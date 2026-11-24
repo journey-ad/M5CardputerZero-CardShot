@@ -127,6 +127,17 @@ pub enum SettingRow {
     Clear,
 }
 
+/// 每个设置分类页包含的行索引区间（含首尾）
+pub const SETTINGS_TAB_RANGES: [(usize, usize); 4] = [(0, 1), (2, 4), (5, 6), (7, 7)];
+
+/// 根据设置行推断所属分类页
+pub fn settings_tab_of(focus: usize) -> usize {
+    SETTINGS_TAB_RANGES
+        .iter()
+        .position(|(start, end)| focus >= *start && focus <= *end)
+        .unwrap_or(0)
+}
+
 impl SettingRow {
     pub const LIST: [SettingRow; 8] = [
         SettingRow::Format,

@@ -377,17 +377,17 @@ fn cycle<T: Copy + PartialEq>(list: &[T], current: T, dir: i64) -> T {
 }
 
 fn handle_settings(st: &mut State, client: &mut Client, key: &str) {
-    let row_count = SettingRow::LIST.len();
+    let (start, end) = crate::constants::SETTINGS_TAB_RANGES[st.settings_tab];
     match key {
+        "TAB" => {
+            st.settings_tab = (st.settings_tab + 1) % crate::constants::SETTINGS_TAB_RANGES.len();
+            st.settings_focus = crate::constants::SETTINGS_TAB_RANGES[st.settings_tab].0;
+        }
         "UP" => {
-            if st.settings_focus > 0 {
-                st.settings_focus -= 1;
-            }
+            st.settings_focus = if st.settings_focus > start { st.settings_focus - 1 } else { end };
         }
         "DOWN" => {
-            if st.settings_focus + 1 < row_count {
-                st.settings_focus += 1;
-            }
+            st.settings_focus = if st.settings_focus < end { st.settings_focus + 1 } else { start };
         }
         "LEFT" | "RIGHT" | "ENTER" => {
             let dir: i64 = if key == "LEFT" { -1 } else { 1 };

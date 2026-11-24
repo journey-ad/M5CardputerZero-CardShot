@@ -54,7 +54,7 @@ component StatChip inherits Rectangle {
     }
     Text {
         x: 27px; y: 0; height: parent.height; vertical-alignment: center;
-        text: root.value; color: #E6EDF3;
+        text: root.value + " 项"; color: #E6EDF3;
         font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
     }
     Text {
@@ -87,7 +87,7 @@ component ActionRow inherits Rectangle {
         font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px;
     }
     if root.right != "" : Text {
-        x: parent.width - 62px; y: 0; width: 42px; height: parent.height; vertical-alignment: center;
+        x: parent.width - 92px; y: 0; width: 54px; height: parent.height; vertical-alignment: center;
         horizontal-alignment: TextHorizontalAlignment.right;
         text: root.right; color: #94A3B2;
         font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
@@ -472,6 +472,8 @@ component HintRow inherits Rectangle {
     if root.page == 3 && !root.editing && root.adjust : ArrowPair { x: 78px; y: 2px; vertical: false; }
     if root.page == 3 && !root.editing && root.adjust : HintText { x: 117px; y: 0; text: "调整"; }
     if root.page == 3 && !root.editing && !root.adjust && root.hint != "" : HintText { x: 78px; y: 0; text: root.hint; }
+    if root.page == 3 && !root.editing : KeyCap  { x: 150px; y: 2px; label: "Tab"; w: 22px; }
+    if root.page == 3 && !root.editing : HintText { x: 175px; y: 0; text: "分类"; }
     if root.page == 3 && !root.editing : KeyCap  { x: parent.width - 48px; y: 2px; label: "Esc"; w: 22px; }
     if root.page == 3 && !root.editing : HintText { x: parent.width - 23px; y: 0; text: "返回"; }
 }
