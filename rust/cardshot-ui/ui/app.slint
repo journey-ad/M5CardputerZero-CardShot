@@ -349,7 +349,7 @@ component HintRow inherits Rectangle {
 
     // 相册
     if root.page == 1 : KeyCap  { x: 8px;   y: 2px; label: "Z"; w: 14px; }
-    if root.page == 1 : KeyCap  { x: 24px;  y: 2px; label: "X"; w: 14px; }
+    if root.page == 1 : KeyCap  { x: 24px;  y: 2px; label: "C"; w: 14px; }
     if root.page == 1 : HintText { x: 41px; y: 0; text: "移动"; }
     if root.page == 1 : KeyCap  { x: 74px;  y: 2px; label: "Enter"; w: 30px; }
     if root.page == 1 : HintText { x: 107px; y: 0; text: "预览"; }
@@ -360,7 +360,7 @@ component HintRow inherits Rectangle {
 
     // 预览
     if root.page == 2 : KeyCap  { x: 8px;   y: 2px; label: "Z"; w: 14px; }
-    if root.page == 2 : KeyCap  { x: 24px;  y: 2px; label: "X"; w: 14px; }
+    if root.page == 2 : KeyCap  { x: 24px;  y: 2px; label: "C"; w: 14px; }
     if root.page == 2 : HintText { x: 41px; y: 0; text: "切换"; }
     if root.page == 2 : KeyCap  { x: parent.width - 106px; y: 2px; label: "退格"; w: 26px; }
     if root.page == 2 : HintText { x: parent.width - 77px; y: 0; text: "删除"; }
@@ -369,10 +369,10 @@ component HintRow inherits Rectangle {
 
     // 设置（非编辑态显示键帽，编辑态显示动态提示）
     if root.page == 3 && root.hint == "" : KeyCap  { x: 8px;   y: 2px; label: "F"; w: 14px; }
-    if root.page == 3 && root.hint == "" : KeyCap  { x: 24px;  y: 2px; label: "C"; w: 14px; }
+    if root.page == 3 && root.hint == "" : KeyCap  { x: 24px;  y: 2px; label: "X"; w: 14px; }
     if root.page == 3 && root.hint == "" : HintText { x: 41px; y: 0; text: "选择"; }
     if root.page == 3 && root.hint == "" : KeyCap  { x: 74px;  y: 2px; label: "Z"; w: 14px; }
-    if root.page == 3 && root.hint == "" : KeyCap  { x: 90px;  y: 2px; label: "X"; w: 14px; }
+    if root.page == 3 && root.hint == "" : KeyCap  { x: 90px;  y: 2px; label: "C"; w: 14px; }
     if root.page == 3 && root.hint == "" : HintText { x: 107px; y: 0; text: "调整"; }
     if root.page == 3 && root.hint != "" : HintText { x: 8px; y: 0; text: root.hint; }
     if root.page == 3 && root.hint == "" : KeyCap  { x: parent.width - 48px; y: 2px; label: "Esc"; w: 22px; }
@@ -474,8 +474,8 @@ export component AppWindow inherits Window {
                 text: "按键"; color: #E6EDF3;
                 font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
             }
-            Text { x: 14px; y: 28px; width: 240px; height: 12px; vertical-alignment: center; text: "Z X  左右切换"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-            Text { x: 14px; y: 42px; width: 240px; height: 12px; vertical-alignment: center; text: "F C  上下选择"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            Text { x: 14px; y: 28px; width: 240px; height: 12px; vertical-alignment: center; text: "Z C  左右切换"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            Text { x: 14px; y: 42px; width: 240px; height: 12px; vertical-alignment: center; text: "F X  上下选择"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
             Text { x: 14px; y: 56px; width: 240px; height: 12px; vertical-alignment: center; text: "Enter  打开 确认"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
             Text { x: 14px; y: 70px; width: 240px; height: 12px; vertical-alignment: center; text: "空格  多选"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
             Text { x: 14px; y: 84px; width: 240px; height: 12px; vertical-alignment: center; text: "退格  删除"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }

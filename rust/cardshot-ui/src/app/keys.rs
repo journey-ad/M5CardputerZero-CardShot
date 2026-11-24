@@ -37,6 +37,15 @@ pub fn handle_key(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
             return;
         }
     }
+    // 机身方向键为字母键，按 cardbili 的约定映射为方向语义
+    let key = match key {
+        "z" | "Z" => "LEFT",
+        "c" | "C" => "RIGHT",
+        "f" | "F" => "UP",
+        "x" | "X" | "s" | "S" => "DOWN",
+        "w" | "W" => "UP",
+        _ => key,
+    };
     // 使用说明弹窗：任意确认键关闭
     if st.help_visible {
         if matches!(key, "ESC" | "ENTER" | "SPACE" | "BACK") {
