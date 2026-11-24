@@ -72,3 +72,16 @@ Unix socket（`$XDG_RUNTIME_DIR/cardshot.sock`）按行收发 JSON，命令包�
 HTTP API：
 `GET /api/status` `/api/items` `/api/config` `/api/thumb?id=` `/api/file?id=&download=1`
 `POST /api/shot` `/api/record` `/api/delete` `/api/config` `/api/remote`
+
+## 界面预览
+
+设备端：
+
+![主页](docs/screenshots/01-home.png)
+![相册](docs/screenshots/02-gallery.png)
+![预览](docs/screenshots/03-preview.png)
+![设置](docs/screenshots/04-settings.png)
+
+远程 Web 管理页：
+
+![Web 管理页](docs/screenshots/07-web.png)
