@@ -265,7 +265,7 @@ component SettingRow inherits Rectangle {
     in property <int> mode: 0;      // 0 文本 / 1 格式段选 / 2 远程开关 / 3 IP+端口
     in property <bool> focused: false;
     in property <bool> disabled: false;
-    height: 18px;
+    height: 26px;
     border-radius: 5px;
     background: focused ? #16302F : transparent;
     border-width: root.focused ? 1px : 0px;
@@ -288,7 +288,7 @@ component SettingRow inherits Rectangle {
         font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
     }
     if root.mode == 3 : Rectangle {
-        x: parent.width - 84px; y: 2px; width: 76px; height: 14px;
+        x: parent.width - 84px; y: 6px; width: 76px; height: 14px;
         border-radius: 4px; background: #10161B; border-width: 1px; border-color: root.focused ? #2DD4BF55 : #263038;
         Text {
             x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
@@ -298,7 +298,7 @@ component SettingRow inherits Rectangle {
         }
     }
     if root.mode == 1 : Rectangle {
-        x: parent.width - 122px; y: 3px; width: 114px; height: 13px; opacity: root.disabled ? 0.4 : 1.0;
+        x: parent.width - 122px; y: 6px; width: 114px; height: 14px; opacity: root.disabled ? 0.4 : 1.0;
         border-radius: 4px; background: #10161B; border-width: 1px; border-color: #263038;
         Rectangle { x: 1px; y: 1px; width: 36px; height: 11px; border-radius: 3px; background: root.value == "PNG"  ? #2DD4BF : transparent; }
         Rectangle { x: 39px; y: 1px; width: 36px; height: 11px; border-radius: 3px; background: root.value == "JPEG" ? #2DD4BF : transparent; }
@@ -314,7 +314,7 @@ component SettingRow inherits Rectangle {
         font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
     }
     if root.mode == 2 : Rectangle {
-        x: parent.width - 30px; y: 3px; width: 26px; height: 13px; border-radius: 7px;
+        x: parent.width - 30px; y: 6px; width: 26px; height: 14px; border-radius: 7px;
         background: root.value != "关" ? #2DD4BF : #2A3A44;
         Rectangle {
             x: root.value != "关" ? 14px : 2px; y: 2px; width: 9px; height: 9px; border-radius: 5px; background: #FFFFFF;
@@ -324,6 +324,7 @@ component SettingRow inherits Rectangle {
 
 component SettingsScreen inherits Rectangle {
     in property <int> focus-idx: 0;
+    in property <int> set-tab: 0;
     in property <string> fmt: "PNG";
     in property <string> port-text: "8420";
     in property <string> shot-text: "shift+space";
@@ -338,14 +339,56 @@ component SettingsScreen inherits Rectangle {
     in property <string> s-port-host: "";
     in property <string> s-port-value: "8420";
     width: 100%; height: 100%; background: transparent;
-    SettingRow { x: 8px; y: 16px;  width: 304px; label: "图片格式";   mode: 1; value: root.fmt; focused: root.focus-idx == 0; }
-    SettingRow { x: 8px; y: 33px;  width: 304px; label: "压缩质量";   mode: 0; value: root.quality; focused: root.focus-idx == 1; }
-    SettingRow { x: 8px; y: 50px;  width: 304px; label: "录制帧率";   mode: 0; value: root.fps; focused: root.focus-idx == 2; }
-    SettingRow { x: 8px; y: 67px;  width: 304px; label: "截图快捷键"; mode: 0; value: root.shot-text; focused: root.focus-idx == 3; }
-    SettingRow { x: 8px; y: 84px;  width: 304px; label: "录制快捷键"; mode: 0; value: root.record-text; focused: root.focus-idx == 4; }
-    SettingRow { x: 8px; y: 101px; width: 304px; label: "Web管理面板"; mode: 2; value: root.remote; focused: root.focus-idx == 5; }
-    SettingRow { x: 8px; y: 118px; width: 304px; label: "服务端口";   mode: 3; value: root.s-port-host; value2: root.s-port-value; focused: root.focus-idx == 6; disabled: root.port-disabled; }
-    SettingRow { x: 8px; y: 135px; width: 304px; label: "清空数据";   mode: 0; value: "全部删除"; focused: root.focus-idx == 7; }
+
+    // 分类标签：当前控件所在分组高亮
+    Rectangle {
+        x: 8px; y: 22px; width: 304px; height: 22px; border-radius: 7px;
+        background: #0E151B; border-width: 1px; border-color: #1E2A33;
+        Rectangle { x: 2px;  y: 2px; width: 73px; height: 18px; border-radius: 5px; background: root.set-tab == 0 ? #2DD4BF : transparent; }
+        Rectangle { x: 77px; y: 2px; width: 73px; height: 18px; border-radius: 5px; background: root.set-tab == 1 ? #2DD4BF : transparent; }
+        Rectangle { x: 152px;y: 2px; width: 73px; height: 18px; border-radius: 5px; background: root.set-tab == 2 ? #2DD4BF : transparent; }
+        Rectangle { x: 227px;y: 2px; width: 73px; height: 18px; border-radius: 5px; background: root.set-tab == 3 ? #2DD4BF : transparent; }
+        Text { x: 2px;  y: 0; width: 73px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: "图像"; color: root.set-tab == 0 ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+        Text { x: 77px; y: 0; width: 73px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: "录制"; color: root.set-tab == 1 ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+        Text { x: 152px;y: 0; width: 73px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: "网络"; color: root.set-tab == 2 ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+        Text { x: 227px;y: 0; width: 73px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: "数据"; color: root.set-tab == 3 ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+    }
+
+    if root.set-tab == 0 : SettingRow { x: 8px; y: 52px;  width: 304px; label: "图片格式"; mode: 1; value: root.fmt; focused: root.focus-idx == 0; }
+    if root.set-tab == 0 : SettingRow { x: 8px; y: 82px;  width: 304px; label: "压缩质量"; mode: 0; value: root.quality; focused: root.focus-idx == 1; }
+    if root.set-tab == 0 : Text {
+        x: 12px; y: 114px; width: 296px; height: 14px; vertical-alignment: center;
+        text: "质量越高，单张体积越大"; color: #6B7885;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+    }
+
+    if root.set-tab == 1 : SettingRow { x: 8px; y: 52px;  width: 304px; label: "录制帧率";   mode: 0; value: root.fps; focused: root.focus-idx == 2; }
+    if root.set-tab == 1 : SettingRow { x: 8px; y: 82px;  width: 304px; label: "截图快捷键"; mode: 0; value: root.shot-text; focused: root.focus-idx == 3; }
+    if root.set-tab == 1 : SettingRow { x: 8px; y: 112px; width: 304px; label: "录制快捷键"; mode: 0; value: root.record-text; focused: root.focus-idx == 4; }
+
+    if root.set-tab == 2 : SettingRow { x: 8px; y: 52px;  width: 304px; label: "Web管理面板"; mode: 2; value: root.remote; focused: root.focus-idx == 5; }
+    if root.set-tab == 2 : SettingRow { x: 8px; y: 82px;  width: 304px; label: "服务端口";   mode: 3; value: root.s-port-host; value2: root.s-port-value; focused: root.focus-idx == 6; disabled: root.port-disabled; }
+    if root.set-tab == 2 : Text {
+        x: 12px; y: 114px; width: 296px; height: 14px; vertical-alignment: center;
+        text: "同一局域网内用浏览器访问该端口"; color: #6B7885;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+    }
+
+    if root.set-tab == 3 : SettingRow { x: 8px; y: 52px;  width: 304px; label: "清空数据"; mode: 0; value: "全部删除"; focused: root.focus-idx == 7; }
+    if root.set-tab == 3 : Rectangle {
+        x: 8px; y: 86px; width: 304px; height: 48px; border-radius: 7px;
+        background: #0E151B; border-width: 1px; border-color: #1E2A33;
+        Text {
+            x: 10px; y: 6px; width: 284px; height: 12px; vertical-alignment: center;
+            text: "截图保存在 Pictures/CardShot"; color: #8B98A6;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+        }
+        Text {
+            x: 10px; y: 22px; width: 284px; height: 12px; vertical-alignment: center;
+            text: "录像保存在 Videos/CardShot"; color: #8B98A6;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+        }
+    }
 }
 
 // 底栏：键帽方块 + 文字，右对齐 Esc（参照原型 .kb）
@@ -468,6 +511,7 @@ export component AppWindow inherits Window {
     in property <int> s-port: 8420;
     in property <string> s-shot: "";
     in property <string> s-record: "";
+    in property <int> set-tab: 0;
     in property <string> s-remote: "开";
     in property <string> s-port-text: "8420";
     in property <string> s-port-host: "";
@@ -509,7 +553,7 @@ export component AppWindow inherits Window {
     if root.page == 3 : SettingsScreen {
         y: 0; width: parent.width; height: parent.height - 18px;
         focus-idx: root.set-focus; fmt: root.s-fmt; quality: root.s-quality; fps: root.s-fps;
-        port: root.s-port; shot: root.s-shot; record: root.s-record; remote: root.s-remote;
+        port: root.s-port; shot: root.s-shot; record: root.s-record; remote: root.s-remote; set-tab: root.set-tab;
         port-text: root.s-port-text; shot-text: root.s-shot; record-text: root.s-record;
         s-port-host: root.s-port-host; s-port-value: root.s-port-value;
         port-disabled: root.port-disabled;

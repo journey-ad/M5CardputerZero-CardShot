@@ -53,6 +53,9 @@ impl App {
             st.pending_preview = true;
         }
         // 调试钩子：直接展示弹窗，便于离线截图验证
+        if let Ok(idx) = std::env::var("CARDSHOT_TEST_SETTINGS").unwrap_or_default().parse::<usize>() {
+            st.settings_focus = idx;
+        }
         if std::env::var("CARDSHOT_TEST_HELP").is_ok() {
             st.help_visible = true;
         }
@@ -61,7 +64,7 @@ impl App {
             st.confirm_focus = 1;
         }
         if std::env::var("CARDSHOT_TEST_CLEAR").is_ok() {
-            st.settings_focus = 6;
+            st.settings_focus = 7;
             st.confirm_kind = 1;
             st.confirm_visible = true;
             st.confirm_focus = 1;
@@ -74,7 +77,7 @@ impl App {
             st.video_ended = true;
         }
         if std::env::var("CARDSHOT_TEST_PORT_EDIT").is_ok() {
-            st.settings_focus = 5;
+            st.settings_focus = 6;
             st.port_edit = true;
             st.port_buf = "8420".into();
         }

@@ -124,7 +124,7 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
         "按下组合键   Esc 取消".into()
     } else if settings {
         match row {
-            SettingRow::ShotHotkey => "Enter 设置".into(),
+            SettingRow::ShotHotkey | SettingRow::RecordHotkey => "Enter 设置".into(),
             SettingRow::Remote => "Enter 开关".into(),
             SettingRow::Port => "Enter 输入".into(),
             SettingRow::Clear => "Enter 清空".into(),
@@ -134,6 +134,13 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
         st.page.hint().into()
     };
     ui.set_hint(hint.into());
+    let tab = match row {
+        SettingRow::Format | SettingRow::Quality => 0,
+        SettingRow::Fps | SettingRow::ShotHotkey | SettingRow::RecordHotkey => 1,
+        SettingRow::Remote | SettingRow::Port => 2,
+        SettingRow::Clear => 3,
+    };
+    ui.set_set_tab(tab);
     ui.set_settings_adjust(adjust);
     ui.set_settings_editing(editing);
     ui.set_count_images(st.count_images as i32);
