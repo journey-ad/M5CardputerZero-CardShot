@@ -5,7 +5,10 @@ use std::path::PathBuf;
 pub fn generate(name: &str, inputs: &[&str], outputs: &[&str], generate: impl FnOnce()) {
     let mut hash = DefaultHasher::new();
     include_bytes!("font_cache.rs").hash(&mut hash);
-    for path in inputs.iter().copied().chain(["Cargo.lock"]) {
+    let lock = std::env::var("CARGO_MANIFEST_DIR")
+        .map(|m| format!("{m}/../Cargo.lock"))
+        .unwrap_or_else(|_| "Cargo.lock".into());
+    for path in inputs.iter().copied().chain([lock.as_str()]) {
         println!("cargo:rerun-if-changed={path}");
         std::fs::read(path)
             .expect("读取字体构建输入失败")

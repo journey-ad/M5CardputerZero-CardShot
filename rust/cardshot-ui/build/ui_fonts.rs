@@ -7,7 +7,7 @@ pub fn generate() {
     let mut pixels = Vec::new();
     // 10px 和 12px 字体保留完整字符集，8px 使用已有子集
     for size in [12, 10, 8] {
-        let source = format!("fonts/fusion{size}.ttf");
+        let source = format!("{}/fonts/fusion{size}.ttf", std::env::var("CARGO_MANIFEST_DIR").unwrap());
         let font = fontdue::Font::from_bytes(
             std::fs::read(source).expect("读取 UI 字体失败"),
             fontdue::FontSettings::default(),

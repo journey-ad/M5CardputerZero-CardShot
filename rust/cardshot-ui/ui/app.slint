@@ -1,4 +1,4 @@
-// CardShot 设备端界面 (320x170)
+// CardShot 设备端界面 (320x170)：相册管理工具
 export struct GalleryItem {
     img: image,
     kind: string,
@@ -7,10 +7,32 @@ export struct GalleryItem {
     dur: string,
 }
 
+component IconImage inherits Rectangle {
+    width: 12px; height: 12px;
+    Rectangle {
+        x: 0; y: 2px; width: 12px; height: 9px; border-radius: 2px;
+        border-width: 1px; border-color: #8b98a6; background: transparent;
+        Rectangle { x: 2px; y: 2px; width: 3px; height: 3px; border-radius: 2px; background: #8b98a6; }
+        Path {
+            x: 2px; y: 4px; width: 8px; height: 4px;
+            commands: "M0 4 L3 0 L5 2 L7 0 L8 4 Z"; fill: #8b98a6;
+        }
+    }
+}
+
+component IconVideo inherits Rectangle {
+    width: 13px; height: 10px;
+    Rectangle { x: 0; y: 0; width: 13px; height: 10px; border-radius: 2px; border-width: 1px; border-color: #8b98a6; background: transparent; }
+    Path { x: 5px; y: 3px; width: 4px; height: 4px; commands: "M0 0 L0 4 L4 2 Z"; fill: #8b98a6; }
+}
+
 component TopBar inherits Rectangle {
     in property <string> title: "CardShot";
-    in property <string> right: "";
     in property <bool> recording: false;
+    in property <string> rec-time: "";
+    in property <int> count-images: 0;
+    in property <int> count-videos: 0;
+    in property <string> size-label: "";
     height: 22px;
     background: #12161b;
     Rectangle { x: 0; y: parent.height - 1px; width: parent.width; height: 1px; background: #232b34; }
@@ -18,16 +40,20 @@ component TopBar inherits Rectangle {
         x: 8px; vertical-alignment: center; height: parent.height;
         text: root.title; color: #e6edf3; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
     }
-    Rectangle {
-        visible: root.recording;
-        x: parent.width - 96px; y: 6px; width: 8px; height: 8px; border-radius: 4px; background: #ff5d5d;
+    if root.recording : Rectangle {
+        x: 0; y: 0; width: parent.width; height: parent.height; background: transparent;
+        Rectangle { x: parent.width - 148px; y: 6px; width: 8px; height: 8px; border-radius: 4px; background: #ff5d5d; }
+        Text { x: parent.width - 137px; y: 0; width: 40px; height: parent.height; vertical-alignment: center;
+            text: root.rec-time; color: #ff8a8a; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
     }
-    Text {
-        x: parent.width - 84px; width: 76px; height: parent.height; vertical-alignment: center;
-        horizontal-alignment: right;
-        text: root.right; color: root.recording ? #ff8a8a : #8b98a6;
-        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
-    }
+    IconImage { x: parent.width - 104px; y: 5px; }
+    Text { x: parent.width - 89px; y: 0; width: 16px; height: parent.height; vertical-alignment: center;
+        text: root.count-images; color: #8b98a6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+    IconVideo { x: parent.width - 68px; y: 6px; }
+    Text { x: parent.width - 52px; y: 0; width: 16px; height: parent.height; vertical-alignment: center;
+        text: root.count-videos; color: #8b98a6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+    Text { x: parent.width - 33px; y: 0; width: 28px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.right;
+        text: root.size-label; color: #6c7884; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
 }
 
 component HintBar inherits Rectangle {
@@ -41,21 +67,22 @@ component HintBar inherits Rectangle {
     }
 }
 
-component HomeTile inherits Rectangle {
+component MenuCard inherits Rectangle {
     in property <string> label: "";
     in property <string> sub: "";
     in property <bool> focused: false;
+    height: 46px;
     border-radius: 10px;
     background: focused ? #16303a : #161b21;
     border-width: focused ? 2px : 1px;
     border-color: focused ? #33d6c0 : #2a333d;
     Text {
-        x: 0; y: 10px; width: parent.width; horizontal-alignment: center;
+        x: 14px; y: 8px; width: parent.width - 28px;
         text: root.label; color: root.focused ? #eafffb : #e6edf3;
         font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
     }
     Text {
-        x: 0; y: 30px; width: parent.width; horizontal-alignment: center;
+        x: 14px; y: 26px; width: parent.width - 28px;
         text: root.sub; color: #8b98a6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
     }
 }
@@ -85,7 +112,7 @@ component GalleryTile inherits Rectangle {
     }
     Text {
         visible: root.dur != "";
-        x: parent.width - 34px; y: 3px; width: 30px; height: 13px; vertical-alignment: center; horizontal-alignment: right;
+        x: parent.width - 34px; y: 3px; width: 30px; height: 13px; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.right;
         text: root.dur; color: #ffffff; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
     }
     Rectangle {
@@ -102,49 +129,42 @@ component GalleryTile inherits Rectangle {
 }
 
 component HomeScreen inherits Rectangle {
-    in property <int> focus: 0;
-    in property <string> c1: "";
-    in property <string> c2: "";
-    in property <string> c3: "";
-    in property <string> c4: "";
-    width: parent.width; height: parent.height;
-    background: transparent;
-    HomeTile { x: 12px; y: 30px; width: 142px; height: 56px; label: "截图"; sub: root.c1; focused: root.focus == 0; }
-    HomeTile { x: 166px; y: 30px; width: 142px; height: 56px; label: "录制"; sub: root.c2; focused: root.focus == 1; }
-    HomeTile { x: 12px; y: 92px; width: 142px; height: 56px; label: "相册"; sub: root.c3; focused: root.focus == 2; }
-    HomeTile { x: 166px; y: 92px; width: 142px; height: 56px; label: "设置"; sub: root.c4; focused: root.focus == 3; }
+    in property <int> focus-idx: 0;
+    in property <string> album-sub: "";
+    in property <string> settings-sub: "";
+    width: 100%; height: 100%; background: transparent;
+    MenuCard { x: 12px; y: 34px; width: 296px; label: "相册"; sub: root.album-sub; focused: root.focus-idx == 0; }
+    MenuCard { x: 12px; y: 88px; width: 296px; label: "设置"; sub: root.settings-sub; focused: root.focus-idx == 1; }
 }
 
 component GalleryScreen inherits Rectangle {
     in property <[GalleryItem]> items;
-    in property <int> focus: 0;
+    in property <int> focus-idx: 0;
     in property <bool> selecting: false;
     in property <int> sel-count: 0;
-    width: parent.width; height: parent.height; background: transparent;
+    width: 100%; height: 100%; background: transparent;
     for it[i] in root.items : GalleryTile {
-        x: 8px + (i mod 3) * 102px;
-        y: 26px + (i / 3) * 62px;
+        x: 8px + Math.mod(i, 3) * 102px;
+        y: 26px + Math.floor(i / 3) * 62px;
         width: 98px; height: 58px;
         img: it.img; kind: it.kind; label: it.name; dur: it.dur;
-        focused: root.focus == i && !root.selecting;
+        focused: root.focus-idx == i && !root.selecting;
         selecting: root.selecting;
-        check: false;
     }
     Rectangle {
         visible: root.items.length == 0;
-        x: 0; y: 40px; width: parent.width; height: 60px;
-        Text { x: 0; y: 0; width: parent.width; horizontal-alignment: center;
+        x: 0; y: 44px; width: parent.width; height: 60px;
+        Text { x: 0; y: 0; width: parent.width; horizontal-alignment: TextHorizontalAlignment.center;
             text: "还没有截图或录制"; color: #6c7884; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; }
-        Text { x: 0; y: 20px; width: parent.width; horizontal-alignment: center;
-            text: "按 S 截图 / R 录制"; color: #4b5560; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+        Text { x: 0; y: 20px; width: parent.width; horizontal-alignment: TextHorizontalAlignment.center;
+            text: "按热键截图或录制后会出现在这里"; color: #4b5560; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
     }
 }
 
 component PreviewScreen inherits Rectangle {
     in property <image> img;
-    in property <string> title: "";
     in property <string> sub: "";
-    width: parent.width; height: parent.height; background: #000;
+    width: 100%; height: 100%; background: #000;
     Image { x: 0; y: 22px; width: parent.width; height: parent.height - 40px; source: root.img; image-fit: contain; }
     Rectangle {
         x: 0; y: parent.height - 18px; width: parent.width; height: 18px; background: #000000b0;
@@ -157,30 +177,34 @@ component SettingRow inherits Rectangle {
     in property <string> label: "";
     in property <string> value: "";
     in property <bool> focused: false;
-    height: 24px;
+    height: 18px;
     background: focused ? #16303a : transparent;
     border-radius: 4px;
     border-width: focused ? 1px : 0px;
     border-color: #33d6c0;
     Text { x: 6px; width: 150px; height: parent.height; vertical-alignment: center;
         text: root.label; color: #cdd6df; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; }
-    Text { x: parent.width - 116px; width: 110px; height: parent.height; vertical-alignment: center; horizontal-alignment: right;
+    Text { x: parent.width - 116px; width: 110px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.right;
         text: root.value; color: root.focused ? #33d6c0 : #8b98a6; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; }
 }
 
 component SettingsScreen inherits Rectangle {
-    in property <int> focus: 0;
+    in property <int> focus-idx: 0;
     in property <string> fmt: "PNG";
     in property <int> quality: 90;
     in property <int> fps: 20;
+    in property <int> port: 8420;
+    in property <string> shot: "";
     in property <string> remote: "开";
     in property <string> hotkey: "关";
-    width: parent.width; height: parent.height; background: transparent;
-    SettingRow { x: 8px; y: 26px; width: 304px; label: "图片格式"; value: root.fmt; focused: root.focus == 0; }
-    SettingRow { x: 8px; y: 52px; width: 304px; label: "压缩质量"; value: root.quality; focused: root.focus == 1; }
-    SettingRow { x: 8px; y: 78px; width: 304px; label: "录制帧率"; value: root.fps; focused: root.focus == 2; }
-    SettingRow { x: 8px; y: 104px; width: 304px; label: "远程 Web"; value: root.remote; focused: root.focus == 3; }
-    SettingRow { x: 8px; y: 130px; width: 304px; label: "全局热键"; value: root.hotkey; focused: root.focus == 4; }
+    width: 100%; height: 100%; background: transparent;
+    SettingRow { x: 8px; y: 24px; width: 304px; label: "图片格式"; value: root.fmt; focused: root.focus-idx == 0; }
+    SettingRow { x: 8px; y: 42px; width: 304px; label: "压缩质量"; value: root.quality; focused: root.focus-idx == 1; }
+    SettingRow { x: 8px; y: 60px; width: 304px; label: "录制帧率"; value: root.fps; focused: root.focus-idx == 2; }
+    SettingRow { x: 8px; y: 78px; width: 304px; label: "服务端口"; value: root.port; focused: root.focus-idx == 3; }
+    SettingRow { x: 8px; y: 96px; width: 304px; label: "截图快捷键"; value: root.shot; focused: root.focus-idx == 4; }
+    SettingRow { x: 8px; y: 114px; width: 304px; label: "远程 Web"; value: root.remote; focused: root.focus-idx == 5; }
+    SettingRow { x: 8px; y: 132px; width: 304px; label: "全局热键"; value: root.hotkey; focused: root.focus-idx == 6; }
 }
 
 export component AppWindow inherits Window {
@@ -193,7 +217,6 @@ export component AppWindow inherits Window {
     in property <int> grid-focus: 0;
     in property <bool> selecting: false;
     in property <int> sel-count: 0;
-    in property <string> status-right: "";
     in property <bool> recording: false;
     in property <string> rec-time: "";
     in property <string> toast: "";
@@ -201,27 +224,33 @@ export component AppWindow inherits Window {
     in property <string> hint: "";
     in property <image> preview-img;
     in property <string> preview-sub: "";
-    in property <string> c1: ""; in property <string> c2: ""; in property <string> c3: ""; in property <string> c4: "";
+    in property <string> c1: ""; in property <string> c2: "";
+    in property <int> count-images: 0; in property <int> count-videos: 0; in property <string> size-label: "";
     in property <int> set-focus: 0;
     in property <string> s-fmt: "PNG";
     in property <int> s-quality: 90;
     in property <int> s-fps: 20;
+    in property <int> s-port: 8420;
+    in property <string> s-shot: "";
     in property <string> s-remote: "开";
     in property <string> s-hotkey: "关";
 
     TopBar {
         width: parent.width; y: 0;
         title: root.page-title;
-        right: root.recording ? root.rec-time : root.status-right;
         recording: root.recording;
+        rec-time: root.rec-time;
+        count-images: root.count-images;
+        count-videos: root.count-videos;
+        size-label: root.size-label;
     }
     if root.page == 0 : HomeScreen {
         y: 0; width: parent.width; height: parent.height;
-        focus: root.home-focus; c1: root.c1; c2: root.c2; c3: root.c3; c4: root.c4;
+        focus-idx: root.home-focus; album-sub: root.c1; settings-sub: root.c2;
     }
     if root.page == 1 : GalleryScreen {
         y: 0; width: parent.width; height: parent.height;
-        items: root.items; focus: root.grid-focus; selecting: root.selecting; sel-count: root.sel-count;
+        items: root.items; focus-idx: root.grid-focus; selecting: root.selecting; sel-count: root.sel-count;
     }
     if root.page == 2 : PreviewScreen {
         y: 0; width: parent.width; height: parent.height;
@@ -229,14 +258,15 @@ export component AppWindow inherits Window {
     }
     if root.page == 3 : SettingsScreen {
         y: 0; width: parent.width; height: parent.height;
-        focus: root.set-focus; fmt: root.s-fmt; quality: root.s-quality; fps: root.s-fps; remote: root.s-remote; hotkey: root.s-hotkey;
+        focus-idx: root.set-focus; fmt: root.s-fmt; quality: root.s-quality; fps: root.s-fps;
+        port: root.s-port; shot: root.s-shot; remote: root.s-remote; hotkey: root.s-hotkey;
     }
     HintBar { width: parent.width; y: parent.height - 15px; text: root.hint; }
     Rectangle {
         visible: root.toast != "";
         x: 60px; y: parent.height - 40px; width: parent.width - 120px; height: 22px;
         border-radius: 6px; background: #1d242ccc; border-width: 1px; border-color: #33d6c0;
-        Text { x: 0; y: 0; width: parent.width; height: parent.height; horizontal-alignment: center; vertical-alignment: center;
+        Text { x: 0; y: 0; width: parent.width; height: parent.height; horizontal-alignment: TextHorizontalAlignment.center; vertical-alignment: center;
             text: root.toast; color: #eafffb; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; overflow: elide; }
     }
 }
