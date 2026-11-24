@@ -122,7 +122,8 @@ impl Recorder {
                     break;
                 }
                 match capture::read_frame() {
-                    Ok(raw) => {
+                    Ok(mut raw) => {
+                        crate::overlay::apply_mask(&mut raw);
                         if let Err(err) = stdin.write_all(&raw) {
                             st.lock().unwrap().last_error = Some(format!("write: {err}"));
                             break;

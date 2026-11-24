@@ -3,6 +3,7 @@ mod feedback;
 mod hotkeys;
 mod http;
 
+use cardshot_core::overlay;
 use cardshot_core::config::Config;
 use cardshot_core::library::Library;
 use cardshot_core::recorder::Recorder;
@@ -127,6 +128,8 @@ pub fn dispatch(core: &Arc<Core>, cmd: &str, args: &Value) -> Value {
                 Ok(p) => {
                     drop(cfg);
                     core.feedback.flash();
+                    let fb = capture::fb_path();
+                    std::thread::spawn(move || { let _ = overlay::toast(&fb, include_bytes!("../assets/shot.png")); });
                     json!({ "ok": true, "path": p.to_string_lossy() })
                 }
                 Err(e) => json!({ "ok": false, "error": e.to_string() }),
@@ -134,6 +137,7 @@ pub fn dispatch(core: &Arc<Core>, cmd: &str, args: &Value) -> Value {
         }
         "record_start" => {
             let cfg = core.cfg.lock().unwrap().clone();
+            let _ = overlay::toast(&capture::fb_path(), include_bytes!("../assets/rec_start.png"));
             let mut r = core.recorder.lock().unwrap();
             match r.start(&cfg) {
                 Ok(p) => {
@@ -150,6 +154,8 @@ pub fn dispatch(core: &Arc<Core>, cmd: &str, args: &Value) -> Value {
                 Ok(p) => {
                     drop(r);
                     core.feedback.flash();
+                    let fb = capture::fb_path();
+                    std::thread::spawn(move || { let _ = overlay::toast(&fb, include_bytes!("../assets/rec_saved.png")); });
                     json!({ "ok": true, "recording": false, "path": p.to_string_lossy() })
                 }
                 Err(e) => json!({ "ok": false, "error": e }),
@@ -158,10 +164,18 @@ pub fn dispatch(core: &Arc<Core>, cmd: &str, args: &Value) -> Value {
         "record_toggle" => {
             let cfg = core.cfg.lock().unwrap().clone();
             let mut r = core.recorder.lock().unwrap();
+            let was = r.status().recording;
+            if !was {
+                let _ = overlay::toast(&capture::fb_path(), include_bytes!("../assets/rec_start.png"));
+            }
             match r.toggle(&cfg) {
                 Ok((on, p)) => {
                     drop(r);
                     core.feedback.flash();
+                    if was && !on {
+                        let fb = capture::fb_path();
+                        std::thread::spawn(move || { let _ = overlay::toast(&fb, include_bytes!("../assets/rec_saved.png")); });
+                    }
                     json!({ "ok": true, "recording": on, "path": p.to_string_lossy() })
                 }
                 Err(e) => json!({ "ok": false, "error": e }),
