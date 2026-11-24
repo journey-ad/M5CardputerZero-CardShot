@@ -88,6 +88,7 @@ HTTP API：
 ![使用说明](docs/screenshots/05-help.png)
 ![删除确认](docs/screenshots/06-confirm.png)
 
-远程 Web 管理页：
+远程 Web 管理页：设置项与设备端保持一致（常规：后台常驻、语言、图片格式、压缩质量、录制帧率；数据：清空数据），语言与设备端共用同一设置，支持中文/英文/日文；相册支持缩略图/列表切换、每页数量与翻页、拖拽框选多选
+
 
 ![Web 管理页](docs/screenshots/07-web.png)
