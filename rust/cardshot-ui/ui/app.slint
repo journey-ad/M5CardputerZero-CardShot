@@ -261,7 +261,8 @@ component PreviewScreen inherits Rectangle {
 component SettingRow inherits Rectangle {
     in property <string> label: "";
     in property <string> value: "";
-    in property <int> mode: 0;      // 0 文本 / 1 格式段选 / 2 远程开关
+    in property <string> value2: "";
+    in property <int> mode: 0;      // 0 文本 / 1 格式段选 / 2 远程开关 / 3 IP+端口
     in property <bool> focused: false;
     in property <bool> disabled: false;
     height: 18px;
@@ -279,6 +280,22 @@ component SettingRow inherits Rectangle {
         horizontal-alignment: TextHorizontalAlignment.right;
         text: root.value; color: root.disabled ? #566270 : (root.focused ? #2DD4BF : #C8D2DC);
         font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 11px;
+    }
+    if root.mode == 3 : Text {
+        x: 80px; width: 138px; height: parent.height; vertical-alignment: center;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: root.value; color: #7C8896;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+    }
+    if root.mode == 3 : Rectangle {
+        x: parent.width - 84px; y: 2px; width: 76px; height: 14px;
+        border-radius: 4px; background: #10161B; border-width: 1px; border-color: root.focused ? #2DD4BF55 : #263038;
+        Text {
+            x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
+            horizontal-alignment: TextHorizontalAlignment.center;
+            text: root.value2; color: root.disabled ? #566270 : (root.focused ? #2DD4BF : #C8D2DC);
+            font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 10px;
+        }
     }
     if root.mode == 1 : Rectangle {
         x: parent.width - 122px; y: 3px; width: 114px; height: 13px; opacity: root.disabled ? 0.4 : 1.0;
@@ -316,13 +333,15 @@ component SettingsScreen inherits Rectangle {
     in property <int> port: 8420;
     in property <string> shot: "";
     in property <string> remote: "开";
+    in property <string> s-port-host: "";
+    in property <string> s-port-value: "8420";
     width: 100%; height: 100%; background: transparent;
     SettingRow { x: 8px; y: 20px;  width: 304px; label: "图片格式";   mode: 1; value: root.fmt; focused: root.focus-idx == 0; }
     SettingRow { x: 8px; y: 38px;  width: 304px; label: "压缩质量";   mode: 0; value: root.quality; focused: root.focus-idx == 1; }
     SettingRow { x: 8px; y: 56px;  width: 304px; label: "录制帧率";   mode: 0; value: root.fps; focused: root.focus-idx == 2; }
     SettingRow { x: 8px; y: 74px;  width: 304px; label: "截图快捷键"; mode: 0; value: root.shot-text; focused: root.focus-idx == 3; }
     SettingRow { x: 8px; y: 92px;  width: 304px; label: "Web管理面板"; mode: 2; value: root.remote; focused: root.focus-idx == 4; }
-    SettingRow { x: 8px; y: 110px; width: 304px; label: "服务端口";   mode: 0; value: root.port-text; focused: root.focus-idx == 5; disabled: root.port-disabled; }
+    SettingRow { x: 8px; y: 110px; width: 304px; label: "服务端口";   mode: 3; value: root.s-port-host; value2: root.s-port-value; focused: root.focus-idx == 5; disabled: root.port-disabled; }
     SettingRow { x: 8px; y: 128px; width: 304px; label: "清空数据";   mode: 0; value: "全部删除"; focused: root.focus-idx == 6; }
 }
 
@@ -447,6 +466,8 @@ export component AppWindow inherits Window {
     in property <string> s-shot: "";
     in property <string> s-remote: "开";
     in property <string> s-port-text: "8420";
+    in property <string> s-port-host: "";
+    in property <string> s-port-value: "8420";
     in property <bool> port-edit: false;
     in property <bool> port-disabled: false;
     in property <bool> hotkey-capture: false;
@@ -486,6 +507,7 @@ export component AppWindow inherits Window {
         focus-idx: root.set-focus; fmt: root.s-fmt; quality: root.s-quality; fps: root.s-fps;
         port: root.s-port; shot: root.s-shot; remote: root.s-remote;
         port-text: root.s-port-text; shot-text: root.s-shot;
+        s-port-host: root.s-port-host; s-port-value: root.s-port-value;
         port-disabled: root.port-disabled;
     }
     HintRow { width: parent.width; y: parent.height - 18px; page: root.page; overlay: root.page == 2; hint: root.hint; adjust: root.settings-adjust; editing: root.settings-editing; selecting: root.selecting; sel-count: root.sel-count; }

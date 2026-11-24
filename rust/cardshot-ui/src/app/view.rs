@@ -150,6 +150,8 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     } else {
         format!("{}:{}", st.remote_host, st.remote_port).into()
     });
+    ui.set_s_port_host(if st.remote_host.is_empty() { String::new().into() } else { format!("{}:", st.remote_host).into() });
+    ui.set_s_port_value(if st.port_edit { format!("{}_", st.port_buf).into() } else { st.remote_port.to_string().into() });
     ui.set_port_edit(st.port_edit);
     ui.set_port_disabled(!st.remote_running);
     let shot_text = if st.hotkey_capture {
