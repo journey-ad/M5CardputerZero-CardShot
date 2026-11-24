@@ -94,7 +94,7 @@ fn save_webp(raw: &[u8], path: &Path, quality: u8) -> Result<()> {
             "-f",
             "rawvideo",
             "-pix_fmt",
-            "bgr565le",
+            "rgb565le",
             "-s",
             "320x170",
             "-i",

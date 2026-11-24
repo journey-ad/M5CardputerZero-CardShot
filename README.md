@@ -52,9 +52,10 @@ bash scripts/install-app.sh
 
 - 截图/录制：全局热键默认开启（`Shift+Space` 截图、`Shift+Enter` 录制开关），也可在 Web 管理页操作
 - 设备端界面：主页「相册」浏览；`Enter` 预览；`Space` 多选；`退格` 删除（弹窗二次确认）；`Shift+退格` 直接删除；`Esc` 返回；「使用说明」查看完整按键
+- 预览页：图片按 320×170 整屏 1:1 显示；视频在预览页循环播放，左右切换不占画面
 - 方向键直接使用机身的 `Z C F X`：`Z/C` 左右，`F/X` 上下（与 CardBili 的字母键映射一致）
 - 设置页：图片格式、压缩质量与录制帧率按预设档位左右切换；远程 Web 开关下方是服务端口，开关关闭时端口灰显；端口按 `Enter` 进入手动数字输入；截图快捷键按 `Enter` 进入录制，按下组合键即保存
-- 远程管理：设备与电脑在同一局域网时访问 `http://<设备IP>:8420/`
+- 远程管理：设备与电脑在同一局域网时访问 `http://<设备IP>:<端口>/`（端口见设置页）
 
 ## 配置
 
@@ -83,6 +84,8 @@ HTTP API：
 ![相册](docs/screenshots/02-gallery.png)
 ![预览](docs/screenshots/03-preview.png)
 ![设置](docs/screenshots/04-settings.png)
+![使用说明](docs/screenshots/05-help.png)
+![删除确认](docs/screenshots/06-confirm.png)
 
 远程 Web 管理页：
 

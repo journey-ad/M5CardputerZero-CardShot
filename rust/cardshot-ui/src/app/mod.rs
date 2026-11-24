@@ -45,8 +45,12 @@ impl App {
         if st.page != Page::Home {
             poll::load_items(c, st);
         }
+        if let Ok(idx) = std::env::var("CARDSHOT_TEST_INDEX").unwrap_or_default().parse::<usize>() {
+            st.grid_focus = idx;
+        }
+        // 起始页为预览时，等列表加载完成后由 tick 打开首项
         if st.page == Page::Preview {
-            view::open_preview(ui, c, st);
+            st.pending_preview = true;
         }
         // 调试钩子：直接展示弹窗，便于离线截图验证
         if std::env::var("CARDSHOT_TEST_HELP").is_ok() {
@@ -118,6 +122,21 @@ impl App {
 
     pub fn sync(&mut self) {
         view::sync_ui(&self.ui, &self.st);
+    }
+
+    /// 每帧推进：离开预览页时停止视频，预览页刷新播放帧
+    pub fn tick(&mut self) {
+        let App { ui, st, client, .. } = self;
+        if st.pending_preview && !st.items.is_empty() {
+            if let Some(c) = client.as_mut() {
+                view::open_preview(ui, c, st);
+            }
+            st.pending_preview = false;
+        }
+        if !matches!(st.page, Page::Preview) {
+            view::stop_video(st);
+        }
+        view::tick_video(ui, st);
     }
 
     pub fn wants_model(&self) -> bool {

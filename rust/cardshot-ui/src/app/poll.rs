@@ -29,6 +29,9 @@ pub fn poll_status(client: &mut Client, st: &mut State) {
     if let Some(d) = s.get("output_dir").and_then(|x| x.as_str()) {
         st.output_dir = d.to_string();
     }
+    if let Some(d) = s.get("video_dir").and_then(|x| x.as_str()) {
+        st.video_dir = d.to_string();
+    }
     if let Some(r) = s.get("remote") {
         if let Some(b) = r.get("running").and_then(|x| x.as_bool()) {
             st.remote_running = b;

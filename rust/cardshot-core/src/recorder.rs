@@ -65,7 +65,7 @@ impl Recorder {
         let mut cmd = Command::new("ffmpeg");
         cmd.args([
             "-hide_banner", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt",
-            "bgr565le", "-s", "320x170", "-r", &fps, "-i", "-",
+            "rgb565le", "-s", "320x170", "-r", &fps, "-i", "-",
         ]);
         if !cfg.record.audio {
             cmd.arg("-an");

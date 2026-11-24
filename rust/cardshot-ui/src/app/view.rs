@@ -1,14 +1,30 @@
 // 界面数据装配：缩略图加载、相册模型、属性同步、预览
 
 use std::collections::HashMap;
+use std::io::Read;
 use std::path::Path;
+use std::process::{Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use slint::{Rgb8Pixel, SharedPixelBuffer};
 
 use crate::constants::{PREVIEW_BOX, THUMB_BOX, GRID_PAGE};
 use crate::daemon::Client;
-use crate::model::{fmt_duration, human_size, State};
+use crate::constants::FB_BYTES;
+use crate::model::{fmt_clock, fmt_duration, human_size, State, VideoPlayer};
 use crate::{AppWindow, GalleryItem};
+
+fn expand_home(p: &str) -> std::path::PathBuf {
+    if let Some(rest) = p.strip_prefix("~/") {
+        if let Some(home) = std::env::var_os("HOME") {
+            return Path::new(&home).join(rest);
+        }
+    }
+    Path::new(p).to_path_buf()
+}
 
 fn load_sized(path: &Path, max: (u32, u32)) -> Option<slint::Image> {
     let img = image::open(path).ok()?.to_rgb8();
@@ -16,10 +32,18 @@ fn load_sized(path: &Path, max: (u32, u32)) -> Option<slint::Image> {
     if w == 0 || h == 0 {
         return None;
     }
-    let scale = (max.0 as f64 / w as f64).min(max.1 as f64 / h as f64);
-    let nw = ((w as f64 * scale).round() as u32).max(1);
-    let nh = ((h as f64 * scale).round() as u32).max(1);
-    let resized = image::imageops::resize(&img, nw, nh, image::imageops::FilterType::Triangle);
+    // 已在目标尺寸内则直接使用原始像素，避免重采样造成模糊
+    let (nw, nh) = if w <= max.0 && h <= max.1 {
+        (w, h)
+    } else {
+        let scale = (max.0 as f64 / w as f64).min(max.1 as f64 / h as f64);
+        (((w as f64 * scale).round() as u32).max(1), ((h as f64 * scale).round() as u32).max(1))
+    };
+    let resized = if (nw, nh) == (w, h) {
+        img
+    } else {
+        image::imageops::resize(&img, nw, nh, image::imageops::FilterType::Triangle)
+    };
 
     let mut buf = SharedPixelBuffer::<Rgb8Pixel>::new(nw, nh);
     let dst = buf.make_mut_slice();
@@ -47,7 +71,7 @@ fn item_image(client: &mut Client, st: &mut State, idx: usize, big: bool) -> Opt
     }
     let box_size = if big { PREVIEW_BOX } else { THUMB_BOX };
     let img = if big && it.kind == "image" && !st.output_dir.is_empty() {
-        let p = Path::new(&st.output_dir).join(&it.name);
+        let p = expand_home(&st.output_dir).join(&it.name);
         load_sized(&p, box_size)
             .or_else(|| client.thumb_path(&it.id).and_then(|p| load_sized(&p, box_size)))
     } else {
@@ -84,7 +108,7 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     ui.set_sel_count(st.selected.len() as i32);
     ui.set_set_focus(st.settings_focus as i32);
     ui.set_recording(st.recording);
-    ui.set_rec_time(fmt_duration(st.rec_seconds as f64).into());
+    ui.set_rec_time(fmt_clock(st.rec_seconds as f64).into());
     if st.page == crate::constants::Page::Preview {
         ui.set_page_title(st.preview_name.clone().into());
     } else {
@@ -141,4 +165,85 @@ pub fn open_preview(ui: &AppWindow, client: &mut Client, st: &mut State) {
     st.preview_kind = it.kind.clone();
     st.preview_pos = format!("{}/{}", idx + 1, st.items.len());
     st.page = crate::constants::Page::Preview;
+    if it.kind == "video" {
+        let base = if st.video_dir.is_empty() { st.output_dir.clone() } else { st.video_dir.clone() };
+        let path = expand_home(&base).join(&it.name);
+        start_video(st, &path, st.fps.max(1) as u32);
+    } else {
+        stop_video(st);
+    }
+}
+
+/// 停止当前视频解码线程
+pub fn stop_video(st: &mut State) {
+    if let Some(v) = st.video.take() {
+        v.stop.store(true, Ordering::Relaxed);
+    }
+}
+
+/// 启动视频预览：后台 ffmpeg 按实时速度解码为 320x170 rgb565 帧
+fn start_video(st: &mut State, path: &Path, fps: u32) {
+    stop_video(st);
+    let (tx, rx) = mpsc::channel::<Vec<u8>>();
+    let stop = Arc::new(AtomicBool::new(false));
+    let stop_thread = stop.clone();
+    let p = path.to_path_buf();
+    std::thread::spawn(move || {
+        eprintln!("video: decoding {:?}", p);
+        let mut child = match Command::new("ffmpeg")
+            .args(["-hide_banner", "-loglevel", "error", "-re", "-stream_loop", "-1", "-i"])
+            .arg(&p)
+            .args([
+                "-f", "rawvideo", "-pix_fmt", "rgb565le", "-s", "320x170", "-r",
+                &fps.to_string(), "-",
+            ])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+        {
+            Ok(c) => c,
+            Err(e) => { eprintln!("video: spawn failed {}", e); return; }
+        };
+        if let Some(mut out) = child.stdout.take() {
+            let mut buf = vec![0u8; FB_BYTES];
+            while !stop_thread.load(Ordering::Relaxed) {
+                if let Err(e) = out.read_exact(&mut buf) {
+                    eprintln!("video: read end {}", e);
+                    break;
+                }
+                if tx.send(buf.clone()).is_err() {
+                    eprintln!("video: receiver gone");
+                    break;
+                }
+            }
+        }
+        let _ = child.kill();
+    });
+    let interval = Duration::from_millis((1000 / fps.max(1) as u64).max(10));
+    st.video = Some(VideoPlayer { rx, stop, next_at: Instant::now(), interval });
+}
+
+/// 每帧调用：从队列取最新一帧刷新预览图
+pub fn tick_video(ui: &AppWindow, st: &mut State) {
+    let Some(v) = st.video.as_mut() else { return };
+    let now = Instant::now();
+    if now < v.next_at {
+        return;
+    }
+    let mut latest: Option<Vec<u8>> = None;
+    while let Ok(f) = v.rx.try_recv() {
+        latest = Some(f);
+    }
+    let Some(raw) = latest else { return };
+    let mut buf = SharedPixelBuffer::<Rgb8Pixel>::new(320, 170);
+    let dst = buf.make_mut_slice();
+    for i in 0..dst.len() {
+        let v = (raw[i * 2] as u16) | ((raw[i * 2 + 1] as u16) << 8);
+        let r = ((v >> 11) & 0x1f) as u8;
+        let g = ((v >> 5) & 0x3f) as u8;
+        let b = (v & 0x1f) as u8;
+        dst[i] = Rgb8Pixel { r: (r << 3) | (r >> 2), g: (g << 2) | (g >> 4), b: (b << 3) | (b >> 2) };
+    }
+    ui.set_preview_img(slint::Image::from_rgb8(buf));
+    v.next_at = now + v.interval;
 }

@@ -44,7 +44,7 @@ pub const SHOT_CHORDS: [&str; 5] = [
 
 /// 缩略图与预览图的最大显示尺寸
 pub const THUMB_BOX: (u32, u32) = (96, 40);
-pub const PREVIEW_BOX: (u32, u32) = (WIDTH, 110);
+pub const PREVIEW_BOX: (u32, u32) = (WIDTH, HEIGHT);
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Page {

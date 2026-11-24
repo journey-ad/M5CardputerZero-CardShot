@@ -56,6 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         application.sync();
+        application.tick();
         display.pump();
 
         std::thread::sleep(Duration::from_millis(FRAME_SLEEP_MS));

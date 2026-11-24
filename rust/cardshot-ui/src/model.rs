@@ -1,7 +1,10 @@
 // 数据模型与界面状态
 
 use std::collections::{HashMap, HashSet};
-use std::time::Instant;
+use std::sync::atomic::AtomicBool;
+use std::sync::mpsc::Receiver;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use serde::Deserialize;
 use slint::Image;
@@ -36,6 +39,20 @@ pub fn fmt_duration(seconds: f64) -> String {
     format!("{:02}:{:02}", total / 60, total % 60)
 }
 
+/// 录制计时用紧凑格式：0:07，分钟不补零
+pub fn fmt_clock(seconds: f64) -> String {
+    let total = seconds.round() as u64;
+    format!("{}:{:02}", total / 60, total % 60)
+}
+
+/// 预览页视频播放器：后台解码线程把 rgb565 帧送到 rx，界面按帧率取最新一帧
+pub struct VideoPlayer {
+    pub rx: Receiver<Vec<u8>>,
+    pub stop: Arc<AtomicBool>,
+    pub next_at: Instant,
+    pub interval: Duration,
+}
+
 pub struct State {
     pub page: Page,
     pub home_focus: usize,
@@ -60,6 +77,7 @@ pub struct State {
     pub hotkey_enabled: bool,
     pub shot_hotkey: String,
     pub output_dir: String,
+    pub video_dir: String,
     pub toast: String,
     pub toast_until: Option<Instant>,
     pub help_visible: bool,
@@ -74,6 +92,8 @@ pub struct State {
     pub port_buf: String,
     pub hotkey_capture: bool,
     pub shift_down: bool,
+    pub video: Option<VideoPlayer>,
+    pub pending_preview: bool,
 }
 
 impl State {
@@ -102,6 +122,7 @@ impl State {
             hotkey_enabled: false,
             shot_hotkey: "shift+space".into(),
             output_dir: String::new(),
+            video_dir: String::new(),
             toast: String::new(),
             toast_until: None,
             help_visible: false,
@@ -116,6 +137,8 @@ impl State {
             port_buf: String::new(),
             hotkey_capture: false,
             shift_down: false,
+            video: None,
+            pending_preview: false,
         }
     }
 
