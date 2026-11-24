@@ -94,6 +94,11 @@ pub fn handle_key(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
             return;
         }
         "ESC" => {
+            if st.page == Page::Gallery && st.selecting {
+                st.selecting = false;
+                st.selected.clear();
+                return;
+            }
             st.page = st.page.back();
             st.selecting = false;
             return;
@@ -182,14 +187,9 @@ fn handle_gallery(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
         }
         "ENTER" => open_preview(ui, client, st),
         "BACK" => {
-            if st.selecting {
-                st.selecting = false;
-                st.selected.clear();
-            } else {
-                st.confirm_kind = 0;
-                st.confirm_focus = 0;
-                st.confirm_visible = true;
-            }
+            st.confirm_kind = 0;
+            st.confirm_focus = 0;
+            st.confirm_visible = true;
         }
         "SHIFT_BACK" => {
             if st.selecting && st.selected.len() > 1 {
