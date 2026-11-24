@@ -92,6 +92,11 @@ pub fn spawn_keys(path: String, tx: mpsc::Sender<String>) {
                 let _ = tx.send(if shift { "SHIFT_ON".to_string() } else { "SHIFT_OFF".to_string() });
                 continue;
             }
+            // ESC 抬起事件用于长按退出判断
+            if code == keycode::ESC && value == 0 {
+                let _ = tx.send("ESC_UP".to_string());
+                continue;
+            }
             if value != 1 {
                 continue;
             }

@@ -15,6 +15,7 @@ pub struct App {
     st: State,
     client: Option<Client>,
     quit: bool,
+    esc_down: Option<std::time::Instant>,
 }
 
 impl App {
@@ -24,6 +25,7 @@ impl App {
             st: State::new(),
             client: Client::connect(),
             quit: false,
+            esc_down: None,
         }
     }
 
@@ -66,10 +68,26 @@ impl App {
     }
 
     pub fn on_key(&mut self, key: &str) {
-        // 主页按 Esc 退出，其余页面由按键处理逐级返回
-        if key == "ESC" && self.st.page == Page::Home {
-            self.quit = true;
+        // 主界面长按 ESC 退出；其余场景 ESC 均为返回
+        let modal = self.st.help_visible
+            || self.st.confirm_visible
+            || self.st.port_edit
+            || self.st.hotkey_capture;
+        if key == "ESC" {
+            if self.st.page == Page::Home && !modal {
+                self.esc_down = Some(std::time::Instant::now());
+                return;
+            }
+        } else if key == "ESC_UP" {
+            if let Some(t) = self.esc_down.take() {
+                if self.st.page == Page::Home && t.elapsed() >= std::time::Duration::from_millis(700) {
+                    self.quit = true;
+                }
+            }
             return;
+        }
+        if self.esc_down.is_some() {
+            self.esc_down = None;
         }
         let App { ui, st, client, .. } = self;
         if let Some(c) = client.as_mut() {
