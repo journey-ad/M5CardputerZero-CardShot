@@ -29,6 +29,7 @@ window.WEB_I18N = {
     copy: "复制", copied: "已复制图片", copy_failed: "复制失败",
     copy_download: "浏览器不支持直接复制，已下载图片",
     confirm_delete: "确认删除选中的 {n} 项？删除后无法恢复。",
+    down_failed: "下载失败",
   },
   en: {
     brand_sub: "Screen capture for Cardputer",
@@ -59,6 +60,7 @@ window.WEB_I18N = {
     copy: "Copy", copied: "Image copied", copy_failed: "Copy failed",
     copy_download: "Clipboard unavailable, image downloaded",
     confirm_delete: "Delete {n} selected item(s)? This cannot be undone.",
+    down_failed: "Download failed",
   },
   ja: {
     brand_sub: "Cardputer の画面キャプチャ",
@@ -89,5 +91,6 @@ window.WEB_I18N = {
     copy: "コピー", copied: "画像をコピーしました", copy_failed: "コピーに失敗しました",
     copy_download: "クリップボード非対応のため画像を保存しました",
     confirm_delete: "選択した {n} 件を削除しますか？元に戻せません。",
+    down_failed: "ダウンロード失敗",
   },
 };

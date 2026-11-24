@@ -343,7 +343,25 @@ function Lightbox({ items, index, onClose, onNav, onDelete, zoom, setZoom, toast
         a.click();
         toast && toast(T("copy_download"));
       }}><${Icon} name="copy" size=${16} />${T("copy")}</button>
-      <a class="btn btn-secondary" href=${fileUrl(it.id) + "&download=1"} download><${Icon} name="download" size=${16} />${T("download")}</a>
+      <button class="btn btn-secondary" onClick=${() => {
+        if (it.kind === "video") {
+          const a = document.createElement("a");
+          a.href = fileUrl(it.id) + "&download=1";
+          a.download = it.name || "capture";
+          a.click();
+          return;
+        }
+        const el = stageRef.current && stageRef.current.querySelector("img");
+        if (!el) return;
+        const w = 320 * zoom, h = 170 * zoom;
+        const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+        const ctx = cv.getContext("2d"); ctx.imageSmoothingEnabled = false;
+        try { ctx.drawImage(el, 0, 0, w, h); } catch (e) { toast && toast(T("down_failed"), true); return; }
+        const a = document.createElement("a");
+        a.href = cv.toDataURL("image/png");
+        a.download = (it.name || "capture").replace(/\.[^.]+$/, "") + "@" + zoom + "x.png";
+        a.click();
+      }}><${Icon} name="download" size=${16} />${T("download")}</button>
       <button class="btn btn-destructive" onClick=${() => onDelete(it.id)}><${Icon} name="trash-2" size=${16} />${T("delete")}</button>
     </div>
   </div>`;
