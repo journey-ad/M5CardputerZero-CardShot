@@ -26,6 +26,8 @@ window.WEB_I18N = {
     rec_started: "开始录制", rec_stopped: "录制已停止", op_failed: "操作失败",
     deleted: "已删除 ", deleted_suf: " 项", delete_failed: "删除失败",
     per_page: "每页", prev: "上一页", next: "下一页", clear_btn: "删除全部",
+    copy: "复制", copied: "已复制图片", copy_failed: "复制失败",
+    copy_download: "浏览器不支持直接复制，已下载图片",
   },
   en: {
     brand_sub: "Screen capture for Cardputer",
@@ -53,6 +55,8 @@ window.WEB_I18N = {
     rec_started: "Recording started", rec_stopped: "Recording stopped", op_failed: "Operation failed",
     deleted: "Deleted ", deleted_suf: "", delete_failed: "Delete failed",
     per_page: "Per page", prev: "Previous", next: "Next", clear_btn: "Delete all",
+    copy: "Copy", copied: "Image copied", copy_failed: "Copy failed",
+    copy_download: "Clipboard unavailable, image downloaded",
   },
   ja: {
     brand_sub: "Cardputer の画面キャプチャ",
@@ -80,5 +84,7 @@ window.WEB_I18N = {
     rec_started: "録画を開始しました", rec_stopped: "録画を停止しました", op_failed: "操作に失敗しました",
     deleted: "削除しました ", deleted_suf: " 件", delete_failed: "削除に失敗しました",
     per_page: "表示件数", prev: "前へ", next: "次へ", clear_btn: "すべて削除",
+    copy: "コピー", copied: "画像をコピーしました", copy_failed: "コピーに失敗しました",
+    copy_download: "クリップボード非対応のため画像を保存しました",
   },
 };

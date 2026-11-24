@@ -59,7 +59,7 @@ input,select{font:inherit}
 @keyframes pulse{0%{box-shadow:0 0 0 0 hsl(var(--destructive)/.55)}70%{box-shadow:0 0 0 8px hsl(var(--destructive)/0)}100%{box-shadow:0 0 0 0 hsl(var(--destructive)/0)}}
 
 /* ---- 按钮 ---- */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:38px;padding:0 16px;
+.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:38px;padding:0 16px;
   border-radius:calc(var(--radius) - 2px);font-weight:600;font-size:13.5px;border:1px solid transparent;
   transition:background .14s,border-color .14s,opacity .14s,transform .06s;white-space:nowrap}
 .btn:active{transform:translateY(1px)}
@@ -167,6 +167,7 @@ input,select{font:inherit}
 .input:focus,.select:focus{border-color:hsl(var(--ring));box-shadow:0 0 0 3px hsl(var(--ring)/.22)}
 .toolbar .page-size{width:auto;height:30px;padding:0 8px;border-radius:8px;flex:none;font-size:12px}
 .grid,.list,.tile,.list-row,.toolbar,.tabs{user-select:none;-webkit-user-select:none}
+.gallery-wrap{min-height:calc(100vh - 250px);padding-bottom:28px}
 .select{appearance:none;background-image:none;cursor:pointer}
 .seg{display:inline-flex;background:hsl(var(--secondary));border-radius:calc(var(--radius) - 4px);padding:3px;gap:3px;width:100%}
 .seg button{flex:1;height:32px;border-radius:calc(var(--radius) - 7px);font-size:12.5px;font-weight:600;color:hsl(var(--muted-foreground))}
@@ -189,8 +190,11 @@ input,select{font:inherit}
 .lb-bar{display:flex;align-items:center;gap:12px;color:#fff}
 .lb-title{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lb-meta{font-size:12px;color:hsl(0 0% 100%/.6);font-variant-numeric:tabular-nums}
-.lb-stage{position:relative;display:grid;place-items:center;min-height:0;padding:12px 0}
-.lb-stage img,.lb-stage video{max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 20px 60px -20px #000;background:#000}
+.lb-stage{position:relative;display:grid;place-items:center;min-height:0;padding:12px 0;overflow:auto}
+.lb-zoom{display:flex;gap:2px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:2px}
+.lb-zoom button{padding:3px 9px;border-radius:7px;font-size:12px;font-weight:600;color:#cfd8e3}
+.lb-zoom button.active{background:rgba(255,255,255,.22);color:#fff}
+.lb-stage img,.lb-stage video{user-select:none;-webkit-user-drag:none;max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 20px 60px -20px #000;background:#000}
 .lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;
   background:hsl(0 0% 100%/.12);color:#fff;display:grid;place-items:center;backdrop-filter:blur(4px)}
 .lb-nav:hover{background:hsl(0 0% 100%/.22)}
@@ -263,12 +267,13 @@ const thumbUrl = (id) => "/api/thumb?id=" + encodeURIComponent(id);
 function Thumb({ id, kind }) {
   const [ok, setOk] = useState(true);
   if (!ok) return html`<div class="ph"><${Icon} name=${kind === "video" ? "film" : "image"} size=${30} /></div>`;
-  return html`<img src=${thumbUrl(id)} loading="lazy" onError=${() => setOk(false)} alt="" />`;
+  return html`<img draggable="false" src=${thumbUrl(id)} loading="lazy" onError=${() => setOk(false)} alt="" />`;
 }
 
 /* ---------- 灯箱 ---------- */
-function Lightbox({ items, index, onClose, onNav, onDelete }) {
+function Lightbox({ items, index, onClose, onNav, onDelete, zoom, setZoom, toast }) {
   const it = items[index];
+  const stageRef = useRef(null);
   useEffect(() => {
     const k = (e) => {
       if (e.key === "Escape") onClose();
@@ -285,16 +290,59 @@ function Lightbox({ items, index, onClose, onNav, onDelete }) {
       <div class="lb-title">${it.name}</div>
       <div class="lb-meta">${humanSize(it.size)}${it.duration ? " · " + mmss(it.duration) : ""}</div>
       <div class="spacer"></div>
+      <div class="lb-zoom">
+        ${[1, 2, 3].map((z) => html`<button class=${zoom === z ? "active" : ""} onClick=${() => setZoom(z)}>${z}X</button>`)}
+      </div>
       <button class="btn btn-ghost btn-sm" onClick=${onClose}><${Icon} name="x" size=${18} /></button>
     </div>
-    <div class="lb-stage">
+    <div class="lb-stage" ref=${stageRef}>
       ${index > 0 && html`<button class="lb-nav lb-prev" onClick=${() => onNav(-1)}><${Icon} name="chevron-left" /></button>`}
       ${it.kind === "video"
-        ? html`<video src=${fileUrl(it.id)} controls autoplay loop playsinline></video>`
-        : html`<img src=${fileUrl(it.id)} alt="" />`}
+        ? html`<video src=${fileUrl(it.id)} controls autoplay loop playsinline draggable="false"
+            style=${{ width: (320 * zoom) + "px", height: (170 * zoom) + "px", maxWidth: "none", maxHeight: "none", imageRendering: "pixelated" }}></video>`
+        : html`<img src=${fileUrl(it.id)} alt="" draggable="false"
+            style=${{ width: (320 * zoom) + "px", height: (170 * zoom) + "px", maxWidth: "none", maxHeight: "none", imageRendering: "pixelated" }} />`}
       ${index < items.length - 1 && html`<button class="lb-nav lb-next" onClick=${() => onNav(1)}><${Icon} name="chevron-right" /></button>`}
     </div>
     <div class="lb-actions">
+      <button class="btn btn-secondary" onClick=${async () => {
+        const el = stageRef.current && stageRef.current.querySelector("img,video");
+        if (!el) return;
+        const w = 320 * zoom, h = 170 * zoom;
+        const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+        const ctx = cv.getContext("2d"); ctx.imageSmoothingEnabled = false;
+        try { ctx.drawImage(el, 0, 0, w, h); } catch (e) { toast && toast(T("copy_failed"), true); return; }
+        const dataUrl = cv.toDataURL("image/png");
+        let done = false;
+        if (navigator.clipboard && window.ClipboardItem) {
+          try {
+            const blob = await new Promise((res) => cv.toBlob(res, "image/png"));
+            await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+            done = true;
+          } catch (e) { done = false; }
+        }
+        if (!done) {
+          const box = document.createElement("div");
+          box.contentEditable = "true";
+          box.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0";
+          const im = document.createElement("img");
+          im.src = dataUrl;
+          box.appendChild(im);
+          document.body.appendChild(box);
+          const range = document.createRange();
+          range.selectNode(im);
+          const sel = window.getSelection();
+          sel.removeAllRanges(); sel.addRange(range);
+          try { done = document.execCommand("copy"); } catch (e) { done = false; }
+          sel.removeAllRanges(); box.remove();
+        }
+        if (done) { toast && toast(T("copied")); return; }
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = (it.name || "capture").replace(/\.[^.]+$/, "") + "@" + zoom + "x.png";
+        a.click();
+        toast && toast(T("copy_download"));
+      }}><${Icon} name="copy" size=${16} />${T("copy")}</button>
       <a class="btn btn-secondary" href=${fileUrl(it.id) + "&download=1"} download><${Icon} name="download" size=${16} />${T("download")}</a>
       <button class="btn btn-destructive" onClick=${() => onDelete(it.id)}><${Icon} name="trash-2" size=${16} />${T("delete")}</button>
     </div>
@@ -415,9 +463,11 @@ function App() {
   const [curPage, setCurPage] = useState(1);
   const [marquee, setMarquee] = useState(null);
   const gridRef = useRef(null);
+  const galleryRef = useRef(null);
   const dragRef = useRef(null);
   const suppressClick = useRef(false);
   const [light, setLight] = useState(-1);
+  const [zoom, setZoom] = useState(1);
   const [toastMsg, setToastMsg] = useState(null);
   const [busy, setBusy] = useState(false);
   const toastTimer = useRef(null);
@@ -493,6 +543,7 @@ function App() {
   };
   const onGridDown = (e) => {
     if (e.button !== 0) return;
+    if (e.target.closest(".toolbar,button,select,a,input,.tabs")) return;
     dragRef.current = { x0: e.clientX, y0: e.clientY, base: new Set(sel.ids), moved: false };
     suppressClick.current = false;
     setMarquee({ x: e.clientX, y: e.clientY, w: 0, h: 0 });
@@ -509,12 +560,12 @@ function App() {
     if (!d) return;
     dragRef.current = null;
     setMarquee(null);
-    if (!d.moved || !gridRef.current) return;
+    if (!d.moved || !galleryRef.current) return;
     suppressClick.current = true;
     const box = { l: Math.min(e.clientX, d.x0), t: Math.min(e.clientY, d.y0),
       r: Math.max(e.clientX, d.x0), b: Math.max(e.clientY, d.y0) };
     const ids = new Set(d.base);
-    gridRef.current.querySelectorAll("[data-tid]").forEach((el) => {
+    galleryRef.current.querySelectorAll("[data-tid]").forEach((el) => {
       const r = el.getBoundingClientRect();
       const hit = !(r.right < box.l || r.left > box.r || r.bottom < box.t || r.top > box.b);
       if (hit) ids.add(el.getAttribute("data-tid"));
@@ -571,7 +622,8 @@ function App() {
       <button class=${"tab " + (tab === "settings" ? "active" : "")} onClick=${() => setTab("settings")}>${T("tab_settings")}</button>
     </div>
 
-    ${tab === "gallery" && html`<div>
+    ${tab === "gallery" && html`<div class="gallery-wrap" ref=${galleryRef}
+        onMouseDown=${onGridDown} onMouseMove=${onGridMove} onMouseUp=${onGridUp} onMouseLeave=${onGridUp}>
       <div class="toolbar">
         <div class="count">${T("total_pre")}${items.length}${T("total_suf")}</div>
         <div class="spacer"></div>
@@ -595,8 +647,7 @@ function App() {
       ${items.length === 0
         ? html`<div class="empty"><${Icon} name="image" size=${40} /><div>${T("empty")}</div></div>`
         : view === "grid"
-        ? html`<div class="grid" ref=${gridRef}
-            onMouseDown=${onGridDown} onMouseMove=${onGridMove} onMouseUp=${onGridUp} onMouseLeave=${onGridUp}>
+        ? html`<div class="grid" ref=${gridRef}>
             ${pageItems.map((it, idx) => html`<div data-tid=${it.id} class=${"tile " + (sel.mode ? "selecting " : "") + (sel.ids.has(it.id) ? "selected" : "")}
               onClick=${() => pickItem(it, idx)}>
               <div class="thumb">
@@ -612,8 +663,7 @@ function App() {
               </div>
             </div>`)}
           </div>`
-        : html`<div class="list" ref=${gridRef}
-            onMouseDown=${onGridDown} onMouseMove=${onGridMove} onMouseUp=${onGridUp} onMouseLeave=${onGridUp}>
+        : html`<div class="list" ref=${gridRef}>
             ${pageItems.map((it, idx) => html`<div data-tid=${it.id} class=${"list-row " + (sel.mode ? "selecting " : "") + (sel.ids.has(it.id) ? "selected" : "")}
               onClick=${() => pickItem(it, idx)}>
               <div class="list-thumb">
@@ -635,7 +685,7 @@ function App() {
     ${light >= 0 && html`<${Lightbox} items=${items} index=${light}
       onClose=${() => setLight(-1)}
       onNav=${(d) => setLight((i) => Math.max(0, Math.min(items.length - 1, i + d)))}
-      onDelete=${(id) => doDelete([id])} />`}
+      onDelete=${(id) => doDelete([id])} zoom=${zoom} setZoom=${setZoom} toast=${toast} />`}
 
     ${toastMsg && html`<div class=${"toast " + (toastMsg.err ? "err" : "")}>
       <${Icon} name=${toastMsg.err ? "x" : "check"} size=${16} />${toastMsg.msg}</div>`}
