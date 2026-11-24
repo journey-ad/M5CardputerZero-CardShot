@@ -12,7 +12,10 @@ struct InputEvent {
     value: i32,
 }
 
+/// 一个组合键：修饰键状态 + 主键键码
 struct Chord {
+    ctrl: bool,
+    alt: bool,
     shift: bool,
     code: Option<u16>,
 }
@@ -35,10 +38,20 @@ fn key_code(name: &str) -> Option<u16> {
 
 fn parse_chord(s: &str) -> Chord {
     let l = s.to_lowercase();
-    let shift = l.contains("shift");
-    // 取最后一个 + 分隔段作为主键
-    let key = l.rsplit('+').next().unwrap_or("").trim();
-    Chord { shift, code: key_code(key) }
+    let mut chord = Chord { ctrl: false, alt: false, shift: false, code: None };
+    for part in l.split('+') {
+        match part.trim() {
+            "ctrl" | "control" => chord.ctrl = true,
+            "alt" => chord.alt = true,
+            "shift" => chord.shift = true,
+            other => {
+                if !other.is_empty() {
+                    chord.code = key_code(other);
+                }
+            }
+        }
+    }
+    chord
 }
 
 pub fn spawn(core: Arc<Core>) {
@@ -56,6 +69,8 @@ pub fn spawn(core: Arc<Core>) {
         };
         let mut buf = [0u8; std::mem::size_of::<InputEvent>()];
         let mut shift = false;
+        let mut ctrl = false;
+        let mut alt = false;
         loop {
             if f.read_exact(&mut buf).is_err() {
                 std::thread::sleep(std::time::Duration::from_millis(200));
@@ -65,19 +80,35 @@ pub fn spawn(core: Arc<Core>) {
             if ev.type_ != 1 {
                 continue;
             }
-            if ev.code == 42 || ev.code == 54 {
-                shift = ev.value != 0;
-                continue;
+            // 修饰键按下与抬起都要跟踪
+            match ev.code {
+                42 | 54 => {
+                    shift = ev.value != 0;
+                    continue;
+                }
+                29 | 97 => {
+                    ctrl = ev.value != 0;
+                    continue;
+                }
+                56 | 100 => {
+                    alt = ev.value != 0;
+                    continue;
+                }
+                _ => {}
             }
             if ev.value != 1 {
                 continue;
             }
             let cfg = core.cfg.lock().unwrap().clone();
+            if !cfg.hotkeys.enabled {
+                continue;
+            }
             let shot = parse_chord(&cfg.hotkeys.shot);
             let rec = parse_chord(&cfg.hotkeys.record);
-            if shot.shift == shift && shot.code == Some(ev.code) {
+            let matches = |ch: &Chord| ch.ctrl == ctrl && ch.alt == alt && ch.shift == shift && ch.code == Some(ev.code);
+            if matches(&shot) {
                 let _ = dispatch(&core, "shot", &json!({}));
-            } else if rec.shift == shift && rec.code == Some(ev.code) {
+            } else if matches(&rec) {
                 let _ = dispatch(&core, "record_toggle", &json!({}));
             }
         }

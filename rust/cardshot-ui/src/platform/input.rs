@@ -76,6 +76,8 @@ pub fn spawn_keys(path: String, tx: mpsc::Sender<String>) {
         // EV_KEY 结构：timeval(16) + type(2) + code(2) + value(4) = 24 字节
         let mut buf = [0u8; 24];
         let mut shift = false;
+    let mut ctrl = false;
+    let mut alt = false;
         loop {
             if file.read_exact(&mut buf).is_err() {
                 break;
@@ -86,10 +88,20 @@ pub fn spawn_keys(path: String, tx: mpsc::Sender<String>) {
             if event_type != 1 {
                 continue;
             }
-            // Shift 的按下/抬起单独记录，供退格键组合判断
+            // 修饰键的按下/抬起单独记录，供组合键与退格判断
             if code == keycode::SHIFT_LEFT || code == keycode::SHIFT_RIGHT {
                 shift = value != 0;
-                let _ = tx.send(if shift { "SHIFT_ON".to_string() } else { "SHIFT_OFF".to_string() });
+                let _ = tx.send(if shift { "SHIFT_ON".into() } else { "SHIFT_OFF".into() });
+                continue;
+            }
+            if code == keycode::LEFT_CTRL || code == keycode::RIGHT_CTRL {
+                ctrl = value != 0;
+                let _ = tx.send(if ctrl { "CTRL_ON".into() } else { "CTRL_OFF".into() });
+                continue;
+            }
+            if code == keycode::LEFT_ALT || code == keycode::RIGHT_ALT {
+                alt = value != 0;
+                let _ = tx.send(if alt { "ALT_ON".into() } else { "ALT_OFF".into() });
                 continue;
             }
             // ESC 抬起事件用于长按退出判断

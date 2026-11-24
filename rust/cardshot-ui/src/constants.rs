@@ -149,6 +149,10 @@ pub mod keycode {
     pub const SPACE: u16 = 57;
     pub const SHIFT_LEFT: u16 = 42;
     pub const SHIFT_RIGHT: u16 = 54;
+    pub const LEFT_CTRL: u16 = 29;
+    pub const RIGHT_CTRL: u16 = 97;
+    pub const LEFT_ALT: u16 = 56;
+    pub const RIGHT_ALT: u16 = 100;
     pub const UP: u16 = 103;
     pub const DOWN: u16 = 108;
     pub const LEFT: u16 = 105;

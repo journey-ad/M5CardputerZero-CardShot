@@ -92,6 +92,9 @@ pub struct State {
     pub port_buf: String,
     pub hotkey_capture: bool,
     pub shift_down: bool,
+    pub ctrl_down: bool,
+    pub alt_down: bool,
+    pub hotkey_buffer: String,
     pub video: Option<VideoPlayer>,
     pub pending_preview: bool,
 }
@@ -137,6 +140,9 @@ impl State {
             port_buf: String::new(),
             hotkey_capture: false,
             shift_down: false,
+            ctrl_down: false,
+            alt_down: false,
+            hotkey_buffer: String::new(),
             video: None,
             pending_preview: false,
         }

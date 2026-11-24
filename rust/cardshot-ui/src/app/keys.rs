@@ -218,22 +218,95 @@ fn change_port(client: &mut Client, st: &mut State, port: i64) {
     }
 }
 
+fn hotkey_mods_upper(st: &State) -> Vec<String> {
+    let mut mods = Vec::new();
+    if st.ctrl_down {
+        mods.push("Ctrl".to_string());
+    }
+    if st.alt_down {
+        mods.push("Alt".to_string());
+    }
+    if st.shift_down {
+        mods.push("Shift".to_string());
+    }
+    mods
+}
+
+/// 仅显示已按下的修饰键前缀，例如 "Ctrl+Alt+"；未按修饰键时为空
+fn hotkey_prefix(st: &State, upper: bool) -> String {
+    let mods = hotkey_mods_upper(st);
+    if mods.is_empty() {
+        return String::new();
+    }
+    let joined = mods.iter().map(|m| if upper { m.clone() } else { m.to_lowercase() }).collect::<Vec<_>>().join("+");
+    format!("{joined}+")
+}
+
+fn refresh_hotkey_buffer(st: &mut State) {
+    st.hotkey_buffer = hotkey_prefix(st, true);
+}
+
 fn handle_hotkey_capture(st: &mut State, client: &mut Client, key: &str) {
     match key {
-        "ESC" | "BACK" => {
-            st.hotkey_capture = false;
+        "SHIFT_ON" => {
+            st.shift_down = true;
+            refresh_hotkey_buffer(st);
+            return;
         }
-        "UP" | "DOWN" | "LEFT" | "RIGHT" | "SHIFT_BACK" => {}
+        "SHIFT_OFF" => {
+            st.shift_down = false;
+            refresh_hotkey_buffer(st);
+            return;
+        }
+        "CTRL_ON" => {
+            st.ctrl_down = true;
+            refresh_hotkey_buffer(st);
+            return;
+        }
+        "CTRL_OFF" => {
+            st.ctrl_down = false;
+            refresh_hotkey_buffer(st);
+            return;
+        }
+        "ALT_ON" => {
+            st.alt_down = true;
+            refresh_hotkey_buffer(st);
+            return;
+        }
+        "ALT_OFF" => {
+            st.alt_down = false;
+            refresh_hotkey_buffer(st);
+            return;
+        }
+        _ => {}
+    }
+    let any_mod = st.ctrl_down || st.alt_down || st.shift_down;
+    match key {
+        "ESC" => {
+            st.hotkey_capture = false;
+            st.hotkey_buffer.clear();
+            st.shift_down = false;
+            st.ctrl_down = false;
+            st.alt_down = false;
+        }
+        "BACK" | "SHIFT_BACK" => {
+            // 按住修饰键时退格不提交，继续等待组合键
+            if !any_mod {
+                st.hotkey_capture = false;
+                st.hotkey_buffer.clear();
+            }
+        }
+        "UP" | "DOWN" | "LEFT" | "RIGHT" => {}
         _ => {
             let base = key.to_lowercase();
-            let chord = if st.shift_down {
-                format!("shift+{base}")
-            } else {
-                base
-            };
+            let chord = format!("{}{}", hotkey_prefix(st, false), base);
             apply_config(client, st, json!({ "hotkeys": { "shot": chord } }));
             st.shot_hotkey = chord;
             st.hotkey_capture = false;
+            st.hotkey_buffer.clear();
+            st.shift_down = false;
+            st.ctrl_down = false;
+            st.alt_down = false;
         }
     }
 }
@@ -310,6 +383,10 @@ fn handle_settings(st: &mut State, client: &mut Client, key: &str) {
                 SettingRow::ShotHotkey => {
                     if key == "ENTER" {
                         st.hotkey_capture = true;
+                        st.hotkey_buffer.clear();
+                        st.shift_down = false;
+                        st.ctrl_down = false;
+                        st.alt_down = false;
                     }
                 }
             }
