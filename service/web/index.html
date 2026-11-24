@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>CardShot · 屏幕录制与截图</title>
+<style>
+/* ---- shadcn 风格 token（zinc 暗色 + teal 主色） ---- */
+:root{
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 240 6% 7%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 8% 6%;
+  --primary: 173 80% 42%;
+  --primary-foreground: 240 10% 4%;
+  --secondary: 240 4% 14%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 4% 14%;
+  --muted-foreground: 240 5% 64%;
+  --accent: 240 5% 16%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5% 17%;
+  --input: 240 5% 20%;
+  --ring: 173 80% 42%;
+  --radius: 0.75rem;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:hsl(var(--background));
+  color:hsl(var(--foreground));
+  font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select{font:inherit}
+.ico{display:block;flex:none}
+
+/* ---- 布局 ---- */
+.container{max-width:1200px;margin:0 auto;padding:24px 20px 96px}
+.topbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+  background:linear-gradient(140deg,hsl(var(--primary)),hsl(190 80% 38%));color:hsl(var(--primary-foreground));box-shadow:var(--shadow)}
+.brand-title{font-size:17px;font-weight:700;letter-spacing:.3px}
+.brand-sub{font-size:12px;color:hsl(var(--muted-foreground));margin-top:-2px}
+.spacer{flex:1}
+.badge{display:inline-flex;align-items:center;gap:7px;border:1px solid hsl(var(--border));
+  background:hsl(var(--card));color:hsl(var(--muted-foreground));border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:500}
+.badge.link{cursor:pointer;color:hsl(var(--foreground))}
+.badge.link:hover{border-color:hsl(var(--ring));color:hsl(var(--primary))}
+.dot{width:8px;height:8px;border-radius:50%;background:hsl(var(--muted-foreground))}
+.dot.ok{background:hsl(150 70% 45%)}
+.dot.rec{background:hsl(var(--destructive));animation:pulse 1.3s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 hsl(var(--destructive)/.55)}70%{box-shadow:0 0 0 8px hsl(var(--destructive)/0)}100%{box-shadow:0 0 0 0 hsl(var(--destructive)/0)}}
+
+/* ---- 按钮 ---- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:38px;padding:0 16px;
+  border-radius:calc(var(--radius) - 2px);font-weight:600;font-size:13.5px;border:1px solid transparent;
+  transition:background .14s,border-color .14s,opacity .14s,transform .06s;white-space:nowrap}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;pointer-events:none}
+.btn-primary{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.btn-primary:hover{background:hsl(var(--primary)/.88)}
+.btn-secondary{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));border-color:hsl(var(--border))}
+.btn-secondary:hover{background:hsl(var(--accent))}
+.btn-outline{background:transparent;border-color:hsl(var(--border));color:hsl(var(--foreground))}
+.btn-outline:hover{background:hsl(var(--accent))}
+.btn-ghost{background:transparent;color:hsl(var(--muted-foreground))}
+.btn-ghost:hover{background:hsl(var(--accent));color:hsl(var(--foreground))}
+.btn-destructive{background:hsl(var(--destructive));color:hsl(var(--destructive-foreground))}
+.btn-destructive:hover{background:hsl(var(--destructive)/.88)}
+.btn-sm{height:32px;padding:0 12px;font-size:12.5px}
+.btn-icon{width:38px;padding:0}
+.btn-icon.btn-sm{width:32px}
+
+/* ---- 卡片 ---- */
+.card{background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-head{display:flex;align-items:center;gap:10px;padding:16px 18px 0}
+.card-title{font-size:13.5px;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
+.card-title .ico{color:hsl(var(--muted-foreground))}
+.card-body{padding:16px 18px}
+
+/* ---- 状态栏 ---- */
+.hero{padding:18px;margin-bottom:18px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.hero-main{display:flex;align-items:center;gap:16px;flex:1;min-width:240px}
+.rec-badge{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;
+  background:hsl(var(--secondary));border:1px solid hsl(var(--border));color:hsl(var(--muted-foreground))}
+.rec-badge.on{background:hsl(var(--destructive)/.16);border-color:hsl(var(--destructive)/.5);color:hsl(var(--destructive))}
+.hero-title{font-size:18px;font-weight:700}
+.hero-sub{font-size:12.5px;color:hsl(var(--muted-foreground));font-variant-numeric:tabular-nums}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+.stat-row{display:flex;gap:22px;flex-wrap:wrap;margin-left:auto}
+.stat{min-width:74px}
+.stat-k{font-size:11.5px;color:hsl(var(--muted-foreground));text-transform:uppercase;letter-spacing:.6px}
+.stat-v{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.mono{font-variant-numeric:tabular-nums}
+
+/* ---- 标签页 ---- */
+.tabs{display:inline-flex;gap:4px;padding:4px;background:hsl(var(--secondary));border-radius:calc(var(--radius) - 2px);margin-bottom:18px}
+.tab{height:32px;padding:0 16px;border-radius:calc(var(--radius) - 6px);font-size:13px;font-weight:600;color:hsl(var(--muted-foreground))}
+.tab.active{background:hsl(var(--card));color:hsl(var(--foreground));box-shadow:0 1px 2px rgba(0,0,0,.35)}
+
+/* ---- 相册 ---- */
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .count{color:hsl(var(--muted-foreground));font-size:12.5px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}
+.tile{position:relative;background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:calc(var(--radius) - 2px);
+  overflow:hidden;cursor:pointer;transition:border-color .14s,transform .1s}
+.tile:hover{border-color:hsl(var(--ring)/.7);transform:translateY(-1px)}
+.tile.selected{border-color:hsl(var(--primary));box-shadow:0 0 0 2px hsl(var(--ring)/.5)}
+.thumb{position:relative;aspect-ratio:320/170;background:hsl(240 6% 5%);display:grid;place-items:center;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:contain;display:block}
+.thumb .ph{color:hsl(var(--muted-foreground)/.5)}
+.thumb .play{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.thumb .play span{width:38px;height:38px;border-radius:50%;background:hsl(0 0% 0%/.55);display:grid;place-items:center;color:#fff;backdrop-filter:blur(2px)}
+.thumb .dur{position:absolute;right:7px;bottom:7px;background:hsl(0 0% 0%/.68);color:#fff;font-size:11px;
+  padding:2px 7px;border-radius:6px;font-variant-numeric:tabular-nums}
+.kind-tag{position:absolute;left:7px;top:7px;background:hsl(0 0% 0%/.6);color:#fff;font-size:10.5px;
+  padding:2px 7px;border-radius:6px;display:flex;align-items:center;gap:4px}
+.check{position:absolute;right:8px;top:8px;width:24px;height:24px;border-radius:50%;border:2px solid hsl(0 0% 100%/.85);
+  background:hsl(0 0% 0%/.35);display:grid;place-items:center;color:#fff;opacity:0;transition:opacity .12s}
+.tile.selecting .check{opacity:1}
+.tile.selected .check{background:hsl(var(--primary));border-color:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.tile-meta{padding:9px 11px}
+.tile-name{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile-sub{font-size:11.5px;color:hsl(var(--muted-foreground));margin-top:2px;display:flex;justify-content:space-between;gap:8px}
+.empty{padding:64px 20px;text-align:center;color:hsl(var(--muted-foreground))}
+.empty .ico{margin:0 auto 12px;opacity:.5}
+
+/* ---- 设置 ---- */
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.field{margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+.label{display:block;font-size:12.5px;font-weight:600;margin-bottom:7px}
+.hint{font-size:11.5px;color:hsl(var(--muted-foreground));margin-top:6px}
+.input,.select{width:100%;height:38px;padding:0 12px;border-radius:calc(var(--radius) - 4px);
+  background:hsl(var(--input)/.35);border:1px solid hsl(var(--input));color:hsl(var(--foreground));outline:none}
+.input:focus,.select:focus{border-color:hsl(var(--ring));box-shadow:0 0 0 3px hsl(var(--ring)/.22)}
+.select{appearance:none;background-image:none;cursor:pointer}
+.seg{display:inline-flex;background:hsl(var(--secondary));border-radius:calc(var(--radius) - 4px);padding:3px;gap:3px;width:100%}
+.seg button{flex:1;height:32px;border-radius:calc(var(--radius) - 7px);font-size:12.5px;font-weight:600;color:hsl(var(--muted-foreground))}
+.seg button.active{background:hsl(var(--card));color:hsl(var(--foreground));box-shadow:0 1px 2px rgba(0,0,0,.35)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.slider{width:100%;height:6px;-webkit-appearance:none;appearance:none;border-radius:99px;
+  background:hsl(var(--input));outline:none;margin:14px 0 4px}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:hsl(var(--primary));
+  border:2px solid hsl(var(--background));box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
+.slider::-moz-range-thumb{width:18px;height:18px;border:2px solid hsl(var(--background));border-radius:50%;background:hsl(var(--primary));cursor:pointer}
+.switch{position:relative;width:44px;height:25px;border-radius:99px;background:hsl(var(--input));transition:background .15s;flex:none}
+.switch.on{background:hsl(var(--primary))}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#fff;transition:transform .15s}
+.switch.on::after{transform:translateX(19px)}
+.settings-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+
+/* ---- 灯箱 ---- */
+.lightbox{position:fixed;inset:0;z-index:60;background:hsl(0 0% 0%/.82);backdrop-filter:blur(6px);
+  display:grid;grid-template-rows:auto 1fr auto;padding:18px}
+.lb-bar{display:flex;align-items:center;gap:12px;color:#fff}
+.lb-title{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-meta{font-size:12px;color:hsl(0 0% 100%/.6);font-variant-numeric:tabular-nums}
+.lb-stage{position:relative;display:grid;place-items:center;min-height:0;padding:12px 0}
+.lb-stage img,.lb-stage video{max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 20px 60px -20px #000;background:#000}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;
+  background:hsl(0 0% 100%/.12);color:#fff;display:grid;place-items:center;backdrop-filter:blur(4px)}
+.lb-nav:hover{background:hsl(0 0% 100%/.22)}
+.lb-prev{left:8px}.lb-next{right:8px}
+.lb-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* ---- toast ---- */
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:90;
+  background:hsl(var(--popover));border:1px solid hsl(var(--border));color:hsl(var(--foreground));
+  padding:10px 16px;border-radius:10px;box-shadow:var(--shadow);font-size:13px;display:flex;align-items:center;gap:8px}
+.toast.err{border-color:hsl(var(--destructive)/.55)}
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:520px){.container{padding:16px 14px 90px}.grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="/vendor/preact.umd.js"></script>
+<script src="/vendor/hooks.umd.js"></script>
+<script src="/vendor/htm.umd.js"></script>
+<script src="/icons.js"></script>
+<script type="module">
+const { h, render } = preact;
+const { useState, useEffect, useRef, useCallback } = preactHooks;
+const html = htm.bind(h);
+
+/* ---------- 工具 ---------- */
+const LUCIDE = window.LUCIDE || {};
+function Icon({ name, size = 18, cls = "" }) {
+  const inner = LUCIDE[name] || "";
+  return html`<svg class=${"ico " + cls} width=${size} height=${size} viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+    dangerouslySetInnerHTML=${{ __html: inner }}></svg>`;
+}
+function humanSize(n) {
+  if (n == null) return "-";
+  const u = ["B", "KB", "MB", "GB"]; let i = 0, v = n;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return (i === 0 ? v : v.toFixed(1)) + " " + u[i];
+}
+function mmss(sec) {
+  if (!sec && sec !== 0) return "0:00";
+  const s = Math.floor(sec % 60), m = Math.floor(sec / 60);
+  return m + ":" + String(s).padStart(2, "0");
+}
+function fmtDate(mtime) {
+  try { return new Date(mtime * 1000).toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }); }
+  catch (e) { return ""; }
+}
+async function api(path, opts) {
+  const r = await fetch(path, Object.assign({ headers: { "Content-Type": "application/json" } }, opts || {}));
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+const fileUrl = (id) => "/api/file?id=" + encodeURIComponent(id);
+const thumbUrl = (id) => "/api/thumb?id=" + encodeURIComponent(id);
+
+/* ---------- 重试图片 ---------- */
+function Thumb({ id, kind }) {
+  const [ok, setOk] = useState(true);
+  if (!ok) return html`<div class="ph"><${Icon} name=${kind === "video" ? "film" : "image"} size=${30} /></div>`;
+  return html`<img src=${thumbUrl(id)} loading="lazy" onError=${() => setOk(false)} alt="" />`;
+}
+
+/* ---------- 灯箱 ---------- */
+function Lightbox({ items, index, onClose, onNav, onDelete }) {
+  const it = items[index];
+  useEffect(() => {
+    const k = (e) => {
+      if (e.key === "Escape") onClose();
+      else if (e.key === "ArrowLeft") onNav(-1);
+      else if (e.key === "ArrowRight") onNav(1);
+    };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [index]);
+  if (!it) return null;
+  return html`<div class="lightbox" onClick=${(e) => { if (e.target.classList.contains("lightbox") || e.target.classList.contains("lb-stage")) onClose(); }}>
+    <div class="lb-bar">
+      <${Icon} name=${it.kind === "video" ? "film" : "image"} size=${18} />
+      <div class="lb-title">${it.name}</div>
+      <div class="lb-meta">${humanSize(it.size)}${it.duration ? " · " + mmss(it.duration) : ""}</div>
+      <div class="spacer"></div>
+      <button class="btn btn-ghost btn-sm" onClick=${onClose}><${Icon} name="x" size=${18} /></button>
+    </div>
+    <div class="lb-stage">
+      ${index > 0 && html`<button class="lb-nav lb-prev" onClick=${() => onNav(-1)}><${Icon} name="chevron-left" /></button>`}
+      ${it.kind === "video"
+        ? html`<video src=${fileUrl(it.id)} controls autoplay loop playsinline></video>`
+        : html`<img src=${fileUrl(it.id)} alt="" />`}
+      ${index < items.length - 1 && html`<button class="lb-nav lb-next" onClick=${() => onNav(1)}><${Icon} name="chevron-right" /></button>`}
+    </div>
+    <div class="lb-actions">
+      <a class="btn btn-secondary" href=${fileUrl(it.id) + "&download=1"} download><${Icon} name="download" size=${16} />下载</a>
+      <button class="btn btn-destructive" onClick=${() => onDelete(it.id)}><${Icon} name="trash-2" size=${16} />删除</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- 设置 ---------- */
+function Settings({ cfg, onSaved, toast }) {
+  const [d, setD] = useState(null);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { setD(JSON.parse(JSON.stringify(cfg))); }, [cfg]);
+  if (!d) return null;
+  const up = (patch) => setD((prev) => ({ ...prev, ...patch }));
+  const upRec = (patch) => setD((prev) => ({ ...prev, record: { ...prev.record, ...patch } }));
+  const upRemote = (patch) => setD((prev) => ({ ...prev, remote: { ...prev.remote, ...patch } }));
+  const save = async () => {
+    setSaving(true);
+    try {
+      const patch = {
+        image_format: d.image_format, image_quality: Number(d.image_quality),
+        record: { fps: Number(d.record.fps), bitrate: d.record.bitrate, encoder: d.record.encoder },
+        hotkeys: d.hotkeys,
+        remote: { enabled: d.remote.enabled, port: Number(d.remote.port) },
+      };
+      const r = await api("/api/config", { method: "POST", body: JSON.stringify({ patch }) });
+      if (r.ok) { toast("设置已保存"); onSaved && onSaved(); }
+      else toast(r.error || "保存失败", true);
+    } catch (e) { toast("保存失败：" + e.message, true); }
+    setSaving(false);
+  };
+  return html`<div>
+    <div class="settings-grid">
+      <div class="card">
+        <div class="card-head"><div class="card-title"><${Icon} name="camera" size=${16} />截图</div></div>
+        <div class="card-body">
+          <div class="field">
+            <label class="label">图片格式</label>
+            <div class="seg">
+              ${["png", "jpeg", "webp"].map((f) => html`<button class=${d.image_format === f ? "active" : ""}
+                onClick=${() => up({ image_format: f })}>${f.toUpperCase()}</button>`)}
+            </div>
+          </div>
+          <div class="field">
+            <div class="row"><label class="label" style="margin:0">压缩质量</label><span class="mono" style="font-weight:700">${d.image_quality}</span></div>
+            <input class="slider" type="range" min="1" max="100" value=${d.image_quality}
+              onInput=${(e) => up({ image_quality: Number(e.currentTarget.value) })} />
+            <div class="hint">数值越高画质越好、体积越大（PNG 为无损，质量不生效）</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title"><${Icon} name="film" size=${16} />录制</div></div>
+        <div class="card-body">
+          <div class="field">
+            <label class="label">帧率 (FPS)</label>
+            <input class="input" type="number" min="1" max="60" value=${d.record.fps}
+              onInput=${(e) => upRec({ fps: e.currentTarget.value })} />
+          </div>
+          <div class="field">
+            <label class="label">码率</label>
+            <input class="input" type="text" value=${d.record.bitrate}
+              onInput=${(e) => upRec({ bitrate: e.currentTarget.value })} placeholder="如 2M / 1500k" />
+          </div>
+          <div class="field">
+            <label class="label">编码器</label>
+            <select class="select" onChange=${(e) => upRec({ encoder: e.currentTarget.value })}>
+              <option value="h264_v4l2m2m" selected=${d.record.encoder === "h264_v4l2m2m"}>H.264 硬件 (v4l2m2m)</option>
+              <option value="libx264" selected=${d.record.encoder === "libx264"}>H.264 软件 (libx264)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title"><${Icon} name="wifi" size=${16} />远程访问</div></div>
+        <div class="card-body">
+          <div class="field row">
+            <div><div class="label" style="margin:0">启用 Web 管理</div><div class="hint">关闭后本页面将无法访问设备</div></div>
+            <button class=${"switch " + (d.remote.enabled ? "on" : "")} onClick=${() => upRemote({ enabled: !d.remote.enabled })}></button>
+          </div>
+          <div class="field">
+            <label class="label">端口</label>
+            <input class="input" type="number" min="1" max="65535" value=${d.remote.port}
+              onInput=${(e) => upRemote({ port: e.currentTarget.value })} />
+            <div class="hint">访问地址：http://${location.hostname}:${d.remote.port}/</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title"><${Icon} name="settings" size=${16} />交互</div></div>
+        <div class="card-body">
+          <div class="field row">
+            <div><div class="label" style="margin:0">全局热键</div><div class="hint">在任意应用前台时也能触发</div></div>
+            <button class=${"switch " + (d.hotkeys.enabled ? "on" : "")} onClick=${() => up({ hotkeys: { ...d.hotkeys, enabled: !d.hotkeys.enabled } })}></button>
+          </div>
+          <div class="field">
+            <label class="label">截图热键</label>
+            <input class="input" type="text" value=${d.hotkeys.shot}
+              onInput=${(e) => up({ hotkeys: { ...d.hotkeys, shot: e.currentTarget.value } })} />
+          </div>
+          <div class="field">
+            <label class="label">录制热键</label>
+            <input class="input" type="text" value=${d.hotkeys.record}
+              onInput=${(e) => up({ hotkeys: { ...d.hotkeys, record: e.currentTarget.value } })} />
+            <div class="hint">格式形如 shift+space、ctrl+alt+r；组合键可能与前台应用冲突</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="settings-actions">
+      <button class="btn btn-outline" onClick=${() => setD(JSON.parse(JSON.stringify(cfg)))}>重置</button>
+      <button class="btn btn-primary" disabled=${saving} onClick=${save}>
+        ${saving ? html`<${Icon} name="refresh-cw" size=${16} cls="spin" />保存中` : html`<${Icon} name="check" size=${16} />保存设置`}
+      </button>
+    </div>
+  </div>`;
+}
+
+/* ---------- 主应用 ---------- */
+function App() {
+  const [tab, setTab] = useState("gallery");
+  const [status, setStatus] = useState(null);
+  const [items, setItems] = useState([]);
+  const [cfg, setCfg] = useState(null);
+  const [sel, setSel] = useState(() => ({ mode: false, ids: new Set() }));
+  const [light, setLight] = useState(-1);
+  const [toastMsg, setToastMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const toastTimer = useRef(null);
+
+  const toast = useCallback((msg, isErr) => {
+    setToastMsg({ msg, err: !!isErr });
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastMsg(null), 2600);
+  }, []);
+
+  const refreshStatus = useCallback(async () => {
+    try { const r = await api("/api/status"); if (r.ok) setStatus(r.status); } catch (e) {}
+  }, []);
+  const refreshItems = useCallback(async () => {
+    try { const r = await api("/api/items"); if (r.ok) setItems(r.items || []); } catch (e) {}
+  }, []);
+  const refreshConfig = useCallback(async () => {
+    try { const r = await api("/api/config"); if (r.ok) setCfg(r.config); } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    refreshStatus(); refreshItems(); refreshConfig();
+    const t1 = setInterval(refreshStatus, 1500);
+    const t2 = setInterval(refreshItems, 5000);
+    return () => { clearInterval(t1); clearInterval(t2); };
+  }, []);
+
+  const doShot = async () => {
+    setBusy(true);
+    try {
+      const r = await api("/api/shot", { method: "POST", body: "{}" });
+      if (r.ok) { toast("已截图 " + (r.name || "")); refreshStatus(); refreshItems(); }
+      else toast(r.error || "截图失败", true);
+    } catch (e) { toast("截图失败：" + e.message, true); }
+    setBusy(false);
+  };
+  const doRecord = async (action) => {
+    setBusy(true);
+    try {
+      const r = await api("/api/record", { method: "POST", body: JSON.stringify({ action }) });
+      if (r.ok) { toast(action === "stop" ? "录制已停止" : "开始录制"); refreshStatus(); refreshItems(); }
+      else toast(r.error || "操作失败", true);
+    } catch (e) { toast("操作失败：" + e.message, true); }
+    setBusy(false);
+  };
+  const doDelete = async (ids) => {
+    if (!ids.length) return;
+    try {
+      const r = await api("/api/delete", { method: "POST", body: JSON.stringify({ ids }) });
+      if (r.ok) {
+        toast("已删除 " + (r.removed != null ? r.removed : ids.length) + " 项");
+        setLight(-1);
+        setSel({ mode: false, ids: new Set() });
+        refreshItems(); refreshStatus();
+      } else toast(r.error || "删除失败", true);
+    } catch (e) { toast("删除失败：" + e.message, true); }
+  };
+
+  const rec = status && status.recording;
+  const counts = (status && status.counts) || { images: 0, videos: 0 };
+  const selIds = Array.from(sel.ids);
+
+  const toggleSel = (id) => setSel((s) => {
+    const n = new Set(s.ids); n.has(id) ? n.delete(id) : n.add(id); return { ...s, ids: n };
+  });
+  const enterSelect = (id) => setSel({ mode: true, ids: new Set(id ? [id] : []) });
+  const selectAll = () => setSel({ mode: true, ids: new Set(items.map((i) => i.id)) });
+
+  return html`<div class="container">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-logo"><${Icon} name="camera" size=${22} /></div>
+        <div>
+          <div class="brand-title">CardShot</div>
+          <div class="brand-sub">Cardputer 屏幕录制与截图</div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      ${status && status.remote && status.remote.running && html`<a class="badge link" href=${"http://" + location.hostname + ":" + status.remote.port + "/"} target="_blank">
+        <${Icon} name="wifi" size=${14} />${location.hostname}:${status.remote.port}<${Icon} name="external-link" size=${12} /></a>`}
+      <button class="btn btn-ghost btn-icon" title="刷新" onClick=${() => { refreshStatus(); refreshItems(); }}>
+        <${Icon} name="refresh-cw" size=${18} /></button>
+    </div>
+
+    <div class="card hero">
+      <div class="hero-main">
+        <div class=${"rec-badge " + (rec ? "on" : "")}>
+          <${Icon} name=${rec ? "square" : "circle"} size=${22} />
+        </div>
+        <div>
+          <div class="hero-title">${rec ? "正在录制" : "待机中"}</div>
+          <div class="hero-sub">${rec
+            ? html`<span class="mono">${mmss(status.elapsed)}</span> · ${status.frames} 帧 · ${status.record_fps || (cfg && cfg.record.fps) || 20} FPS`
+            : "按下方按钮截图或开始录制"}</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="stat-k">截图</div><div class="stat-v">${counts.images}</div></div>
+        <div class="stat"><div class="stat-k">录制</div><div class="stat-v">${counts.videos}</div></div>
+        <div class="stat"><div class="stat-k">占用</div><div class="stat-v">${humanSize(status && status.total_bytes)}</div></div>
+        <div class="stat"><div class="stat-k">格式</div><div class="stat-v">${(status && status.image_format || "png").toUpperCase()}</div></div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn btn-secondary" disabled=${busy} onClick=${doShot}><${Icon} name="camera" size=${17} />截图</button>
+        ${rec
+          ? html`<button class="btn btn-destructive" disabled=${busy} onClick=${() => doRecord("stop")}><${Icon} name="square" size=${16} />停止录制</button>`
+          : html`<button class="btn btn-primary" disabled=${busy} onClick=${() => doRecord("start")}><${Icon} name="circle" size=${16} />开始录制</button>`}
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class=${"tab " + (tab === "gallery" ? "active" : "")} onClick=${() => setTab("gallery")}>相册</button>
+      <button class=${"tab " + (tab === "settings" ? "active" : "")} onClick=${() => setTab("settings")}>设置</button>
+    </div>
+
+    ${tab === "gallery" && html`<div>
+      <div class="toolbar">
+        <div class="count">共 ${items.length} 项</div>
+        <div class="spacer"></div>
+        ${sel.mode
+          ? html`<span class="count">已选 ${selIds.length}</span>
+              <button class="btn btn-outline btn-sm" onClick=${selectAll}>全选</button>
+              <button class="btn btn-destructive btn-sm" disabled=${!selIds.length} onClick=${() => doDelete(selIds)}><${Icon} name="trash-2" size=${15} />删除</button>
+              <button class="btn btn-ghost btn-sm" onClick=${() => setSel({ mode: false, ids: new Set() })}>取消</button>`
+          : html`<button class="btn btn-outline btn-sm" disabled=${!items.length} onClick=${() => enterSelect(null)}><${Icon} name="check" size=${15} />多选</button>`}
+      </div>
+      ${items.length === 0
+        ? html`<div class="empty"><${Icon} name="image" size=${40} /><div>还没有截图或录制，点击上方按钮开始</div></div>`
+        : html`<div class="grid">
+            ${items.map((it, idx) => html`<div class=${"tile " + (sel.mode ? "selecting " : "") + (sel.ids.has(it.id) ? "selected" : "")}
+              onClick=${() => sel.mode ? toggleSel(it.id) : setLight(idx)}>
+              <div class="thumb">
+                <${Thumb} id=${it.id} kind=${it.kind} />
+                ${it.kind === "video" && html`<div class="play"><span><${Icon} name="play" size=${18} /></span></div>`}
+                <div class="kind-tag"><${Icon} name=${it.kind === "video" ? "film" : "image"} size=${11} />${it.kind === "video" ? "视频" : "截图"}</div>
+                ${it.kind === "video" && it.duration ? html`<div class="dur">${mmss(it.duration)}</div>` : null}
+                <div class="check"><${Icon} name="check" size=${15} /></div>
+              </div>
+              <div class="tile-meta">
+                <div class="tile-name">${it.name}</div>
+                <div class="tile-sub"><span>${humanSize(it.size)}</span><span>${fmtDate(it.mtime)}</span></div>
+              </div>
+            </div>`)}
+          </div>`}
+    </div>`}
+
+    ${tab === "settings" && html`<${Settings} cfg=${cfg} toast=${toast} onSaved=${() => { refreshConfig(); refreshStatus(); }} />`}
+
+    ${light >= 0 && html`<${Lightbox} items=${items} index=${light}
+      onClose=${() => setLight(-1)}
+      onNav=${(d) => setLight((i) => Math.max(0, Math.min(items.length - 1, i + d)))}
+      onDelete=${(id) => doDelete([id])} />`}
+
+    ${toastMsg && html`<div class=${"toast " + (toastMsg.err ? "err" : "")}>
+      <${Icon} name=${toastMsg.err ? "x" : "check"} size=${16} />${toastMsg.msg}</div>`}
+  </div>`;
+}
+
+render(html`<${App} />`, document.getElementById("app"));
+</script>
+</body>
+</html>
