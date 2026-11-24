@@ -28,8 +28,6 @@ pub struct HotkeysCfg {
     pub enabled: bool,
     pub shot: String,
     pub record: String,
-    /// 独占物理键盘并转发其它按键，避免快捷键同时传给前台应用
-    pub grab: bool,
 }
 
 impl Default for HotkeysCfg {
@@ -38,7 +36,6 @@ impl Default for HotkeysCfg {
             enabled: true,
             shot: "shift+space".into(),
             record: "shift+enter".into(),
-            grab: false,
         }
     }
 }

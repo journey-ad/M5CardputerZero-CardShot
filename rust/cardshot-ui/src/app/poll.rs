@@ -68,6 +68,9 @@ pub fn poll_config(client: &mut Client, st: &mut State) {
     if let Some(k) = c.pointer("/hotkeys/shot").and_then(|x| x.as_str()) {
         st.shot_hotkey = k.to_string();
     }
+    if let Some(rk) = c.pointer("/hotkeys/record").and_then(|x| x.as_str()) {
+        st.record_hotkey = rk.to_string();
+    }
 }
 
 pub fn load_items(client: &mut Client, st: &mut State) {

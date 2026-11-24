@@ -327,22 +327,25 @@ component SettingsScreen inherits Rectangle {
     in property <string> fmt: "PNG";
     in property <string> port-text: "8420";
     in property <string> shot-text: "shift+space";
+    in property <string> record-text: "shift+enter";
     in property <bool> port-disabled: false;
     in property <int> quality: 90;
     in property <int> fps: 20;
     in property <int> port: 8420;
     in property <string> shot: "";
+    in property <string> record: "shift+enter";
     in property <string> remote: "开";
     in property <string> s-port-host: "";
     in property <string> s-port-value: "8420";
     width: 100%; height: 100%; background: transparent;
-    SettingRow { x: 8px; y: 20px;  width: 304px; label: "图片格式";   mode: 1; value: root.fmt; focused: root.focus-idx == 0; }
-    SettingRow { x: 8px; y: 38px;  width: 304px; label: "压缩质量";   mode: 0; value: root.quality; focused: root.focus-idx == 1; }
-    SettingRow { x: 8px; y: 56px;  width: 304px; label: "录制帧率";   mode: 0; value: root.fps; focused: root.focus-idx == 2; }
-    SettingRow { x: 8px; y: 74px;  width: 304px; label: "截图快捷键"; mode: 0; value: root.shot-text; focused: root.focus-idx == 3; }
-    SettingRow { x: 8px; y: 92px;  width: 304px; label: "Web管理面板"; mode: 2; value: root.remote; focused: root.focus-idx == 4; }
-    SettingRow { x: 8px; y: 110px; width: 304px; label: "服务端口";   mode: 3; value: root.s-port-host; value2: root.s-port-value; focused: root.focus-idx == 5; disabled: root.port-disabled; }
-    SettingRow { x: 8px; y: 128px; width: 304px; label: "清空数据";   mode: 0; value: "全部删除"; focused: root.focus-idx == 6; }
+    SettingRow { x: 8px; y: 16px;  width: 304px; label: "图片格式";   mode: 1; value: root.fmt; focused: root.focus-idx == 0; }
+    SettingRow { x: 8px; y: 33px;  width: 304px; label: "压缩质量";   mode: 0; value: root.quality; focused: root.focus-idx == 1; }
+    SettingRow { x: 8px; y: 50px;  width: 304px; label: "录制帧率";   mode: 0; value: root.fps; focused: root.focus-idx == 2; }
+    SettingRow { x: 8px; y: 67px;  width: 304px; label: "截图快捷键"; mode: 0; value: root.shot-text; focused: root.focus-idx == 3; }
+    SettingRow { x: 8px; y: 84px;  width: 304px; label: "录制快捷键"; mode: 0; value: root.record-text; focused: root.focus-idx == 4; }
+    SettingRow { x: 8px; y: 101px; width: 304px; label: "Web管理面板"; mode: 2; value: root.remote; focused: root.focus-idx == 5; }
+    SettingRow { x: 8px; y: 118px; width: 304px; label: "服务端口";   mode: 3; value: root.s-port-host; value2: root.s-port-value; focused: root.focus-idx == 6; disabled: root.port-disabled; }
+    SettingRow { x: 8px; y: 135px; width: 304px; label: "清空数据";   mode: 0; value: "全部删除"; focused: root.focus-idx == 7; }
 }
 
 // 底栏：键帽方块 + 文字，右对齐 Esc（参照原型 .kb）
@@ -464,6 +467,7 @@ export component AppWindow inherits Window {
     in property <int> s-fps: 20;
     in property <int> s-port: 8420;
     in property <string> s-shot: "";
+    in property <string> s-record: "";
     in property <string> s-remote: "开";
     in property <string> s-port-text: "8420";
     in property <string> s-port-host: "";
@@ -505,8 +509,8 @@ export component AppWindow inherits Window {
     if root.page == 3 : SettingsScreen {
         y: 0; width: parent.width; height: parent.height - 18px;
         focus-idx: root.set-focus; fmt: root.s-fmt; quality: root.s-quality; fps: root.s-fps;
-        port: root.s-port; shot: root.s-shot; remote: root.s-remote;
-        port-text: root.s-port-text; shot-text: root.s-shot;
+        port: root.s-port; shot: root.s-shot; record: root.s-record; remote: root.s-remote;
+        port-text: root.s-port-text; shot-text: root.s-shot; record-text: root.s-record;
         s-port-host: root.s-port-host; s-port-value: root.s-port-value;
         port-disabled: root.port-disabled;
     }

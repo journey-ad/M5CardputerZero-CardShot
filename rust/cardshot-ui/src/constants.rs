@@ -121,17 +121,19 @@ pub enum SettingRow {
     Quality,
     Fps,
     ShotHotkey,
+    RecordHotkey,
     Remote,
     Port,
     Clear,
 }
 
 impl SettingRow {
-    pub const LIST: [SettingRow; 7] = [
+    pub const LIST: [SettingRow; 8] = [
         SettingRow::Format,
         SettingRow::Quality,
         SettingRow::Fps,
         SettingRow::ShotHotkey,
+        SettingRow::RecordHotkey,
         SettingRow::Remote,
         SettingRow::Port,
         SettingRow::Clear,

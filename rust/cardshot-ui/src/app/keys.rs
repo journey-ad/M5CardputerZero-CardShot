@@ -312,6 +312,7 @@ fn handle_hotkey_capture(st: &mut State, client: &mut Client, key: &str) {
     match key {
         "ESC" => {
             st.hotkey_capture = false;
+            st.hotkey_record = false;
             st.hotkey_buffer.clear();
             st.shift_down = false;
             st.ctrl_down = false;
@@ -321,6 +322,7 @@ fn handle_hotkey_capture(st: &mut State, client: &mut Client, key: &str) {
             // 按住修饰键时退格不提交，继续等待组合键
             if !any_mod {
                 st.hotkey_capture = false;
+                st.hotkey_record = false;
                 st.hotkey_buffer.clear();
             }
         }
@@ -328,8 +330,13 @@ fn handle_hotkey_capture(st: &mut State, client: &mut Client, key: &str) {
         _ => {
             let base = key.to_lowercase();
             let chord = format!("{}{}", hotkey_prefix(st, false), base);
-            apply_config(client, st, json!({ "hotkeys": { "shot": chord } }));
-            st.shot_hotkey = chord;
+            if st.hotkey_record {
+                apply_config(client, st, json!({ "hotkeys": { "record": chord } }));
+                st.record_hotkey = chord;
+            } else {
+                apply_config(client, st, json!({ "hotkeys": { "shot": chord } }));
+                st.shot_hotkey = chord;
+            }
             st.hotkey_capture = false;
             st.hotkey_buffer.clear();
             st.shift_down = false;
@@ -411,6 +418,17 @@ fn handle_settings(st: &mut State, client: &mut Client, key: &str) {
                 SettingRow::ShotHotkey => {
                     if key == "ENTER" {
                         st.hotkey_capture = true;
+                        st.hotkey_record = false;
+                        st.hotkey_buffer.clear();
+                        st.shift_down = false;
+                        st.ctrl_down = false;
+                        st.alt_down = false;
+                    }
+                }
+                SettingRow::RecordHotkey => {
+                    if key == "ENTER" {
+                        st.hotkey_capture = true;
+                        st.hotkey_record = true;
                         st.hotkey_buffer.clear();
                         st.shift_down = false;
                         st.ctrl_down = false;

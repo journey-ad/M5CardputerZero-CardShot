@@ -154,7 +154,7 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     ui.set_s_port_value(if st.port_edit { format!("{}_", st.port_buf).into() } else { st.remote_port.to_string().into() });
     ui.set_port_edit(st.port_edit);
     ui.set_port_disabled(!st.remote_running);
-    let shot_text = if st.hotkey_capture {
+    let shot_text = if st.hotkey_capture && !st.hotkey_record {
         if st.hotkey_buffer.is_empty() {
             "按下组合键…".to_string()
         } else {
@@ -164,6 +164,12 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
         st.shot_hotkey.clone()
     };
     ui.set_s_shot(shot_text.into());
+    let record_text = if st.hotkey_capture && st.hotkey_record {
+        if st.hotkey_buffer.is_empty() { "按下组合键…".to_string() } else { st.hotkey_buffer.clone() }
+    } else {
+        st.record_hotkey.clone()
+    };
+    ui.set_s_record(record_text.into());
     ui.set_hotkey_capture(st.hotkey_capture);
     ui.set_s_remote(if st.remote_running { "开".into() } else { "关".into() });
     ui.set_help_visible(st.help_visible);
