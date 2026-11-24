@@ -124,6 +124,7 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
         "按下组合键   Esc 取消".into()
     } else if settings {
         match row {
+            SettingRow::Autostart => "Enter 开关".into(),
             SettingRow::ShotHotkey | SettingRow::RecordHotkey => "Enter 设置".into(),
             SettingRow::Remote => "Enter 开关".into(),
             SettingRow::Port => "Enter 输入".into(),
@@ -135,6 +136,7 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     };
     ui.set_hint(hint.into());
     ui.set_set_tab(st.settings_tab as i32);
+    ui.set_s_autostart(if st.autostart { "开".into() } else { "关".into() });
     ui.set_settings_adjust(adjust);
     ui.set_settings_editing(editing);
     ui.set_count_images(st.count_images as i32);

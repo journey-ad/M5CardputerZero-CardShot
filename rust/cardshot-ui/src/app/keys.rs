@@ -83,6 +83,10 @@ pub fn handle_key(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
     }
     // 全局按键
     match key {
+        "TAB" if st.page == Page::Settings => {
+            handle_settings(st, client, key);
+            return;
+        }
         "TAB" => {
             st.page = st.page.next();
             if st.page == Page::Gallery || st.page == Page::Preview {
@@ -392,6 +396,11 @@ fn handle_settings(st: &mut State, client: &mut Client, key: &str) {
         "LEFT" | "RIGHT" | "ENTER" => {
             let dir: i64 = if key == "LEFT" { -1 } else { 1 };
             match SettingRow::at(st.settings_focus) {
+                SettingRow::Autostart => {
+                    let next = !st.autostart;
+                    apply_config(client, st, json!({ "service": { "autostart": next } }));
+                    st.autostart = next;
+                }
                 SettingRow::Format => {
                     let next = cycle(&IMAGE_FORMATS, st.image_format.as_str(), dir);
                     apply_config(client, st, json!({ "image_format": next }));

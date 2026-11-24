@@ -29,6 +29,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut application = App::new(ui);
     application.init();
+    // 调试钩子：启动后注入一串按键，便于离线验证交互
+    if let Ok(keys) = std::env::var("CARDSHOT_TEST_KEYS") {
+        for k in keys.split(',').filter(|s| !s.is_empty()) {
+            application.on_key(k);
+        }
+    }
 
     let mut last_poll = Instant::now();
     let mut dirty = true;

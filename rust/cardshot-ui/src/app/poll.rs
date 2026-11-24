@@ -56,6 +56,9 @@ pub fn poll_config(client: &mut Client, st: &mut State) {
     if let Some(f) = c.pointer("/record/fps").and_then(|x| x.as_i64()) {
         st.fps = f;
     }
+    if let Some(a) = c.pointer("/service/autostart").and_then(|x| x.as_bool()) {
+        st.autostart = a;
+    }
     if let Some(e) = c.pointer("/remote/enabled").and_then(|x| x.as_bool()) {
         st.remote_running = e;
     }

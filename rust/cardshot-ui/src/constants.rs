@@ -117,6 +117,7 @@ impl HomeAction {
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum SettingRow {
+    Autostart,
     Format,
     Quality,
     Fps,
@@ -128,7 +129,7 @@ pub enum SettingRow {
 }
 
 /// 每个设置分类页包含的行索引区间（含首尾）
-pub const SETTINGS_TAB_RANGES: [(usize, usize); 4] = [(0, 1), (2, 4), (5, 6), (7, 7)];
+pub const SETTINGS_TAB_RANGES: [(usize, usize); 4] = [(0, 3), (4, 5), (6, 7), (8, 8)];
 
 /// 根据设置行推断所属分类页
 pub fn settings_tab_of(focus: usize) -> usize {
@@ -139,7 +140,8 @@ pub fn settings_tab_of(focus: usize) -> usize {
 }
 
 impl SettingRow {
-    pub const LIST: [SettingRow; 8] = [
+    pub const LIST: [SettingRow; 9] = [
+        SettingRow::Autostart,
         SettingRow::Format,
         SettingRow::Quality,
         SettingRow::Fps,

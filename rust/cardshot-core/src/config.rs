@@ -4,6 +4,19 @@ use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(default)]
+pub struct ServiceCfg {
+    /// 开机自启后台服务
+    pub autostart: bool,
+}
+
+impl Default for ServiceCfg {
+    fn default() -> Self {
+        ServiceCfg { autostart: true }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(default)]
 pub struct RecordCfg {
     pub fps: u32,
     pub bitrate: String,
@@ -79,6 +92,7 @@ pub struct Config {
     pub image_format: String,
     pub image_quality: u8,
     pub socket_name: String,
+    pub service: ServiceCfg,
     pub record: RecordCfg,
     pub hotkeys: HotkeysCfg,
     pub feedback: FeedbackCfg,
@@ -94,6 +108,7 @@ impl Default for Config {
             image_format: "png".into(),
             image_quality: 90,
             socket_name: "cardshot.sock".into(),
+            service: ServiceCfg::default(),
             record: RecordCfg::default(),
             hotkeys: HotkeysCfg::default(),
             feedback: FeedbackCfg::default(),

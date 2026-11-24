@@ -84,7 +84,16 @@ impl Core {
         match serde_json::from_value::<Config>(cur) {
             Ok(mut nc) => {
                 nc.image_quality = nc.image_quality.clamp(1, 100);
+                let old_autostart = cfg.service.autostart;
                 let _ = nc.save(&self.cfg_path);
+                if old_autostart != nc.service.autostart {
+                    let action = if nc.service.autostart { "enable" } else { "disable" };
+                    let rt = crate::runtime_dir();
+                    let _ = std::process::Command::new("systemctl")
+                        .args(["--user", action, "cardshot.service"])
+                        .env("XDG_RUNTIME_DIR", &rt)
+                        .status();
+                }
                 *cfg = nc.clone();
                 *self.lib.lock().unwrap() = Library::new(&nc);
                 let running = self.remote.lock().unwrap().is_some();
