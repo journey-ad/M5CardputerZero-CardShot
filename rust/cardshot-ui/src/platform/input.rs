@@ -24,6 +24,42 @@ fn code_name(code: u16) -> Option<&'static str> {
         keycode::ESC => "ESC",
         keycode::TAB => "TAB",
         keycode::BACKSPACE => "BACK",
+        keycode::KEY_A => "A",
+        keycode::KEY_B => "B",
+        keycode::KEY_C => "C",
+        keycode::KEY_D => "D",
+        keycode::KEY_E => "E",
+        keycode::KEY_F => "F",
+        keycode::KEY_G => "G",
+        keycode::KEY_H => "H",
+        keycode::KEY_I => "I",
+        keycode::KEY_J => "J",
+        keycode::KEY_K => "K",
+        keycode::KEY_L => "L",
+        keycode::KEY_M => "M",
+        keycode::KEY_N => "N",
+        keycode::KEY_O => "O",
+        keycode::KEY_P => "P",
+        keycode::KEY_Q => "Q",
+        keycode::KEY_R => "R",
+        keycode::KEY_S => "S",
+        keycode::KEY_T => "T",
+        keycode::KEY_U => "U",
+        keycode::KEY_V => "V",
+        keycode::KEY_W => "W",
+        keycode::KEY_X => "X",
+        keycode::KEY_Y => "Y",
+        keycode::KEY_Z => "Z",
+        keycode::KEY_1 => "1",
+        keycode::KEY_2 => "2",
+        keycode::KEY_3 => "3",
+        keycode::KEY_4 => "4",
+        keycode::KEY_5 => "5",
+        keycode::KEY_6 => "6",
+        keycode::KEY_7 => "7",
+        keycode::KEY_8 => "8",
+        keycode::KEY_9 => "9",
+        keycode::KEY_0 => "0",
         _ => return None,
     })
 }
@@ -53,6 +89,7 @@ pub fn spawn_keys(path: String, tx: mpsc::Sender<String>) {
             // Shift 的按下/抬起单独记录，供退格键组合判断
             if code == keycode::SHIFT_LEFT || code == keycode::SHIFT_RIGHT {
                 shift = value != 0;
+                let _ = tx.send(if shift { "SHIFT_ON".to_string() } else { "SHIFT_OFF".to_string() });
                 continue;
             }
             if value != 1 {

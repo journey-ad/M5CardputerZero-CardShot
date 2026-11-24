@@ -90,7 +90,14 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     } else {
         ui.set_page_title(st.page.title().into());
     }
-    ui.set_hint(st.page.hint().into());
+    let hint = if st.page == crate::constants::Page::Settings && st.port_edit {
+        "数字输入   Enter 保存   Esc 取消"
+    } else if st.page == crate::constants::Page::Settings && st.hotkey_capture {
+        "按下组合键   Esc 取消"
+    } else {
+        st.page.hint()
+    };
+    ui.set_hint(hint.into());
     ui.set_count_images(st.count_images as i32);
     ui.set_count_videos(st.count_videos as i32);
     ui.set_size_label(human_size(st.total_bytes).into());
@@ -98,9 +105,16 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     ui.set_s_quality(st.image_quality as i32);
     ui.set_s_fps(st.fps as i32);
     ui.set_s_port(st.remote_port as i32);
-    ui.set_s_shot(st.shot_hotkey.clone().into());
+    ui.set_s_port_text(if st.port_edit {
+        format!("{}_", st.port_buf).into()
+    } else {
+        st.remote_port.to_string().into()
+    });
+    ui.set_port_edit(st.port_edit);
+    ui.set_port_disabled(!st.remote_running);
+    ui.set_s_shot(if st.hotkey_capture { "按下组合键…".into() } else { st.shot_hotkey.clone().into() });
+    ui.set_hotkey_capture(st.hotkey_capture);
     ui.set_s_remote(if st.remote_running { "开".into() } else { "关".into() });
-    ui.set_s_hotkey(if st.hotkey_enabled { "开".into() } else { "关".into() });
     ui.set_help_visible(st.help_visible);
     ui.set_confirm_visible(st.confirm_visible);
     ui.set_confirm_focus(st.confirm_focus);

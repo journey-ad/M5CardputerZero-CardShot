@@ -70,6 +70,10 @@ pub struct State {
     pub preview_dur: String,
     pub preview_kind: String,
     pub preview_pos: String,
+    pub port_edit: bool,
+    pub port_buf: String,
+    pub hotkey_capture: bool,
+    pub shift_down: bool,
 }
 
 impl State {
@@ -108,6 +112,10 @@ impl State {
             preview_dur: String::new(),
             preview_kind: "image".into(),
             preview_pos: String::new(),
+            port_edit: false,
+            port_buf: String::new(),
+            hotkey_capture: false,
+            shift_down: false,
         }
     }
 

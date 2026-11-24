@@ -17,19 +17,28 @@ struct Chord {
     code: Option<u16>,
 }
 
+fn key_code(name: &str) -> Option<u16> {
+    Some(match name {
+        "space" => 57,
+        "enter" => 28,
+        "tab" => 15,
+        "a" => 30, "b" => 48, "c" => 46, "d" => 32, "e" => 18, "f" => 33,
+        "g" => 34, "h" => 35, "i" => 23, "j" => 36, "k" => 37, "l" => 38,
+        "m" => 50, "n" => 49, "o" => 24, "p" => 25, "q" => 16, "r" => 19,
+        "s" => 31, "t" => 20, "u" => 22, "v" => 47, "w" => 17, "x" => 45,
+        "y" => 21, "z" => 44,
+        "1" => 2, "2" => 3, "3" => 4, "4" => 5, "5" => 6,
+        "6" => 7, "7" => 8, "8" => 9, "9" => 10, "0" => 11,
+        _ => return None,
+    })
+}
+
 fn parse_chord(s: &str) -> Chord {
     let l = s.to_lowercase();
     let shift = l.contains("shift");
-    let code = if l.contains("space") {
-        Some(57)
-    } else if l.contains("enter") {
-        Some(28)
-    } else if l.contains("tab") {
-        Some(15)
-    } else {
-        None
-    };
-    Chord { shift, code }
+    // 取最后一个 + 分隔段作为主键
+    let key = l.rsplit('+').next().unwrap_or("").trim();
+    Chord { shift, code: key_code(key) }
 }
 
 pub fn spawn(core: Arc<Core>) {

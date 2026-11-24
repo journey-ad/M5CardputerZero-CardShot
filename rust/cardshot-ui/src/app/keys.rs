@@ -7,13 +7,36 @@ use crate::app::poll::{load_items, poll_config, poll_status};
 use crate::app::view::open_preview;
 use crate::constants::{
     FPS_STEPS, HomeAction, IMAGE_FORMATS, Page, SettingRow, GRID_COLS, HOME_COLS, PORT_MAX,
-    PORT_MIN, PORT_STEP, QUALITY_MAX, QUALITY_MIN, QUALITY_STEP, SHOT_CHORDS,
+    PORT_MIN, QUALITY_PRESETS,
 };
 use crate::daemon::Client;
 use crate::model::State;
 use crate::AppWindow;
 
 pub fn handle_key(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str) {
+    // Shift 状态单独跟踪，供快捷键录制与退格组合判断
+    match key {
+        "SHIFT_ON" => {
+            st.shift_down = true;
+            return;
+        }
+        "SHIFT_OFF" => {
+            st.shift_down = false;
+            return;
+        }
+        _ => {}
+    }
+    // 设置页的编辑态优先拦截按键
+    if st.page == Page::Settings {
+        if st.hotkey_capture {
+            handle_hotkey_capture(st, client, key);
+            return;
+        }
+        if st.port_edit {
+            handle_port_edit(st, client, key);
+            return;
+        }
+    }
     // 使用说明弹窗：任意确认键关闭
     if st.help_visible {
         if matches!(key, "ESC" | "ENTER" | "SPACE" | "BACK") {
@@ -186,6 +209,56 @@ fn change_port(client: &mut Client, st: &mut State, port: i64) {
     }
 }
 
+fn handle_hotkey_capture(st: &mut State, client: &mut Client, key: &str) {
+    match key {
+        "ESC" | "BACK" => {
+            st.hotkey_capture = false;
+        }
+        "UP" | "DOWN" | "LEFT" | "RIGHT" | "SHIFT_BACK" => {}
+        _ => {
+            let base = key.to_lowercase();
+            let chord = if st.shift_down {
+                format!("shift+{base}")
+            } else {
+                base
+            };
+            apply_config(client, st, json!({ "hotkeys": { "shot": chord } }));
+            st.shot_hotkey = chord;
+            st.hotkey_capture = false;
+        }
+    }
+}
+
+fn handle_port_edit(st: &mut State, client: &mut Client, key: &str) {
+    match key {
+        "ENTER" => {
+            if let Ok(p) = st.port_buf.parse::<i64>() {
+                let p = p.clamp(PORT_MIN, PORT_MAX);
+                if p != st.remote_port {
+                    change_port(client, st, p);
+                }
+            }
+            st.port_edit = false;
+        }
+        "ESC" => st.port_edit = false,
+        "BACK" => {
+            st.port_buf.pop();
+        }
+        k if k.len() == 1 && k.chars().all(|c| c.is_ascii_digit()) => {
+            if st.port_buf.len() < 5 {
+                st.port_buf.push_str(k);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn cycle<T: Copy + PartialEq>(list: &[T], current: T, dir: i64) -> T {
+    let idx = list.iter().position(|v| *v == current).unwrap_or(0) as i64;
+    let next = (idx + dir).rem_euclid(list.len() as i64) as usize;
+    list[next]
+}
+
 fn handle_settings(st: &mut State, client: &mut Client, key: &str) {
     let row_count = SettingRow::LIST.len();
     match key {
@@ -199,41 +272,37 @@ fn handle_settings(st: &mut State, client: &mut Client, key: &str) {
                 st.settings_focus += 1;
             }
         }
-        "LEFT" | "RIGHT" => {
-            let dir: i64 = if key == "RIGHT" { 1 } else { -1 };
+        "LEFT" | "RIGHT" | "ENTER" => {
+            let dir: i64 = if key == "LEFT" { -1 } else { 1 };
             match SettingRow::at(st.settings_focus) {
                 SettingRow::Format => {
-                    let current = IMAGE_FORMATS
-                        .iter()
-                        .position(|f| *f == st.image_format)
-                        .unwrap_or(0) as i64;
-                    let next = (current + dir).rem_euclid(IMAGE_FORMATS.len() as i64) as usize;
-                    apply_config(client, st, json!({ "image_format": IMAGE_FORMATS[next] }));
+                    let next = cycle(&IMAGE_FORMATS, st.image_format.as_str(), dir);
+                    apply_config(client, st, json!({ "image_format": next }));
                 }
                 SettingRow::Quality => {
-                    let q = (st.image_quality + dir * QUALITY_STEP).clamp(QUALITY_MIN, QUALITY_MAX);
-                    apply_config(client, st, json!({ "image_quality": q }));
+                    let next = cycle(&QUALITY_PRESETS, st.image_quality, dir);
+                    apply_config(client, st, json!({ "image_quality": next }));
                 }
                 SettingRow::Fps => {
-                    let current = FPS_STEPS.iter().position(|v| *v == st.fps).unwrap_or(0) as i64;
-                    let next = (current + dir).rem_euclid(FPS_STEPS.len() as i64) as usize;
-                    apply_config(client, st, json!({ "record": { "fps": FPS_STEPS[next] } }));
+                    let next = cycle(&FPS_STEPS, st.fps, dir);
+                    apply_config(client, st, json!({ "record": { "fps": next } }));
+                }
+                SettingRow::Remote => {
+                    if matches!(key, "ENTER" | "LEFT" | "RIGHT") {
+                        toggle_remote(client, st);
+                    }
                 }
                 SettingRow::Port => {
-                    let port = (st.remote_port + dir * PORT_STEP).clamp(PORT_MIN, PORT_MAX);
-                    if port != st.remote_port {
-                        change_port(client, st, port);
+                    if key == "ENTER" && st.remote_running {
+                        st.port_edit = true;
+                        st.port_buf = st.remote_port.to_string();
                     }
                 }
                 SettingRow::ShotHotkey => {
-                    let current = SHOT_CHORDS
-                        .iter()
-                        .position(|v| *v == st.shot_hotkey)
-                        .unwrap_or(0) as i64;
-                    let next = (current + dir).rem_euclid(SHOT_CHORDS.len() as i64) as usize;
-                    apply_config(client, st, json!({ "hotkeys": { "shot": SHOT_CHORDS[next] } }));
+                    if key == "ENTER" {
+                        st.hotkey_capture = true;
+                    }
                 }
-                SettingRow::Remote => toggle_remote(client, st),
             }
         }
         _ => {}

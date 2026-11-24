@@ -54,6 +54,15 @@ impl App {
             st.confirm_visible = true;
             st.confirm_focus = 1;
         }
+        if std::env::var("CARDSHOT_TEST_PORT_EDIT").is_ok() {
+            st.settings_focus = 4;
+            st.port_edit = true;
+            st.port_buf = "8420".into();
+        }
+        if std::env::var("CARDSHOT_TEST_HOTKEY").is_ok() {
+            st.settings_focus = 5;
+            st.hotkey_capture = true;
+        }
     }
 
     pub fn on_key(&mut self, key: &str) {

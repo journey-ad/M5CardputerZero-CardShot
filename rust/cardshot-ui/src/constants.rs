@@ -23,6 +23,8 @@ pub const DEFAULT_FPS: i64 = 20;
 pub const QUALITY_MIN: i64 = 1;
 pub const QUALITY_MAX: i64 = 100;
 pub const QUALITY_STEP: i64 = 10;
+/// 压缩质量预设档位（左右键循环）
+pub const QUALITY_PRESETS: [i64; 5] = [60, 75, 85, 90, 95];
 pub const IMAGE_FORMATS: [&str; 3] = ["png", "jpeg", "webp"];
 pub const FPS_STEPS: [i64; 5] = [10, 15, 20, 25, 30];
 
@@ -78,7 +80,7 @@ impl Page {
             Page::Home => "Enter 打开",
             Page::Gallery => "Enter 预览   空格 多选   退格 删除",
             Page::Preview => "退格 删除   Esc 返回",
-            Page::Settings => "▲▼ 选择   ◀▶ 调整",
+            Page::Settings => "",
         }
     }
 
@@ -118,9 +120,9 @@ pub enum SettingRow {
     Format,
     Quality,
     Fps,
+    Remote,
     Port,
     ShotHotkey,
-    Remote,
 }
 
 impl SettingRow {
@@ -128,9 +130,9 @@ impl SettingRow {
         SettingRow::Format,
         SettingRow::Quality,
         SettingRow::Fps,
+        SettingRow::Remote,
         SettingRow::Port,
         SettingRow::ShotHotkey,
-        SettingRow::Remote,
     ];
 
     pub fn at(index: usize) -> SettingRow {
@@ -151,6 +153,40 @@ pub mod keycode {
     pub const DOWN: u16 = 108;
     pub const LEFT: u16 = 105;
     pub const RIGHT: u16 = 106;
+    pub const KEY_A: u16 = 30;
+    pub const KEY_B: u16 = 48;
+    pub const KEY_C: u16 = 46;
     pub const KEY_D: u16 = 32;
+    pub const KEY_E: u16 = 18;
+    pub const KEY_F: u16 = 33;
+    pub const KEY_G: u16 = 34;
+    pub const KEY_H: u16 = 35;
+    pub const KEY_I: u16 = 23;
+    pub const KEY_J: u16 = 36;
+    pub const KEY_K: u16 = 37;
+    pub const KEY_L: u16 = 38;
     pub const KEY_M: u16 = 50;
+    pub const KEY_N: u16 = 49;
+    pub const KEY_O: u16 = 24;
+    pub const KEY_P: u16 = 25;
+    pub const KEY_Q: u16 = 16;
+    pub const KEY_R: u16 = 19;
+    pub const KEY_S: u16 = 31;
+    pub const KEY_T: u16 = 20;
+    pub const KEY_U: u16 = 22;
+    pub const KEY_V: u16 = 47;
+    pub const KEY_W: u16 = 17;
+    pub const KEY_X: u16 = 45;
+    pub const KEY_Y: u16 = 21;
+    pub const KEY_Z: u16 = 44;
+    pub const KEY_1: u16 = 2;
+    pub const KEY_2: u16 = 3;
+    pub const KEY_3: u16 = 4;
+    pub const KEY_4: u16 = 5;
+    pub const KEY_5: u16 = 6;
+    pub const KEY_6: u16 = 7;
+    pub const KEY_7: u16 = 8;
+    pub const KEY_8: u16 = 9;
+    pub const KEY_9: u16 = 10;
+    pub const KEY_0: u16 = 11;
 }
