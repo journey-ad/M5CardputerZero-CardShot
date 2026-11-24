@@ -495,6 +495,27 @@ function App() {
     return () => { clearInterval(t1); clearInterval(t2); };
   }, []);
 
+  const dragHandlers = useRef({});
+  useEffect(() => { dragHandlers.current = { down: onGridDown, move: onGridMove, up: onGridUp }; });
+  useEffect(() => {
+    if (tab !== "gallery") return;
+    const down = (e) => {
+      if (e.button !== 0) return;
+      if (e.target.closest("button,select,a,input,.tabs,.lb-bar,.lightbox,.topbar,.hero,.toast,.marquee")) return;
+      dragHandlers.current.down(e);
+    };
+    const move = (e) => dragHandlers.current.move(e);
+    const up = (e) => dragHandlers.current.up(e);
+    document.addEventListener("mousedown", down, true);
+    document.addEventListener("mousemove", move, true);
+    document.addEventListener("mouseup", up, true);
+    return () => {
+      document.removeEventListener("mousedown", down, true);
+      document.removeEventListener("mousemove", move, true);
+      document.removeEventListener("mouseup", up, true);
+    };
+  }, [tab]);
+
   const doShot = async () => {
     setBusy(true);
     try {
@@ -515,6 +536,7 @@ function App() {
   };
   const doDelete = async (ids) => {
     if (!ids.length) return;
+    if (!window.confirm(T("confirm_delete").replace("{n}", ids.length))) return;
     try {
       const r = await api("/api/delete", { method: "POST", body: JSON.stringify({ ids }) });
       if (r.ok) {
@@ -543,6 +565,7 @@ function App() {
   };
   const onGridDown = (e) => {
     if (e.button !== 0) return;
+    document.body.style.userSelect = "none";
     if (e.target.closest(".toolbar,button,select,a,input,.tabs")) return;
     dragRef.current = { x0: e.clientX, y0: e.clientY, base: new Set(sel.ids), moved: false };
     suppressClick.current = false;
@@ -560,6 +583,7 @@ function App() {
     if (!d) return;
     dragRef.current = null;
     setMarquee(null);
+    document.body.style.userSelect = "";
     if (!d.moved || !galleryRef.current) return;
     suppressClick.current = true;
     const box = { l: Math.min(e.clientX, d.x0), t: Math.min(e.clientY, d.y0),
@@ -622,8 +646,7 @@ function App() {
       <button class=${"tab " + (tab === "settings" ? "active" : "")} onClick=${() => setTab("settings")}>${T("tab_settings")}</button>
     </div>
 
-    ${tab === "gallery" && html`<div class="gallery-wrap" ref=${galleryRef}
-        onMouseDown=${onGridDown} onMouseMove=${onGridMove} onMouseUp=${onGridUp} onMouseLeave=${onGridUp}>
+    ${tab === "gallery" && html`<div class="gallery-wrap" ref=${galleryRef}>
       <div class="toolbar">
         <div class="count">${T("total_pre")}${items.length}${T("total_suf")}</div>
         <div class="spacer"></div>
