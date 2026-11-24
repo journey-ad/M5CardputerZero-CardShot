@@ -1,0 +1,25 @@
+{
+  "output_dir": "~/Pictures/CardShot",
+  "video_dir": "~/Videos/CardShot",
+  "thumb_dir": "~/.cache/cardshot/thumbs",
+  "image_format": "png",
+  "image_quality": 90,
+  "record": {
+    "fps": 20,
+    "bitrate": "2M",
+    "encoder": "h264_v4l2m2m",
+    "audio": false
+  },
+  "hotkeys": {
+    "enabled": false,
+    "shot": "shift+space",
+    "record": "shift+enter"
+  },
+  "feedback": { "led": true },
+  "remote": {
+    "enabled": true,
+    "bind": "0.0.0.0",
+    "port": 8420
+  },
+  "socket_name": "cardshot.sock"
+}
