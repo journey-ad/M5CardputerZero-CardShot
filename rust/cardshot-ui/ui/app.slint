@@ -1,4 +1,6 @@
-// CardShot 设备端界面 (320x170)：相册管理工具
+// CardShot 设备端界面（320×170）：后台截图/录屏守护的相册管理前端
+// 视觉规范：8px 基线栅格；正文 10/12px；三种语义色（表面/描边/强调）
+
 export struct GalleryItem {
     img: image,
     kind: string,
@@ -7,84 +9,120 @@ export struct GalleryItem {
     dur: string,
 }
 
+// 主色板
+// bg #0B0E11  surface #14191E  surface2 #1A2027  border #262E36
+// text #E6EDF3  muted #94A3B2  faint #5C6773  accent #2DD4BF  danger #F26D6D
+
 component TopBar inherits Rectangle {
     in property <string> title: "CardShot";
     in property <bool> recording: false;
     in property <string> rec-time: "";
-    in property <int> count-images: 0;
-    in property <int> count-videos: 0;
-    in property <string> size-label: "";
-    height: 22px;
-    background: #12161b;
-    Rectangle { x: 0; y: parent.height - 1px; width: parent.width; height: 1px; background: #232b34; }
+    height: 20px;
+    background: #0B0E11;
+    Rectangle { x: 0; y: parent.height - 1px; width: parent.width; height: 1px; background: #1C242B; }
     Text {
-        x: 8px; vertical-alignment: center; height: parent.height;
-        text: root.title; color: #e6edf3; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
+        x: 10px; y: 0; width: parent.width - 74px; height: parent.height; vertical-alignment: center; overflow: elide;
+        text: root.title; color: #E6EDF3;
+        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
     }
     if root.recording : Rectangle {
-        x: 0; y: 0; width: parent.width; height: parent.height; background: transparent;
-        Rectangle {
-            x: parent.width - 58px; y: 5px; width: 52px; height: 13px; border-radius: 7px; background: #2a1518;
-            Rectangle { x: 5px; y: 4px; width: 5px; height: 5px; border-radius: 3px; background: #ff5d5d; }
-            Text { x: 14px; y: 0; width: 34px; height: parent.height; vertical-alignment: center;
-                text: root.rec-time; color: #ff9b9b; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+        x: parent.width - 62px; y: 4px; width: 52px; height: 14px; border-radius: 7px;
+        background: #2A1518;
+        Rectangle { x: 6px; y: 5px; width: 5px; height: 5px; border-radius: 3px; background: #F26D6D; }
+        Text {
+            x: 16px; y: 0; width: 32px; height: parent.height; vertical-alignment: center;
+            text: root.rec-time; color: #F6A5A5;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
         }
     }
 }
 
-component HintBar inherits Rectangle {
-    in property <string> text: "";
-    height: 15px;
-    background: #0d1013;
+component StatChip inherits Rectangle {
+    in property <image> icon;
+    in property <string> value: "0";
+    in property <string> label: "";
+    height: 28px;
+    border-radius: 8px;
+    background: #14191E;
+    border-width: 1px;
+    border-color: #202830;
+    Image {
+        x: 10px; y: (parent.height - 11px) / 2; width: 11px; height: 11px;
+        source: root.icon; opacity: 0.75;
+    }
     Text {
-        x: 8px; width: parent.width - 16px; height: parent.height; vertical-alignment: center;
-        text: root.text; color: #6c7884; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
-        overflow: elide;
+        x: 27px; y: 0; height: parent.height; vertical-alignment: center;
+        text: root.value; color: #E6EDF3;
+        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
+    }
+    Text {
+        x: parent.width - 40px; y: 0; width: 30px; height: parent.height; vertical-alignment: center;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: root.label; color: #5C6773;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
     }
 }
 
-component MenuCard inherits Rectangle {
-    in property <string> label: "";
+component ActionRow inherits Rectangle {
     in property <image> icon;
-    in property <string> glyph: "";
+    in property <string> label: "";
+    in property <string> right: "";
     in property <bool> focused: false;
-    in property <int> count-images: -1;
-    in property <int> count-videos: -1;
-    in property <length> box-height: 36px;
-    height: root.box-height;
-    border-radius: 10px;
-    background: focused ? #17262b : #141a1f;
+    height: 26px;
+    border-radius: 8px;
+    background: focused ? #17262B : #14191E;
     border-width: 1px;
-    border-color: focused ? #3ddbc4 : #232c35;
-    animate background { duration: 120ms; }
-    animate border-color { duration: 120ms; }
-    Rectangle {
-        x: 8px; y: (parent.height - 24px) / 2; width: 24px; height: 24px; border-radius: 7px;
-        background: focused ? #243a3f : #1b2329;
-    }
-    Image { x: 13px; y: (parent.height - 14px) / 2; width: 14px; height: 14px; source: root.icon; visible: root.glyph == ""; opacity: 0.92; }
-    Text {
-        x: 13px; y: 0; width: 14px; height: parent.height; horizontal-alignment: TextHorizontalAlignment.center; vertical-alignment: center;
-        text: root.glyph; color: #9fb0bd; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
-        visible: root.glyph != "";
+    border-color: focused ? #2DD4BF : #202830;
+    animate background { duration: 110ms; }
+    animate border-color { duration: 110ms; }
+    Image {
+        x: 10px; y: (parent.height - 12px) / 2; width: 12px; height: 12px;
+        source: root.icon; opacity: root.focused ? 1.0 : 0.72;
     }
     Text {
-        x: 40px; y: 0; height: parent.height; vertical-alignment: center;
-        text: root.label; color: #e8eef4; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
+        x: 30px; y: 0; height: parent.height; vertical-alignment: center;
+        text: root.label; color: #E6EDF3;
+        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px;
     }
-    if root.count-images >= 0 : Rectangle {
-        x: parent.width - 104px; y: (parent.height - 14px) / 2; width: 86px; height: 14px; background: transparent;
-        Image { x: 0; y: 1px; width: 12px; height: 12px; source: @image-url("icons/image.svg"); opacity: 0.8; }
-        Text { x: 15px; y: 0; width: 22px; height: parent.height; vertical-alignment: center;
-            text: root.count-images; color: #9fb0bd; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-        Image { x: 42px; y: 1px; width: 12px; height: 12px; source: @image-url("icons/video.svg"); opacity: 0.8; }
-        Text { x: 57px; y: 0; width: 22px; height: parent.height; vertical-alignment: center;
-            text: root.count-videos; color: #9fb0bd; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+    if root.right != "" : Text {
+        x: parent.width - 62px; y: 0; width: 42px; height: parent.height; vertical-alignment: center;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: root.right; color: #94A3B2;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
     }
     Image {
-        x: parent.width - 17px; y: (parent.height - 12px) / 2; width: 12px; height: 12px;
-        source: @image-url("icons/arrow-right.svg"); opacity: root.focused ? 0.85 : 0.3;
-        animate opacity { duration: 120ms; }
+        x: parent.width - 16px; y: (parent.height - 10px) / 2; width: 10px; height: 10px;
+        source: @image-url("icons/arrow-right.svg");
+        opacity: root.focused ? 0.9 : 0.28;
+        animate opacity { duration: 110ms; }
+    }
+}
+
+component HomeScreen inherits Rectangle {
+    in property <int> focus-idx: 0;
+    in property <int> count-images: 0;
+    in property <int> count-videos: 0;
+    in property <string> size-label: "";
+    width: 100%; height: 100%; background: transparent;
+
+    StatChip { x: 9px;  y: 27px; width: 148px; icon: @image-url("icons/camera.svg");      value: root.count-images; label: "截图"; }
+    StatChip { x: 163px; y: 27px; width: 148px; icon: @image-url("icons/video-sharp.svg"); value: root.count-videos; label: "录制"; }
+
+    ActionRow {
+        x: 9px; y: 63px; width: 302px;
+        icon: @image-url("icons/gallery-thumbnails.svg");
+        label: "相册"; right: (root.count-images + root.count-videos) + " 项";
+        focused: root.focus-idx == 0;
+    }
+    ActionRow {
+        x: 9px; y: 93px; width: 302px;
+        icon: @image-url("icons/settings-cog.svg");
+        label: "设置"; focused: root.focus-idx == 1;
+    }
+    ActionRow {
+        x: 9px; y: 123px; width: 302px;
+        icon: @image-url("icons/book-open.svg");
+        label: "使用说明"; focused: root.focus-idx == 2;
     }
 }
 
@@ -96,58 +134,49 @@ component GalleryTile inherits Rectangle {
     in property <bool> focused: false;
     in property <bool> selecting: false;
     in property <bool> check: false;
-    border-radius: 6px;
+    border-radius: 8px;
     clip: true;
-    background: #0a0d10;
+    background: #14191E;
     border-width: focused ? 2px : 1px;
-    border-color: focused ? #33d6c0 : #232b34;
+    border-color: focused ? #2DD4BF : #202830;
+    animate border-color { duration: 110ms; }
     Image {
         x: 0; y: 0; width: parent.width; height: parent.height - 14px;
         source: root.img; image-fit: contain;
     }
-    Rectangle { x: 3px; y: 3px; width: 15px; height: 15px; border-radius: 4px; background: #00000099; }
-    Image { x: 4px; y: 4px; width: 13px; height: 13px; source: @image-url("icons/image.svg"); visible: root.kind == "image"; }
-    Image { x: 4px; y: 4px; width: 13px; height: 13px; source: @image-url("icons/video.svg"); visible: root.kind == "video"; }
+    Rectangle { x: 4px; y: 4px; width: 15px; height: 15px; border-radius: 4px; background: #000000B0; }
+    Image { x: 6px; y: 6px; width: 11px; height: 11px; source: @image-url("icons/camera.svg");       visible: root.kind == "image"; }
+    Image { x: 6px; y: 6px; width: 11px; height: 11px; source: @image-url("icons/video-sharp.svg"); visible: root.kind == "video"; }
     Image {
-        x: (parent.width - 26px) / 2; y: (parent.height - 14px - 26px) / 2;
-        width: 26px; height: 26px; source: @image-url("icons/play-circle.svg");
-        visible: root.kind == "video"; opacity: 0.9;
+        x: (parent.width - 24px) / 2; y: (parent.height - 14px - 24px) / 2;
+        width: 24px; height: 24px; source: @image-url("icons/play-circle.svg");
+        visible: root.kind == "video" && !root.selecting; opacity: 0.92;
     }
-    Text {
-        visible: root.dur != "";
-        x: parent.width - 34px; y: 3px; width: 30px; height: 13px; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.right;
-        text: root.dur; color: #ffffff; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+    if root.dur != "" && !root.selecting : Rectangle {
+        x: parent.width - 36px; y: 4px; width: 32px; height: 13px; border-radius: 4px; background: #000000B0;
+        Text {
+            x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
+            horizontal-alignment: TextHorizontalAlignment.center;
+            text: root.dur; color: #FFFFFF;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+        }
+    }
+    if root.selecting : Rectangle {
+        x: parent.width - 21px; y: 4px; width: 16px; height: 16px; border-radius: 8px;
+        background: root.check ? #2DD4BF : #000000B0;
+        border-width: 1px; border-color: root.check ? #2DD4BF : #4C5865;
+        Image {
+            x: 3px; y: 3px; width: 10px; height: 10px;
+            source: @image-url("icons/check.svg"); visible: root.check;
+        }
     }
     Rectangle {
-        y: parent.height - 14px; height: 14px; width: parent.width; background: #12161b;
-        Text { x: 4px; width: parent.width - 8px; height: parent.height; vertical-alignment: center;
-            text: root.label; color: #cdd6df; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; overflow: elide; }
-    }
-    Rectangle {
-        visible: root.selecting;
-        x: parent.width - 19px; y: 3px; width: 16px; height: 16px; border-radius: 8px;
-        background: root.check ? #33d6c0 : #00000088;
-        border-width: 1px; border-color: #ffffffcc;
-    }
-}
-
-component HomeScreen inherits Rectangle {
-    in property <int> focus-idx: 0;
-    in property <int> count-images: 0;
-    in property <int> count-videos: 0;
-    width: 100%; height: 100%; background: transparent;
-    MenuCard {
-        x: 12px; y: 30px; width: 296px; box-height: 36px; label: "相册";
-        icon: @image-url("icons/image.svg"); count-images: root.count-images; count-videos: root.count-videos;
-        focused: root.focus-idx == 0;
-    }
-    MenuCard {
-        x: 12px; y: 70px; width: 296px; box-height: 36px; label: "设置";
-        icon: @image-url("icons/settings-cog.svg"); focused: root.focus-idx == 1;
-    }
-    MenuCard {
-        x: 12px; y: 110px; width: 296px; box-height: 36px; label: "使用说明";
-        glyph: "?"; focused: root.focus-idx == 2;
+        y: parent.height - 14px; width: parent.width; height: 14px; background: #1A2027;
+        Text {
+            x: 5px; width: parent.width - 10px; height: parent.height; vertical-alignment: center;
+            text: root.label; color: #AEBAC6;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; overflow: elide;
+        }
     }
 }
 
@@ -158,21 +187,34 @@ component GalleryScreen inherits Rectangle {
     in property <int> sel-count: 0;
     width: 100%; height: 100%; background: transparent;
     for it[i] in root.items : GalleryTile {
-        x: 8px + Math.mod(i, 3) * 102px;
-        y: 26px + Math.floor(i / 3) * 62px;
-        width: 98px; height: 58px;
+        x: 8px + Math.mod(i, 3) * 103px;
+        y: 26px + Math.floor(i / 3) * 65px;
+        width: 98px; height: 59px;
         img: it.img; kind: it.kind; label: it.name; dur: it.dur;
         focused: root.focus-idx == i && !root.selecting;
         selecting: root.selecting;
     }
     Rectangle {
         visible: root.items.length == 0;
-        x: 0; y: 44px; width: parent.width; height: 60px;
-        Text { x: 0; y: 0; width: parent.width; horizontal-alignment: TextHorizontalAlignment.center;
-            text: "还没有截图或录制"; color: #6c7884; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; }
-        Text { x: 0; y: 20px; width: parent.width; horizontal-alignment: TextHorizontalAlignment.center;
-            text: "按热键截图或录制后会出现在这里"; color: #4b5560; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+        x: 0; y: 50px; width: parent.width; height: 50px;
+        Text {
+            x: 0; y: 0; width: parent.width; horizontal-alignment: TextHorizontalAlignment.center;
+            text: "还没有内容"; color: #94A3B2;
+            font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px;
+        }
+        Text {
+            x: 0; y: 20px; width: parent.width; horizontal-alignment: TextHorizontalAlignment.center;
+            text: "用热键截图或录制后会自动出现"; color: #5C6773;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+        }
     }
+}
+
+component ArrowPad inherits Rectangle {
+    in property <image> icon;
+    width: 20px; height: 34px; border-radius: 5px;
+    background: #141E22; border-width: 1px; border-color: #262E36;
+    Image { x: 4px; y: 11px; width: 12px; height: 12px; source: root.icon; opacity: 0.85; }
 }
 
 component PreviewScreen inherits Rectangle {
@@ -181,42 +223,73 @@ component PreviewScreen inherits Rectangle {
     in property <string> size-label: "";
     in property <string> dur: "";
     in property <string> kind: "image";
-    width: 100%; height: 100%; background: #05080a;
-    Image { x: 0; y: 22px; width: parent.width; height: parent.height - 55px; source: root.img; image-fit: contain; }
-    Image { x: 5px; y: (parent.height - 55px) / 2; width: 16px; height: 16px; source: @image-url("icons/arrow-left.svg"); opacity: 0.65; }
-    Image { x: parent.width - 21px; y: (parent.height - 55px) / 2; width: 16px; height: 16px; source: @image-url("icons/arrow-right.svg"); opacity: 0.65; }
-    Rectangle {
-        x: 0; y: parent.height - 33px; width: parent.width; height: 18px; background: #0b0e11e6;
-        Image { x: 8px; y: 3px; width: 12px; height: 12px; source: @image-url("icons/image.svg"); visible: root.kind == "image"; opacity: 0.85; }
-        Image { x: 8px; y: 3px; width: 12px; height: 12px; source: @image-url("icons/video.svg"); visible: root.kind == "video"; opacity: 0.85; }
-        Text {
-            x: 26px; width: parent.width - 120px; height: parent.height; vertical-alignment: center;
-            text: root.name; color: #d6dde4; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; overflow: elide;
-        }
-        Text {
-            x: parent.width - 88px; width: 44px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.right;
-            text: root.size-label; color: #8b98a6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
-        }
-        Text {
-            x: parent.width - 40px; width: 32px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.right;
-            text: root.dur; color: #8b98a6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
-        }
+    in property <string> pos: "";
+    width: 100%; height: 100%; background: transparent;
+    Rectangle { x: 0; y: 20px; width: parent.width; height: parent.height - 20px; background: #05090A; }
+    Image {
+        x: 16px; y: 38px; width: 288px; height: 96px;
+        source: root.img; image-fit: contain;
+    }
+    Text {
+        x: parent.width - 64px; y: 2px; width: 56px; height: 16px; vertical-alignment: center;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: root.pos; color: #5C6773;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+    }
+    ArrowPad { x: 4px; y: (parent.height - 34px) / 2; icon: @image-url("icons/arrow-left.svg"); }
+    ArrowPad { x: parent.width - 24px; y: (parent.height - 34px) / 2; icon: @image-url("icons/arrow-right.svg"); }
+    Text {
+        x: 0; y: parent.height - 18px; width: parent.width; height: 13px;
+        vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center;
+        text: root.size-label + "    " + root.dur; color: #5C6773;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
     }
 }
 
 component SettingRow inherits Rectangle {
     in property <string> label: "";
     in property <string> value: "";
+    in property <int> mode: 0;      // 0 文本 / 1 格式段选 / 2 远程开关
     in property <bool> focused: false;
-    height: 18px;
-    background: focused ? #16303a : transparent;
-    border-radius: 4px;
-    border-width: focused ? 1px : 0px;
-    border-color: #33d6c0;
-    Text { x: 6px; width: 150px; height: parent.height; vertical-alignment: center;
-        text: root.label; color: #cdd6df; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; }
-    Text { x: parent.width - 116px; width: 110px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.right;
-        text: root.value; color: root.focused ? #33d6c0 : #8b98a6; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; }
+    height: 19px;
+    border-radius: 5px;
+    background: focused ? #16302F : transparent;
+    border-width: root.focused ? 1px : 0px;
+    border-color: #2DD4BF;
+    Text {
+        x: 8px; width: 70px; height: parent.height; vertical-alignment: center;
+        text: root.label; color: root.focused ? #E6EDF3 : #AEBAC6;
+        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 11px;
+    }
+    if root.mode == 0 : Text {
+        x: parent.width - 130px; width: 120px; height: parent.height; vertical-alignment: center;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: root.value; color: root.focused ? #2DD4BF : #C8D2DC;
+        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 11px;
+    }
+    if root.mode == 1 : Rectangle {
+        x: parent.width - 122px; y: 3px; width: 114px; height: 13px;
+        border-radius: 4px; background: #10161B; border-width: 1px; border-color: #263038;
+        Rectangle { x: 1px; y: 1px; width: 36px; height: 11px; border-radius: 3px; background: root.value == "PNG"  ? #2DD4BF : transparent; }
+        Rectangle { x: 39px; y: 1px; width: 36px; height: 11px; border-radius: 3px; background: root.value == "JPEG" ? #2DD4BF : transparent; }
+        Rectangle { x: 77px; y: 1px; width: 36px; height: 11px; border-radius: 3px; background: root.value == "WEBP" ? #2DD4BF : transparent; }
+        Text { x: 1px; y: 0; width: 36px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: "PNG";  color: root.value == "PNG"  ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px; }
+        Text { x: 39px; y: 0; width: 36px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: "JPEG"; color: root.value == "JPEG" ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px; }
+        Text { x: 77px; y: 0; width: 36px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: "WebP"; color: root.value == "WEBP" ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px; }
+    }
+    if root.mode == 2 : Text {
+        x: parent.width - 96px; width: 62px; height: parent.height; vertical-alignment: center;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: root.value; color: #2DD4BF;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+    }
+    if root.mode == 2 : Rectangle {
+        x: parent.width - 30px; y: 3px; width: 26px; height: 13px; border-radius: 7px;
+        background: root.value != "关" ? #2DD4BF : #2A3A44;
+        Rectangle {
+            x: root.value != "关" ? 14px : 2px; y: 2px; width: 9px; height: 9px; border-radius: 5px; background: #FFFFFF;
+        }
+    }
 }
 
 component SettingsScreen inherits Rectangle {
@@ -228,35 +301,101 @@ component SettingsScreen inherits Rectangle {
     in property <string> shot: "";
     in property <string> remote: "开";
     width: 100%; height: 100%; background: transparent;
-    SettingRow { x: 8px; y: 24px; width: 304px; label: "图片格式"; value: root.fmt; focused: root.focus-idx == 0; }
-    SettingRow { x: 8px; y: 42px; width: 304px; label: "压缩质量"; value: root.quality; focused: root.focus-idx == 1; }
-    SettingRow { x: 8px; y: 60px; width: 304px; label: "录制帧率"; value: root.fps; focused: root.focus-idx == 2; }
-    SettingRow { x: 8px; y: 78px; width: 304px; label: "服务端口"; value: root.port; focused: root.focus-idx == 3; }
-    SettingRow { x: 8px; y: 96px; width: 304px; label: "截图快捷键"; value: root.shot; focused: root.focus-idx == 4; }
-    SettingRow { x: 8px; y: 114px; width: 304px; label: "远程 Web"; value: root.remote; focused: root.focus-idx == 5; }
+    SettingRow { x: 8px; y: 24px;  width: 304px; label: "图片格式";   mode: 1; value: root.fmt; focused: root.focus-idx == 0; }
+    SettingRow { x: 8px; y: 45px;  width: 304px; label: "压缩质量";   mode: 0; value: root.quality; focused: root.focus-idx == 1; }
+    SettingRow { x: 8px; y: 66px;  width: 304px; label: "录制帧率";   mode: 0; value: root.fps; focused: root.focus-idx == 2; }
+    SettingRow { x: 8px; y: 87px;  width: 304px; label: "服务端口";   mode: 0; value: root.port; focused: root.focus-idx == 3; }
+    SettingRow { x: 8px; y: 108px; width: 304px; label: "截图快捷键"; mode: 0; value: root.shot; focused: root.focus-idx == 4; }
+    SettingRow { x: 8px; y: 129px; width: 304px; label: "远程 Web";   mode: 2; value: root.remote; focused: root.focus-idx == 5; }
+}
+
+// 底栏：键帽方块 + 文字，右对齐 Esc（参照原型 .kb）
+component KeyCap inherits Rectangle {
+    in property <string> label: "";
+    in property <length> w: 14px;
+    width: root.w; height: 13px; border-radius: 3px;
+    background: #22303A; border-width: 1px; border-color: #31424E;
+    Text {
+        x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
+        horizontal-alignment: TextHorizontalAlignment.center;
+        text: root.label; color: #CFEAE4;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+    }
+}
+
+component HintText inherits Text {
+    height: 18px; vertical-alignment: center; color: #6E7B88;
+    font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+}
+
+component HintRow inherits Rectangle {
+    in property <int> page: 0;
+    height: 18px;
+    background: #0F1419;
+    Rectangle { x: 0; y: 0; width: parent.width; height: 1px; background: #1C242B; }
+
+    // 主页
+    if root.page == 0 : KeyCap  { x: 8px;   y: 2px; label: "Enter"; w: 30px; }
+    if root.page == 0 : HintText { x: 41px; y: 0; text: "打开"; }
+    if root.page == 0 : KeyCap  { x: parent.width - 52px; y: 2px; label: "Esc"; w: 22px; }
+    if root.page == 0 : HintText { x: parent.width - 27px; y: 0; text: "退出"; }
+
+    // 相册
+    if root.page == 1 : KeyCap  { x: 8px;   y: 2px; label: "◀"; w: 14px; }
+    if root.page == 1 : KeyCap  { x: 24px;  y: 2px; label: "▶"; w: 14px; }
+    if root.page == 1 : HintText { x: 41px; y: 0; text: "移动"; }
+    if root.page == 1 : KeyCap  { x: 74px;  y: 2px; label: "Enter"; w: 30px; }
+    if root.page == 1 : HintText { x: 107px; y: 0; text: "预览"; }
+    if root.page == 1 : KeyCap  { x: 138px; y: 2px; label: "空格"; w: 26px; }
+    if root.page == 1 : HintText { x: 167px; y: 0; text: "多选"; }
+    if root.page == 1 : KeyCap  { x: parent.width - 60px; y: 2px; label: "退格"; w: 26px; }
+    if root.page == 1 : HintText { x: parent.width - 31px; y: 0; text: "删除"; }
+
+    // 预览
+    if root.page == 2 : KeyCap  { x: 8px;   y: 2px; label: "◀"; w: 14px; }
+    if root.page == 2 : KeyCap  { x: 24px;  y: 2px; label: "▶"; w: 14px; }
+    if root.page == 2 : HintText { x: 41px; y: 0; text: "切换"; }
+    if root.page == 2 : KeyCap  { x: parent.width - 106px; y: 2px; label: "退格"; w: 26px; }
+    if root.page == 2 : HintText { x: parent.width - 77px; y: 0; text: "删除"; }
+    if root.page == 2 : KeyCap  { x: parent.width - 48px; y: 2px; label: "Esc"; w: 22px; }
+    if root.page == 2 : HintText { x: parent.width - 23px; y: 0; text: "返回"; }
+
+    // 设置
+    if root.page == 3 : KeyCap  { x: 8px;   y: 2px; label: "▲"; w: 14px; }
+    if root.page == 3 : KeyCap  { x: 24px;  y: 2px; label: "▼"; w: 14px; }
+    if root.page == 3 : HintText { x: 41px; y: 0; text: "选择"; }
+    if root.page == 3 : KeyCap  { x: 74px;  y: 2px; label: "◀"; w: 14px; }
+    if root.page == 3 : KeyCap  { x: 90px;  y: 2px; label: "▶"; w: 14px; }
+    if root.page == 3 : HintText { x: 107px; y: 0; text: "调整"; }
+    if root.page == 3 : KeyCap  { x: parent.width - 48px; y: 2px; label: "Esc"; w: 22px; }
+    if root.page == 3 : HintText { x: parent.width - 23px; y: 0; text: "返回"; }
 }
 
 export component AppWindow inherits Window {
     title: "CardShot";
     width: 320px; height: 170px;
-    background: #0d1013;
-    in property <int> page: 0;            // 0 home 1 gallery 2 preview 3 settings
-    in property <[GalleryItem]> items;
+    background: #0B0E11;
+
+    in property <int> page: 0;
+    in property <string> page-title: "CardShot";
+    in property <bool> recording: false;
+    in property <string> rec-time: "";
     in property <int> home-focus: 0;
     in property <int> grid-focus: 0;
     in property <bool> selecting: false;
     in property <int> sel-count: 0;
-    in property <bool> recording: false;
-    in property <string> rec-time: "";
-    in property <string> toast: "";
-    in property <string> page-title: "CardShot";
-    in property <string> hint: "";
+    in property <[GalleryItem]> items;
     in property <image> preview-img;
     in property <string> preview-name: "";
     in property <string> preview-size: "";
     in property <string> preview-dur: "";
     in property <string> preview-kind: "image";
-    in property <int> count-images: 0; in property <int> count-videos: 0; in property <string> size-label: "";
+    in property <string> preview-pos: "";
+    in property <int> count-images: 0;
+    in property <int> count-videos: 0;
+    in property <string> size-label: "";
+    in property <string> hint: "";
+    in property <string> toast: "";
     in property <bool> help-visible: false;
     in property <bool> confirm-visible: false;
     in property <int> confirm-focus: 0;
@@ -267,77 +406,101 @@ export component AppWindow inherits Window {
     in property <int> s-port: 8420;
     in property <string> s-shot: "";
     in property <string> s-remote: "开";
-    in property <string> s-hotkey: "关";
+    in property <string> s-hotkey: "开";
 
     TopBar {
         width: parent.width; y: 0;
         title: root.page-title;
         recording: root.recording;
         rec-time: root.rec-time;
-        count-images: root.count-images;
-        count-videos: root.count-videos;
-        size-label: root.size-label;
     }
     if root.page == 0 : HomeScreen {
-        y: 0; width: parent.width; height: parent.height;
-        focus-idx: root.home-focus; count-images: root.count-images; count-videos: root.count-videos;
+        y: 0; width: parent.width; height: parent.height - 18px;
+        focus-idx: root.home-focus;
+        count-images: root.count-images; count-videos: root.count-videos; size-label: root.size-label;
     }
     if root.page == 1 : GalleryScreen {
-        y: 0; width: parent.width; height: parent.height;
+        y: 0; width: parent.width; height: parent.height - 18px;
         items: root.items; focus-idx: root.grid-focus; selecting: root.selecting; sel-count: root.sel-count;
     }
     if root.page == 2 : PreviewScreen {
-        y: 0; width: parent.width; height: parent.height;
-        img: root.preview-img; name: root.preview-name; size-label: root.preview-size; dur: root.preview-dur; kind: root.preview-kind;
+        y: 0; width: parent.width; height: parent.height - 18px;
+        img: root.preview-img; name: root.preview-name; size-label: root.preview-size; dur: root.preview-dur; kind: root.preview-kind; pos: root.preview-pos;
     }
     if root.page == 3 : SettingsScreen {
-        y: 0; width: parent.width; height: parent.height;
+        y: 0; width: parent.width; height: parent.height - 18px;
         focus-idx: root.set-focus; fmt: root.s-fmt; quality: root.s-quality; fps: root.s-fps;
         port: root.s-port; shot: root.s-shot; remote: root.s-remote;
     }
-    HintBar { width: parent.width; y: parent.height - 15px; text: root.hint; }
+    HintRow { width: parent.width; y: parent.height - 18px; page: root.page; }
+
+    if root.toast != "" : Rectangle {
+        x: parent.width - 120px; y: parent.height - 32px; width: 112px; height: 16px;
+        border-radius: 8px; background: #1D2A32; border-width: 1px; border-color: #2A3A45;
+        Text {
+            x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
+            horizontal-alignment: TextHorizontalAlignment.center;
+            text: root.toast; color: #C8D2DC;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+        }
+    }
+
     if root.help-visible : Rectangle {
-        x: 0; y: 0; width: parent.width; height: parent.height; background: #000000c0;
+        x: 0; y: 0; width: parent.width; height: parent.height; background: #000000C0;
         Rectangle {
-            x: 16px; y: 14px; width: parent.width - 32px; height: parent.height - 44px;
-            border-radius: 10px; background: #141a20; border-width: 1px; border-color: #33d6c0;
-            Text { x: 12px; y: 5px; width: parent.width - 24px; text: "按键说明"; color: #eafffb; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700; }
-            Text { x: 12px; y: 23px; width: parent.width - 24px; text: "▲▼◀▶  移动 / 切换"; color: #cdd6df; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-            Text { x: 12px; y: 39px; width: parent.width - 24px; text: "Enter  打开 / 确认"; color: #cdd6df; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-            Text { x: 12px; y: 55px; width: parent.width - 24px; text: "空格  多选"; color: #cdd6df; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-            Text { x: 12px; y: 71px; width: parent.width - 24px; text: "退格  删除（需确认）"; color: #cdd6df; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-            Text { x: 12px; y: 87px; width: parent.width - 24px; text: "Shift+退格  直接删除"; color: #cdd6df; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-            Text { x: 12px; y: 103px; width: parent.width - 24px; text: "Esc  返回 / 关闭"; color: #cdd6df; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            x: 24px; y: 12px; width: 272px; height: 132px;
+            border-radius: 10px; background: #14191E; border-width: 1px; border-color: #2A3A45;
+            Text {
+                x: 14px; y: 8px; width: 240px; height: 16px; vertical-alignment: center;
+                text: "按键"; color: #E6EDF3;
+                font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
+            }
+            Text { x: 14px; y: 28px; width: 240px; height: 12px; vertical-alignment: center; text: "▲▼◀▶  移动 切换"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            Text { x: 14px; y: 42px; width: 240px; height: 12px; vertical-alignment: center; text: "Enter  打开 确认"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            Text { x: 14px; y: 56px; width: 240px; height: 12px; vertical-alignment: center; text: "空格  多选"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            Text { x: 14px; y: 70px; width: 240px; height: 12px; vertical-alignment: center; text: "退格  删除"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            Text { x: 14px; y: 84px; width: 240px; height: 12px; vertical-alignment: center; text: "Shift+退格  直接删除"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            Text { x: 14px; y: 98px; width: 240px; height: 12px; vertical-alignment: center; text: "Esc  返回 关闭"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
         }
     }
+
     if root.confirm-visible : Rectangle {
-        x: 0; y: 0; width: parent.width; height: parent.height; background: #000000c0;
+        x: 0; y: 0; width: parent.width; height: parent.height; background: #000000C0;
         Rectangle {
-            x: 28px; y: 42px; width: parent.width - 56px; height: 86px;
-            border-radius: 10px; background: #141a20; border-width: 1px; border-color: #ff6b6b;
-            Text { x: 12px; y: 10px; width: parent.width - 24px; text: "是否确认进行删除？"; color: #ffffff; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700; }
-            Text { x: 12px; y: 28px; width: parent.width - 24px; text: "删除后将无法恢复"; color: #ff9b9b; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-            Rectangle {
-                x: 16px; y: 54px; width: 96px; height: 22px; border-radius: 6px;
-                background: root.confirm-focus == 0 ? #2a333d : #1a2028;
-                border-width: 1px; border-color: root.confirm-focus == 0 ? #8b98a6 : #2a333d;
-                Text { x: 0; y: 0; width: parent.width; height: parent.height; horizontal-alignment: TextHorizontalAlignment.center; vertical-alignment: center;
-                    text: "取消"; color: #e6edf3; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; }
+            x: 34px; y: 44px; width: 252px; height: 84px;
+            border-radius: 10px; background: #14191E; border-width: 1px; border-color: #5A2B2B;
+            Text {
+                x: 16px; y: 10px; width: 220px; height: 16px; vertical-alignment: center;
+                text: "删除所选内容"; color: #E6EDF3;
+                font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
+            }
+            Text {
+                x: 16px; y: 28px; width: 220px; height: 12px; vertical-alignment: center;
+                text: "删除后无法恢复"; color: #C98A8A;
+                font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
             }
             Rectangle {
-                x: parent.width - 112px; y: 54px; width: 96px; height: 22px; border-radius: 6px;
-                background: root.confirm-focus == 1 ? #7a2c2c : #3a2222;
-                border-width: 1px; border-color: root.confirm-focus == 1 ? #ff6b6b : #3a2222;
-                Text { x: 0; y: 0; width: parent.width; height: parent.height; horizontal-alignment: TextHorizontalAlignment.center; vertical-alignment: center;
-                    text: "删除"; color: #ffd7d7; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; }
+                x: 16px; y: 50px; width: 102px; height: 24px; border-radius: 7px;
+                background: #1A2027; border-width: 1px;
+                border-color: root.confirm-focus == 0 ? #2DD4BF : #2A323B;
+                Text {
+                    x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                    text: "取消"; color: root.confirm-focus == 0 ? #E6EDF3 : #AEBAC6;
+                    font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px;
+                }
+            }
+            Rectangle {
+                x: 134px; y: 50px; width: 102px; height: 24px; border-radius: 7px;
+                background: root.confirm-focus == 1 ? #7F2A2A : #5A2222; border-width: 1px;
+                border-color: root.confirm-focus == 1 ? #F26D6D : #7F3A3A;
+                Text {
+                    x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                    text: "删除"; color: #FFE2E2;
+                    font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px;
+                }
             }
         }
-    }
-    Rectangle {
-        visible: root.toast != "";
-        x: 60px; y: parent.height - 40px; width: parent.width - 120px; height: 22px;
-        border-radius: 6px; background: #1d242ccc; border-width: 1px; border-color: #33d6c0;
-        Text { x: 0; y: 0; width: parent.width; height: parent.height; horizontal-alignment: TextHorizontalAlignment.center; vertical-alignment: center;
-            text: root.toast; color: #eafffb; font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; overflow: elide; }
     }
 }

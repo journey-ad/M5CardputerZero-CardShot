@@ -85,7 +85,11 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     ui.set_set_focus(st.settings_focus as i32);
     ui.set_recording(st.recording);
     ui.set_rec_time(fmt_duration(st.rec_seconds as f64).into());
-    ui.set_page_title(st.page.title().into());
+    if st.page == crate::constants::Page::Preview {
+        ui.set_page_title(st.preview_name.clone().into());
+    } else {
+        ui.set_page_title(st.page.title().into());
+    }
     ui.set_hint(st.page.hint().into());
     ui.set_count_images(st.count_images as i32);
     ui.set_count_videos(st.count_videos as i32);
@@ -100,6 +104,7 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     ui.set_help_visible(st.help_visible);
     ui.set_confirm_visible(st.confirm_visible);
     ui.set_confirm_focus(st.confirm_focus);
+    ui.set_preview_pos(st.preview_pos.clone().into());
     ui.set_toast(st.toast_text().into());
 }
 
@@ -114,7 +119,12 @@ pub fn open_preview(ui: &AppWindow, client: &mut Client, st: &mut State) {
     ui.set_preview_img(img);
     ui.set_preview_name(it.name.clone().into());
     ui.set_preview_size(human_size(it.size).into());
-    ui.set_preview_dur(duration.into());
+    ui.set_preview_dur(duration.clone().into());
     ui.set_preview_kind(it.kind.clone().into());
+    st.preview_name = it.name.clone();
+    st.preview_size = human_size(it.size);
+    st.preview_dur = duration;
+    st.preview_kind = it.kind.clone();
+    st.preview_pos = format!("{}/{}", idx + 1, st.items.len());
     st.page = crate::constants::Page::Preview;
 }

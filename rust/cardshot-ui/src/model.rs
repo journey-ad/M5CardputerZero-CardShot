@@ -65,6 +65,11 @@ pub struct State {
     pub help_visible: bool,
     pub confirm_visible: bool,
     pub confirm_focus: i32,
+    pub preview_name: String,
+    pub preview_size: String,
+    pub preview_dur: String,
+    pub preview_kind: String,
+    pub preview_pos: String,
 }
 
 impl State {
@@ -98,6 +103,11 @@ impl State {
             help_visible: false,
             confirm_visible: false,
             confirm_focus: 0,
+            preview_name: String::new(),
+            preview_size: String::new(),
+            preview_dur: String::new(),
+            preview_kind: "image".into(),
+            preview_pos: String::new(),
         }
     }
 

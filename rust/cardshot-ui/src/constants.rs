@@ -75,10 +75,10 @@ impl Page {
 
     pub fn hint(self) -> &'static str {
         match self {
-            Page::Home => "▲▼ 选择   Enter 确认   Esc 退出",
-            Page::Gallery => "◀▶ 移动   Enter 预览   空格 多选   退格 删除",
-            Page::Preview => "◀▶ 切换   退格 删除   Shift+退格 直删  Esc返回",
-            Page::Settings => "▲▼ 选择   ◀▶ 调整   Esc 返回",
+            Page::Home => "Enter 打开",
+            Page::Gallery => "Enter 预览   空格 多选   退格 删除",
+            Page::Preview => "退格 删除   Esc 返回",
+            Page::Settings => "▲▼ 选择   ◀▶ 调整",
         }
     }
 
