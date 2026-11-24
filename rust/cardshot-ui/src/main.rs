@@ -4,6 +4,7 @@ mod app;
 mod constants;
 mod daemon;
 mod fonts;
+mod i18n;
 mod model;
 mod platform;
 

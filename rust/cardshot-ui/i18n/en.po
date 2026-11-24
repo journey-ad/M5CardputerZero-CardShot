@@ -1,0 +1,260 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "常规"
+msgstr "General"
+
+msgid "按键"
+msgstr "Keys"
+
+msgid "远程"
+msgstr "Remote"
+
+msgid "数据"
+msgstr "Data"
+
+msgid "后台常驻"
+msgstr "Background"
+
+msgid "语言设置"
+msgstr "Language"
+
+msgid "图片格式"
+msgstr "Image format"
+
+msgid "压缩质量"
+msgstr "Quality"
+
+msgid "录制帧率"
+msgstr "Frame rate"
+
+msgid "截图快捷键"
+msgstr "Shot shortcut"
+
+msgid "录制快捷键"
+msgstr "Record shortcut"
+
+msgid "Web管理面板"
+msgstr "Web panel"
+
+msgid "服务端口"
+msgstr "Port"
+
+msgid "清空数据"
+msgstr "Clear data"
+
+msgid "质量越高，单张体积越大"
+msgstr "Higher quality, larger files"
+
+msgid "同一局域网内用浏览器访问该端口"
+msgstr "Open this port from a browser on the same LAN"
+
+msgid "截图保存在 Pictures/CardShot"
+msgstr "Screenshots in Pictures/CardShot"
+
+msgid "录像保存在 Videos/CardShot"
+msgstr "Recordings in Videos/CardShot"
+
+msgid "相册"
+msgstr "Gallery"
+
+msgid "设置"
+msgstr "Settings"
+
+msgid "使用说明"
+msgstr "Help"
+
+msgid "截图"
+msgstr "Shots"
+
+msgid "录制"
+msgstr "Videos"
+
+msgid "项"
+msgstr "items"
+
+msgid "还没有内容"
+msgstr "Nothing here yet"
+
+msgid "用热键截图或录制后会自动出现"
+msgstr "Shots and recordings appear here automatically"
+
+msgid "打开"
+msgstr "Open"
+
+msgid "长按退出"
+msgstr "Hold to quit"
+
+msgid "移动"
+msgstr "Move"
+
+msgid "预览"
+msgstr "View"
+
+msgid "多选"
+msgstr "Select"
+
+msgid "删除"
+msgstr "Delete"
+
+msgid "切换"
+msgstr "Switch"
+
+msgid "返回"
+msgstr "Back"
+
+msgid "选择"
+msgstr "Sel"
+
+msgid "调整"
+msgstr "Adjust"
+
+msgid "分类"
+msgstr "Tab"
+
+msgid "左右切换"
+msgstr "Switch left / right"
+
+msgid "上下选择"
+msgstr "Move up / down"
+
+msgid "Enter  打开 确认"
+msgstr "Enter  open / confirm"
+
+msgid "空格  多选"
+msgstr "Space  multi-select"
+
+msgid "退格  删除"
+msgstr "Backspace  delete"
+
+msgid "Shift + 退格  直接删除"
+msgstr "Shift + Backspace  delete now"
+
+msgid "Esc 返回；主界面长按退出"
+msgstr "Esc back; hold on home to quit"
+
+msgid "取消"
+msgstr "Cancel"
+
+msgid "删除"
+msgstr "Delete"
+
+msgid "已选 "
+msgstr "Selected "
+
+msgid " 项    空格 选择    退格 删除    Esc 取消"
+msgstr "    Space select    Backspace delete    Esc cancel"
+
+msgid "是否确认进行删除？删除后将无法恢复"
+msgstr "Delete permanently? This cannot be undone"
+
+msgid "清空数据"
+msgstr "Clear data"
+
+msgid "清空全部截图与录像？此操作无法恢复"
+msgstr "Clear all shots and recordings? This cannot be undone"
+
+msgid "控制应用是否随系统启动并在后台常驻"
+msgstr "Start automatically at boot and keep running in background"
+
+msgid "切换界面显示语言"
+msgstr "Change the interface language"
+
+msgid "选择截图保存的图片格式"
+msgstr "Choose the image format for screenshots"
+
+msgid "调整图片压缩质量，数值越高画质越好、体积越大"
+msgstr "Adjust compression quality; higher means better quality and larger files"
+
+msgid "设置录屏的帧率，帧率越高画面越流畅"
+msgstr "Set the recording frame rate; higher is smoother"
+
+msgid "设置全局截图快捷键"
+msgstr "Set the global screenshot shortcut"
+
+msgid "设置全局录屏开始/结束快捷键"
+msgstr "Set the global recording shortcut"
+
+msgid "开启后可通过浏览器在局域网内管理相册"
+msgstr "Enable the web gallery on your local network"
+
+msgid "设置 Web 管理面板的访问端口"
+msgstr "Set the port of the web panel"
+
+msgid "删除全部截图与录像，操作不可恢复"
+msgstr "Delete all shots and recordings permanently"
+
+msgid "设置项说明"
+msgstr "About this setting"
+
+msgid "按 H 查看说明"
+msgstr "Press H for help"
+
+msgid "数字输入   Enter 保存   Esc 取消"
+msgstr "Type digits   Enter save   Esc cancel"
+
+msgid "按下组合键   Esc 取消"
+msgstr "Press combo   Esc cancel"
+
+msgid "Enter 开关"
+msgstr "Enter toggle"
+
+msgid "Enter 设置"
+msgstr "Enter set"
+
+msgid "Enter 输入"
+msgstr "Enter edit"
+
+msgid "Enter 清空"
+msgstr "Enter clear"
+
+msgid "全部删除"
+msgstr "Delete all"
+
+msgid "开"
+msgstr "On"
+
+msgid "关"
+msgstr "Off"
+
+msgid "按 H 查看说明"
+msgstr "Press H for help"
+
+msgid "说明"
+msgstr "Help"
+
+msgid "随系统启动后自动在后台运行，关闭后需手动启动"
+msgstr "Starts automatically in the background at boot; when off, launch it manually"
+
+msgid "切换界面语言，立即生效"
+msgstr "Switch UI language, takes effect immediately"
+
+msgid "截图保存的编码格式，PNG 无损，JPEG 与 WebP 体积更小"
+msgstr "Image encoding; PNG is lossless, JPEG and WebP are smaller"
+
+msgid "JPEG 与 WebP 的编码质量，数值越高越清晰，文件也越大"
+msgstr "Encoding quality for JPEG and WebP; higher is sharper and larger"
+
+msgid "录屏每秒采样的帧数，越高画面越流畅，文件越大"
+msgstr "Frames sampled per second; higher is smoother and larger"
+
+msgid "按 Enter 后按下组合键即可保存为截图快捷键"
+msgstr "Press Enter, then press a key combo to save the screenshot shortcut"
+
+msgid "按 Enter 后按下组合键即可保存为录制快捷键"
+msgstr "Press Enter, then press a key combo to save the recording shortcut"
+
+msgid "开启后可在同一局域网内用浏览器管理相册"
+msgstr "When on, manage the gallery from a browser on the same LAN"
+
+msgid "Web 管理面板监听的端口，按 Enter 手动输入"
+msgstr "Port the web panel listens on; press Enter to type it"
+
+msgid "删除全部截图与录像，此操作不可恢复"
+msgstr "Delete all screenshots and recordings; this cannot be undone"
+
+msgid "按 H 关闭"
+msgstr "Press H to close"
+

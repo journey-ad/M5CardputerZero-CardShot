@@ -37,6 +37,18 @@ pub fn handle_key(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
             return;
         }
     }
+    // 设置项说明面板：H / Esc / 空格 / 回车 关闭
+    if st.page == Page::Settings && st.setting_help_visible {
+        if matches!(key, "h" | "H" | "ESC" | "SPACE" | "ENTER") {
+            st.setting_help_visible = false;
+        }
+        return;
+    }
+    // 设置页按 H 打开当前项说明
+    if st.page == Page::Settings && matches!(key, "h" | "H") {
+        st.setting_help_visible = true;
+        return;
+    }
     // 机身方向键为字母键，按 cardbili 的约定映射为方向语义
     let key = match key {
         "z" | "Z" => "LEFT",
@@ -400,6 +412,12 @@ fn handle_settings(st: &mut State, client: &mut Client, key: &str) {
                     let next = !st.autostart;
                     apply_config(client, st, json!({ "service": { "autostart": next } }));
                     st.autostart = next;
+                }
+                SettingRow::Language => {
+                    let cur = st.language.clone();
+                    let next = cycle(&crate::i18n::LANGS, cur.as_str(), dir);
+                    apply_config(client, st, json!({ "language": next }));
+                    st.language = crate::i18n::normalize(next).to_string();
                 }
                 SettingRow::Format => {
                     let next = cycle(&IMAGE_FORMATS, st.image_format.as_str(), dir);

@@ -118,6 +118,7 @@ impl HomeAction {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum SettingRow {
     Autostart,
+    Language,
     Format,
     Quality,
     Fps,
@@ -128,8 +129,13 @@ pub enum SettingRow {
     Clear,
 }
 
-/// 每个设置分类页包含的行索引区间（含首尾）
-pub const SETTINGS_TAB_RANGES: [(usize, usize); 4] = [(0, 3), (4, 5), (6, 7), (8, 8)];
+/// 每个设置分类页包含的行索引区间（含首尾），由 SettingRow 顺序推导
+pub const SETTINGS_TAB_RANGES: [(usize, usize); 4] = [
+    (SettingRow::Autostart.index(), SettingRow::Fps.index()),
+    (SettingRow::ShotHotkey.index(), SettingRow::RecordHotkey.index()),
+    (SettingRow::Remote.index(), SettingRow::Port.index()),
+    (SettingRow::Clear.index(), SettingRow::Clear.index()),
+];
 
 /// 根据设置行推断所属分类页
 pub fn settings_tab_of(focus: usize) -> usize {
@@ -140,8 +146,9 @@ pub fn settings_tab_of(focus: usize) -> usize {
 }
 
 impl SettingRow {
-    pub const LIST: [SettingRow; 9] = [
+    pub const LIST: [SettingRow; 10] = [
         SettingRow::Autostart,
+        SettingRow::Language,
         SettingRow::Format,
         SettingRow::Quality,
         SettingRow::Fps,
@@ -151,6 +158,21 @@ impl SettingRow {
         SettingRow::Port,
         SettingRow::Clear,
     ];
+
+    pub const fn index(self) -> usize {
+        match self {
+            SettingRow::Autostart => 0,
+            SettingRow::Language => 1,
+            SettingRow::Format => 2,
+            SettingRow::Quality => 3,
+            SettingRow::Fps => 4,
+            SettingRow::ShotHotkey => 5,
+            SettingRow::RecordHotkey => 6,
+            SettingRow::Remote => 7,
+            SettingRow::Port => 8,
+            SettingRow::Clear => 9,
+        }
+    }
 
     pub fn at(index: usize) -> SettingRow {
         SettingRow::LIST[index.min(SettingRow::LIST.len() - 1)]

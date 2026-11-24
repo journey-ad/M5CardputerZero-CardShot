@@ -5,7 +5,8 @@ pub mod keys;
 pub mod poll;
 pub mod view;
 
-use crate::constants::Page;
+use crate::constants::{Page, SettingRow};
+use slint::ComponentHandle;
 use crate::daemon::Client;
 use crate::model::State;
 use crate::AppWindow;
@@ -20,6 +21,7 @@ pub struct App {
 
 impl App {
     pub fn new(ui: AppWindow) -> App {
+        ui.global::<crate::I18n>().on_lookup(|text| crate::i18n::tr_current(text.as_str()).into());
         App {
             ui,
             st: State::new(),
@@ -53,6 +55,9 @@ impl App {
             st.pending_preview = true;
         }
         // 调试钩子：直接展示弹窗，便于离线截图验证
+        if let Ok(l) = std::env::var("CARDSHOT_TEST_LANG") {
+            st.language = crate::i18n::normalize(&l).to_string();
+        }
         if let Ok(idx) = std::env::var("CARDSHOT_TEST_SETTINGS").unwrap_or_default().parse::<usize>() {
             st.settings_focus = idx;
             st.settings_tab = crate::constants::settings_tab_of(idx);
@@ -65,7 +70,7 @@ impl App {
             st.confirm_focus = 1;
         }
         if std::env::var("CARDSHOT_TEST_CLEAR").is_ok() {
-            st.settings_focus = 7;
+            st.settings_focus = SettingRow::Clear.index();
             st.settings_tab = 3;
             st.confirm_kind = 1;
             st.confirm_visible = true;
@@ -79,13 +84,13 @@ impl App {
             st.video_ended = true;
         }
         if std::env::var("CARDSHOT_TEST_PORT_EDIT").is_ok() {
-            st.settings_focus = 6;
+            st.settings_focus = SettingRow::Port.index();
             st.settings_tab = 2;
             st.port_edit = true;
             st.port_buf = "8420".into();
         }
         if std::env::var("CARDSHOT_TEST_HOTKEY").is_ok() {
-            st.settings_focus = 3;
+            st.settings_focus = SettingRow::ShotHotkey.index();
             st.settings_tab = 1;
             st.hotkey_capture = true;
         }

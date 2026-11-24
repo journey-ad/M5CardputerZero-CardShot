@@ -1,3 +1,4 @@
+use slint::ComponentHandle;
 // 界面数据装配：缩略图加载、相册模型、属性同步、预览
 
 use std::collections::HashMap;
@@ -112,31 +113,41 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     if st.page == crate::constants::Page::Preview {
         ui.set_page_title(st.preview_name.clone().into());
     } else {
-        ui.set_page_title(st.page.title().into());
+        ui.set_page_title(crate::i18n::tr(&st.language, st.page.title()).into());
     }
     let settings = st.page == crate::constants::Page::Settings;
     let row = SettingRow::at(st.settings_focus);
     let adjust = settings && matches!(row, SettingRow::Format | SettingRow::Quality | SettingRow::Fps);
     let editing = settings && (st.port_edit || st.hotkey_capture);
+    let lang = st.language.as_str();
     let hint: String = if settings && st.port_edit {
-        "数字输入   Enter 保存   Esc 取消".into()
+        crate::i18n::tr(lang, "数字输入   Enter 保存   Esc 取消")
     } else if settings && st.hotkey_capture {
-        "按下组合键   Esc 取消".into()
+        crate::i18n::tr(lang, "按下组合键   Esc 取消")
     } else if settings {
         match row {
-            SettingRow::Autostart => "Enter 开关".into(),
-            SettingRow::ShotHotkey | SettingRow::RecordHotkey => "Enter 设置".into(),
-            SettingRow::Remote => "Enter 开关".into(),
-            SettingRow::Port => "Enter 输入".into(),
-            SettingRow::Clear => "Enter 清空".into(),
+            SettingRow::Autostart => crate::i18n::tr(lang, "Enter 开关"),
+            SettingRow::ShotHotkey | SettingRow::RecordHotkey => crate::i18n::tr(lang, "Enter 设置"),
+            SettingRow::Remote => crate::i18n::tr(lang, "Enter 开关"),
+            SettingRow::Port => crate::i18n::tr(lang, "Enter 输入"),
+            SettingRow::Clear => crate::i18n::tr(lang, "Enter 清空"),
             _ => String::new(),
         }
     } else {
-        st.page.hint().into()
+        crate::i18n::tr(lang, st.page.hint())
     };
     ui.set_hint(hint.into());
     ui.set_set_tab(st.settings_tab as i32);
-    ui.set_s_autostart(if st.autostart { "开".into() } else { "关".into() });
+    ui.set_s_autostart(if st.autostart { crate::i18n::tr(lang, "开").into() } else { crate::i18n::tr(lang, "关").into() });
+    ui.set_s_language(crate::i18n::lang_name(&st.language).into());
+    ui.set_setting_help_visible(st.setting_help_visible);
+    if st.setting_help_visible {
+        let (lk, dk) = crate::i18n::setting_help(row);
+        ui.set_s_setting_help_title(crate::i18n::tr(lang, lk).into());
+        ui.set_s_setting_help_body(crate::i18n::tr(lang, dk).into());
+    }
+    crate::i18n::set_current(lang);
+    ui.global::<crate::I18n>().set_lang(if lang == "en" { 1 } else if lang == "ja" { 2 } else { 0 });
     ui.set_settings_adjust(adjust);
     ui.set_settings_editing(editing);
     ui.set_count_images(st.count_images as i32);
@@ -174,7 +185,7 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     };
     ui.set_s_record(record_text.into());
     ui.set_hotkey_capture(st.hotkey_capture);
-    ui.set_s_remote(if st.remote_running { "开".into() } else { "关".into() });
+    ui.set_s_remote(if st.remote_running { crate::i18n::tr(lang, "开").into() } else { crate::i18n::tr(lang, "关").into() });
     ui.set_help_visible(st.help_visible);
     ui.set_confirm_visible(st.confirm_visible);
     ui.set_confirm_focus(st.confirm_focus);
@@ -314,3 +325,6 @@ pub fn tick_video(ui: &AppWindow, st: &mut State) {
         v.next_at = now + interval;
     }
 }
+
+
+

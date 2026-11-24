@@ -84,6 +84,9 @@ impl Core {
         match serde_json::from_value::<Config>(cur) {
             Ok(mut nc) => {
                 nc.image_quality = nc.image_quality.clamp(1, 100);
+                if !matches!(nc.language.as_str(), "zh" | "en" | "ja") {
+                    nc.language = "zh".into();
+                }
                 let old_autostart = cfg.service.autostart;
                 let _ = nc.save(&self.cfg_path);
                 if old_autostart != nc.service.autostart {
