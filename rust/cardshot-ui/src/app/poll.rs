@@ -39,6 +39,9 @@ pub fn poll_status(client: &mut Client, st: &mut State) {
         if let Some(p) = r.get("port").and_then(|x| x.as_i64()) {
             st.remote_port = p;
         }
+        if let Some(h) = r.get("host").and_then(|x| x.as_str()) {
+            st.remote_host = h.to_string();
+        }
     }
 }
 

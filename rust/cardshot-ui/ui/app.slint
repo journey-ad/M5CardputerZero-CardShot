@@ -93,7 +93,7 @@ component ActionRow inherits Rectangle {
         font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
     }
     Image {
-        x: parent.width - 16px; y: (parent.height - 10px) / 2; width: 10px; height: 10px;
+        x: parent.width - 21px; y: (parent.height - 12px) / 2; width: 12px; height: 12px;
         source: @image-url("icons/arrow-right.svg");
         opacity: root.focused ? 0.9 : 0.28;
         animate opacity { duration: 110ms; }
@@ -231,7 +231,13 @@ component PreviewScreen inherits Rectangle {
     in property <string> dur: "";
     in property <string> kind: "image";
     in property <string> pos: "";
+    in property <bool> ended: false;
     width: 100%; height: 100%; background: transparent;
+    if root.ended : Rectangle {
+        x: (parent.width - 48px) / 2; y: (parent.height - 48px) / 2; width: 48px; height: 48px;
+        border-radius: 24px; background: #000000A6; border-width: 1px; border-color: #FFFFFF59;
+        Image { x: 17px; y: 17px; width: 14px; height: 14px; source: @image-url("icons/play.svg"); }
+    }
     // 位置与体积：右上浮层，不占布局
     Text {
         x: parent.width - 158px; y: 2px; width: 150px; height: 16px; vertical-alignment: center;
@@ -258,7 +264,7 @@ component SettingRow inherits Rectangle {
     in property <int> mode: 0;      // 0 文本 / 1 格式段选 / 2 远程开关
     in property <bool> focused: false;
     in property <bool> disabled: false;
-    height: 19px;
+    height: 18px;
     border-radius: 5px;
     background: focused ? #16302F : transparent;
     border-width: root.focused ? 1px : 0px;
@@ -311,12 +317,13 @@ component SettingsScreen inherits Rectangle {
     in property <string> shot: "";
     in property <string> remote: "开";
     width: 100%; height: 100%; background: transparent;
-    SettingRow { x: 8px; y: 24px;  width: 304px; label: "图片格式";   mode: 1; value: root.fmt; focused: root.focus-idx == 0; }
-    SettingRow { x: 8px; y: 45px;  width: 304px; label: "压缩质量";   mode: 0; value: root.quality; focused: root.focus-idx == 1; }
-    SettingRow { x: 8px; y: 66px;  width: 304px; label: "录制帧率";   mode: 0; value: root.fps; focused: root.focus-idx == 2; }
-    SettingRow { x: 8px; y: 87px;  width: 304px; label: "远程 Web";   mode: 2; value: root.remote; focused: root.focus-idx == 3; }
-    SettingRow { x: 8px; y: 108px; width: 304px; label: "服务端口";   mode: 0; value: root.port-text; focused: root.focus-idx == 4; disabled: root.port-disabled; }
-    SettingRow { x: 8px; y: 129px; width: 304px; label: "截图快捷键"; mode: 0; value: root.shot-text; focused: root.focus-idx == 5; }
+    SettingRow { x: 8px; y: 20px;  width: 304px; label: "图片格式";   mode: 1; value: root.fmt; focused: root.focus-idx == 0; }
+    SettingRow { x: 8px; y: 38px;  width: 304px; label: "压缩质量";   mode: 0; value: root.quality; focused: root.focus-idx == 1; }
+    SettingRow { x: 8px; y: 56px;  width: 304px; label: "录制帧率";   mode: 0; value: root.fps; focused: root.focus-idx == 2; }
+    SettingRow { x: 8px; y: 74px;  width: 304px; label: "截图快捷键"; mode: 0; value: root.shot-text; focused: root.focus-idx == 3; }
+    SettingRow { x: 8px; y: 92px;  width: 304px; label: "Web管理面板"; mode: 2; value: root.remote; focused: root.focus-idx == 4; }
+    SettingRow { x: 8px; y: 110px; width: 304px; label: "服务端口";   mode: 0; value: root.port-text; focused: root.focus-idx == 5; disabled: root.port-disabled; }
+    SettingRow { x: 8px; y: 128px; width: 304px; label: "清空数据";   mode: 0; value: "全部删除"; focused: root.focus-idx == 6; }
 }
 
 // 底栏：键帽方块 + 文字，右对齐 Esc（参照原型 .kb）
@@ -340,14 +347,14 @@ component HintText inherits Text {
 
 component ArrowPair inherits Rectangle {
     in property <bool> vertical: false;
-    width: 30px; height: 13px; border-radius: 3px;
+    width: 34px; height: 15px; border-radius: 3px;
     background: #22303A; border-width: 1px; border-color: #31424E;
     Image {
-        x: 3px; y: 2px; width: 9px; height: 9px;
+        x: 4px; y: 1px; width: 12px; height: 12px;
         source: root.vertical ? @image-url("icons/arrow-up.svg") : @image-url("icons/arrow-left.svg");
     }
     Image {
-        x: 18px; y: 2px; width: 9px; height: 9px;
+        x: 18px; y: 1px; width: 12px; height: 12px;
         source: root.vertical ? @image-url("icons/arrow-down.svg") : @image-url("icons/arrow-right.svg");
     }
 }
@@ -355,6 +362,10 @@ component ArrowPair inherits Rectangle {
 component HintRow inherits Rectangle {
     in property <int> page: 0;
     in property <bool> overlay: false;
+    in property <bool> adjust: true;
+    in property <bool> editing: false;
+    in property <bool> selecting: false;
+    in property <int> sel-count: 0;
     in property <string> hint: "";
     height: 18px;
     background: root.overlay ? #0F1419E8 : #0F1419;
@@ -366,15 +377,20 @@ component HintRow inherits Rectangle {
     if root.page == 0 : KeyCap  { x: parent.width - 74px; y: 2px; label: "Esc"; w: 22px; }
     if root.page == 0 : HintText { x: parent.width - 50px; y: 0; text: "长按退出"; }
 
-    // 相册
-    if root.page == 1 : ArrowPair { x: 8px; y: 2px; vertical: false; }
-    if root.page == 1 : HintText { x: 41px; y: 0; text: "移动"; }
-    if root.page == 1 : KeyCap  { x: 74px;  y: 2px; label: "Enter"; w: 30px; }
-    if root.page == 1 : HintText { x: 107px; y: 0; text: "预览"; }
-    if root.page == 1 : KeyCap  { x: 138px; y: 2px; label: "空格"; w: 26px; }
-    if root.page == 1 : HintText { x: 167px; y: 0; text: "多选"; }
-    if root.page == 1 : KeyCap  { x: parent.width - 60px; y: 2px; label: "退格"; w: 26px; }
-    if root.page == 1 : HintText { x: parent.width - 31px; y: 0; text: "删除"; }
+    // 相册：多选态显示已选数量与操作提示
+    if root.page == 1 && root.selecting : Text {
+        x: 8px; y: 0; height: 18px; vertical-alignment: center;
+        text: "已选 " + root.sel-count + " 项    空格 选择    退格 删除    Esc 取消";
+        color: #2DD4BF; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+    }
+    if root.page == 1 && !root.selecting : ArrowPair { x: 8px; y: 2px; vertical: false; }
+    if root.page == 1 && !root.selecting : HintText { x: 41px; y: 0; text: "移动"; }
+    if root.page == 1 && !root.selecting : KeyCap  { x: 74px;  y: 2px; label: "Enter"; w: 30px; }
+    if root.page == 1 && !root.selecting : HintText { x: 107px; y: 0; text: "预览"; }
+    if root.page == 1 && !root.selecting : KeyCap  { x: 138px; y: 2px; label: "空格"; w: 26px; }
+    if root.page == 1 && !root.selecting : HintText { x: 167px; y: 0; text: "多选"; }
+    if root.page == 1 && !root.selecting : KeyCap  { x: parent.width - 60px; y: 2px; label: "退格"; w: 26px; }
+    if root.page == 1 && !root.selecting : HintText { x: parent.width - 31px; y: 0; text: "删除"; }
 
     // 预览
     if root.page == 2 : ArrowPair { x: 8px; y: 2px; vertical: false; }
@@ -384,14 +400,15 @@ component HintRow inherits Rectangle {
     if root.page == 2 : KeyCap  { x: parent.width - 48px; y: 2px; label: "Esc"; w: 22px; }
     if root.page == 2 : HintText { x: parent.width - 23px; y: 0; text: "返回"; }
 
-    // 设置（非编辑态显示键帽，编辑态显示动态提示）
-    if root.page == 3 && root.hint == "" : ArrowPair { x: 8px; y: 2px; vertical: true; }
-    if root.page == 3 && root.hint == "" : HintText { x: 41px; y: 0; text: "选择"; }
-    if root.page == 3 && root.hint == "" : ArrowPair { x: 74px; y: 2px; vertical: false; }
-    if root.page == 3 && root.hint == "" : HintText { x: 107px; y: 0; text: "调整"; }
-    if root.page == 3 && root.hint != "" : HintText { x: 8px; y: 0; text: root.hint; }
-    if root.page == 3 && root.hint == "" : KeyCap  { x: parent.width - 48px; y: 2px; label: "Esc"; w: 22px; }
-    if root.page == 3 && root.hint == "" : HintText { x: parent.width - 23px; y: 0; text: "返回"; }
+    // 设置：编辑态显示动态提示；否则方向键选择，仅档位项显示左右调整
+    if root.page == 3 && root.editing : HintText { x: 8px; y: 0; text: root.hint; }
+    if root.page == 3 && !root.editing : ArrowPair { x: 8px; y: 2px; vertical: true; }
+    if root.page == 3 && !root.editing : HintText { x: 47px; y: 0; text: "选择"; }
+    if root.page == 3 && !root.editing && root.adjust : ArrowPair { x: 78px; y: 2px; vertical: false; }
+    if root.page == 3 && !root.editing && root.adjust : HintText { x: 117px; y: 0; text: "调整"; }
+    if root.page == 3 && !root.editing && !root.adjust && root.hint != "" : HintText { x: 78px; y: 0; text: root.hint; }
+    if root.page == 3 && !root.editing : KeyCap  { x: parent.width - 48px; y: 2px; label: "Esc"; w: 22px; }
+    if root.page == 3 && !root.editing : HintText { x: parent.width - 23px; y: 0; text: "返回"; }
 }
 
 export component AppWindow inherits Window {
@@ -433,6 +450,11 @@ export component AppWindow inherits Window {
     in property <bool> port-edit: false;
     in property <bool> port-disabled: false;
     in property <bool> hotkey-capture: false;
+    in property <bool> video-ended: false;
+    in property <bool> settings-adjust: true;
+    in property <bool> settings-editing: false;
+    in property <string> confirm-title: "删除当前内容";
+    in property <string> confirm-desc: "是否确认进行删除？删除后将无法恢复";
 
     if root.page == 2 : Image {
         x: 0; y: 0; width: parent.width; height: parent.height;
@@ -457,7 +479,7 @@ export component AppWindow inherits Window {
     }
     if root.page == 2 : PreviewScreen {
         y: 0; width: parent.width; height: parent.height;
-        img: root.preview-img; name: root.preview-name; size-label: root.preview-size; dur: root.preview-dur; kind: root.preview-kind; pos: root.preview-pos;
+        img: root.preview-img; name: root.preview-name; size-label: root.preview-size; dur: root.preview-dur; kind: root.preview-kind; pos: root.preview-pos; ended: root.video-ended;
     }
     if root.page == 3 : SettingsScreen {
         y: 0; width: parent.width; height: parent.height - 18px;
@@ -466,7 +488,7 @@ export component AppWindow inherits Window {
         port-text: root.s-port-text; shot-text: root.s-shot;
         port-disabled: root.port-disabled;
     }
-    HintRow { width: parent.width; y: parent.height - 18px; page: root.page; overlay: root.page == 2; hint: root.hint; }
+    HintRow { width: parent.width; y: parent.height - 18px; page: root.page; overlay: root.page == 2; hint: root.hint; adjust: root.settings-adjust; editing: root.settings-editing; selecting: root.selecting; sel-count: root.sel-count; }
 
     if root.toast != "" : Rectangle {
         x: parent.width - 120px; y: parent.height - 32px; width: 112px; height: 16px;
@@ -489,13 +511,15 @@ export component AppWindow inherits Window {
                 text: "按键"; color: #E6EDF3;
                 font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
             }
-            Text { x: 14px; y: 28px; width: 240px; height: 12px; vertical-alignment: center; text: "Z C  左右切换"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-            Text { x: 14px; y: 42px; width: 240px; height: 12px; vertical-alignment: center; text: "F X  上下选择"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-            Text { x: 14px; y: 56px; width: 240px; height: 12px; vertical-alignment: center; text: "Enter  打开 确认"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-            Text { x: 14px; y: 70px; width: 240px; height: 12px; vertical-alignment: center; text: "空格  多选"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-            Text { x: 14px; y: 84px; width: 240px; height: 12px; vertical-alignment: center; text: "退格  删除"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-            Text { x: 14px; y: 98px; width: 240px; height: 12px; vertical-alignment: center; text: "Shift 加退格  直接删除"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-            Text { x: 14px; y: 112px; width: 240px; height: 12px; vertical-alignment: center; text: "Esc 返回；主界面长按退出"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            ArrowPair { x: 14px; y: 28px; width: 34px; height: 15px; vertical: false; }
+            Text { x: 54px; y: 28px; width: 200px; height: 15px; vertical-alignment: center; text: "左右切换"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            ArrowPair { x: 14px; y: 44px; width: 34px; height: 15px; vertical: true; }
+            Text { x: 54px; y: 44px; width: 200px; height: 15px; vertical-alignment: center; text: "上下选择"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            Text { x: 14px; y: 60px; width: 240px; height: 12px; vertical-alignment: center; text: "Enter  打开 确认"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            Text { x: 14px; y: 74px; width: 240px; height: 12px; vertical-alignment: center; text: "空格  多选"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            Text { x: 14px; y: 88px; width: 240px; height: 12px; vertical-alignment: center; text: "退格  删除"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            Text { x: 14px; y: 102px; width: 240px; height: 12px; vertical-alignment: center; text: "Shift + 退格  直接删除"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
+            Text { x: 14px; y: 116px; width: 240px; height: 12px; vertical-alignment: center; text: "Esc 返回；主界面长按退出"; color: #AEBAC6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
         }
     }
 
@@ -506,12 +530,12 @@ export component AppWindow inherits Window {
             border-radius: 10px; background: #14191E; border-width: 1px; border-color: #5A2B2B;
             Text {
                 x: 16px; y: 10px; width: 220px; height: 16px; vertical-alignment: center;
-                text: "删除所选内容"; color: #E6EDF3;
+                text: root.confirm-title; color: #E6EDF3;
                 font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
             }
             Text {
                 x: 16px; y: 28px; width: 220px; height: 12px; vertical-alignment: center;
-                text: "删除后无法恢复"; color: #C98A8A;
+                text: root.confirm-desc; color: #C98A8A;
                 font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
             }
             Rectangle {

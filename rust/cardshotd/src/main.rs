@@ -60,7 +60,7 @@ impl Core {
             "last_error": rec.last_error,
             "counts": { "images": im, "videos": vi },
             "total_bytes": tb,
-            "remote": { "running": running, "port": cfg.remote.port, "bind": cfg.remote.bind.clone() },
+            "remote": { "running": running, "port": cfg.remote.port, "bind": cfg.remote.bind.clone(), "host": crate::http::display_host(&cfg.remote.bind) },
             "output_dir": cfg.output_dir.clone(),
             "video_dir": cfg.video_dir.clone(),
             "image_format": cfg.image_format.clone(),
@@ -197,6 +197,18 @@ pub fn dispatch(core: &Arc<Core>, cmd: &str, args: &Value) -> Value {
                         .collect()
                 })
                 .unwrap_or_default();
+            let n = core.lib.lock().unwrap().delete(&ids);
+            json!({ "ok": true, "removed": n })
+        }
+        "clear_all" => {
+            let ids: Vec<String> = core
+                .lib
+                .lock()
+                .unwrap()
+                .items()
+                .iter()
+                .map(|it| it.id.clone())
+                .collect();
             let n = core.lib.lock().unwrap().delete(&ids);
             json!({ "ok": true, "removed": n })
         }

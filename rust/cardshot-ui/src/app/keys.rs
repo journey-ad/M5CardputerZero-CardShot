@@ -2,7 +2,7 @@
 
 use serde_json::json;
 
-use crate::app::actions::{apply_config, delete_current, toggle_remote};
+use crate::app::actions::{apply_config, clear_all, clear_selected, delete_current, toggle_remote};
 use crate::app::poll::{load_items, poll_config, poll_status};
 use crate::app::view::open_preview;
 use crate::constants::{
@@ -58,16 +58,25 @@ pub fn handle_key(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
         match key {
             "LEFT" | "RIGHT" => st.confirm_focus = 1 - st.confirm_focus,
             "ENTER" => {
-                let do_delete = st.confirm_focus == 1;
+                let do_it = st.confirm_focus == 1;
+                let kind = st.confirm_kind;
                 st.confirm_visible = false;
-                if do_delete {
-                    delete_current(client, st);
-                    if st.page == Page::Preview {
-                        st.page = Page::Gallery;
+                st.confirm_kind = 0;
+                if do_it {
+                    if kind == 1 {
+                        clear_all(client, st);
+                    } else {
+                        delete_current(client, st);
+                        if st.page == Page::Preview {
+                            st.page = Page::Gallery;
+                        }
                     }
                 }
             }
-            "ESC" => st.confirm_visible = false,
+            "ESC" => {
+                st.confirm_visible = false;
+                st.confirm_kind = 0;
+            }
             _ => {}
         }
         return;
@@ -173,10 +182,22 @@ fn handle_gallery(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
         }
         "ENTER" => open_preview(ui, client, st),
         "BACK" => {
-            st.confirm_focus = 0;
-            st.confirm_visible = true;
+            if st.selecting {
+                st.selecting = false;
+                st.selected.clear();
+            } else {
+                st.confirm_kind = 0;
+                st.confirm_focus = 0;
+                st.confirm_visible = true;
+            }
         }
-        "SHIFT_BACK" => delete_current(client, st),
+        "SHIFT_BACK" => {
+            if st.selecting && st.selected.len() > 1 {
+                clear_selected(client, st);
+            } else {
+                delete_current(client, st);
+            }
+        }
         _ => {}
     }
 }
@@ -195,7 +216,14 @@ fn handle_preview(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
                 open_preview(ui, client, st);
             }
         }
+        "ENTER" | "SPACE" => {
+            if st.video_ended && st.preview_kind == "video" {
+                st.video_ended = false;
+                open_preview(ui, client, st);
+            }
+        }
         "BACK" => {
+            st.confirm_kind = 0;
             st.confirm_focus = 0;
             st.confirm_visible = true;
         }
@@ -387,6 +415,13 @@ fn handle_settings(st: &mut State, client: &mut Client, key: &str) {
                         st.shift_down = false;
                         st.ctrl_down = false;
                         st.alt_down = false;
+                    }
+                }
+                SettingRow::Clear => {
+                    if key == "ENTER" {
+                        st.confirm_kind = 1;
+                        st.confirm_focus = 0;
+                        st.confirm_visible = true;
                     }
                 }
             }

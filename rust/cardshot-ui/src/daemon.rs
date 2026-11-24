@@ -58,6 +58,11 @@ impl Client {
             .unwrap_or_default()
     }
 
+    pub fn clear_all(&mut self) -> usize {
+        let v = self.call("clear_all", json!({}));
+        v.get("removed").and_then(|x| x.as_u64()).unwrap_or(0) as usize
+    }
+
     pub fn thumb_path(&mut self, id: &str) -> Option<PathBuf> {
         let v = self.call("thumb", json!({ "id": id }));
         v.get("path")

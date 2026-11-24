@@ -11,7 +11,7 @@ use std::time::{Duration, Instant};
 
 use slint::{Rgb8Pixel, SharedPixelBuffer};
 
-use crate::constants::{PREVIEW_BOX, THUMB_BOX, GRID_PAGE};
+use crate::constants::{PREVIEW_BOX, THUMB_BOX, GRID_PAGE, SettingRow};
 use crate::daemon::Client;
 use crate::constants::FB_BYTES;
 use crate::model::{fmt_clock, fmt_duration, human_size, State, VideoPlayer};
@@ -114,14 +114,28 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     } else {
         ui.set_page_title(st.page.title().into());
     }
-    let hint = if st.page == crate::constants::Page::Settings && st.port_edit {
-        "数字输入   Enter 保存   Esc 取消"
-    } else if st.page == crate::constants::Page::Settings && st.hotkey_capture {
-        "按下组合键   Esc 取消"
+    let settings = st.page == crate::constants::Page::Settings;
+    let row = SettingRow::at(st.settings_focus);
+    let adjust = settings && matches!(row, SettingRow::Format | SettingRow::Quality | SettingRow::Fps);
+    let editing = settings && (st.port_edit || st.hotkey_capture);
+    let hint: String = if settings && st.port_edit {
+        "数字输入   Enter 保存   Esc 取消".into()
+    } else if settings && st.hotkey_capture {
+        "按下组合键   Esc 取消".into()
+    } else if settings {
+        match row {
+            SettingRow::ShotHotkey => "Enter 设置".into(),
+            SettingRow::Remote => "Enter 开关".into(),
+            SettingRow::Port => "Enter 输入".into(),
+            SettingRow::Clear => "Enter 清空".into(),
+            _ => String::new(),
+        }
     } else {
-        st.page.hint()
+        st.page.hint().into()
     };
     ui.set_hint(hint.into());
+    ui.set_settings_adjust(adjust);
+    ui.set_settings_editing(editing);
     ui.set_count_images(st.count_images as i32);
     ui.set_count_videos(st.count_videos as i32);
     ui.set_size_label(human_size(st.total_bytes).into());
@@ -131,8 +145,10 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     ui.set_s_port(st.remote_port as i32);
     ui.set_s_port_text(if st.port_edit {
         format!("{}_", st.port_buf).into()
-    } else {
+    } else if st.remote_host.is_empty() {
         st.remote_port.to_string().into()
+    } else {
+        format!("{}:{}", st.remote_host, st.remote_port).into()
     });
     ui.set_port_edit(st.port_edit);
     ui.set_port_disabled(!st.remote_running);
@@ -152,6 +168,14 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     ui.set_confirm_visible(st.confirm_visible);
     ui.set_confirm_focus(st.confirm_focus);
     ui.set_preview_pos(st.preview_pos.clone().into());
+    ui.set_video_ended(st.video_ended);
+    if st.confirm_kind == 1 {
+        ui.set_confirm_title("清空全部数据".into());
+        ui.set_confirm_desc("确定删除所有截图与录制？删除后无法恢复".into());
+    } else {
+        ui.set_confirm_title("删除当前内容".into());
+        ui.set_confirm_desc("是否确认进行删除？删除后将无法恢复".into());
+    }
     ui.set_toast(st.toast_text().into());
 }
 
@@ -175,9 +199,15 @@ pub fn open_preview(ui: &AppWindow, client: &mut Client, st: &mut State) {
     st.preview_pos = format!("{}/{}", idx + 1, st.items.len());
     st.page = crate::constants::Page::Preview;
     if it.kind == "video" {
-        let base = if st.video_dir.is_empty() { st.output_dir.clone() } else { st.video_dir.clone() };
-        let path = expand_home(&base).join(&it.name);
-        start_video(st, &path, st.fps.max(1) as u32);
+        if std::env::var("CARDSHOT_TEST_ENDED").is_ok() {
+            stop_video(st);
+            st.video_ended = true;
+            ui.set_video_ended(true);
+        } else {
+            let base = if st.video_dir.is_empty() { st.output_dir.clone() } else { st.video_dir.clone() };
+            let path = expand_home(&base).join(&it.name);
+            start_video(st, &path, st.fps.max(1) as u32);
+        }
     } else {
         stop_video(st);
     }
@@ -188,6 +218,7 @@ pub fn stop_video(st: &mut State) {
     if let Some(v) = st.video.take() {
         v.stop.store(true, Ordering::Relaxed);
     }
+    st.video_ended = false;
 }
 
 /// 启动视频预览：后台 ffmpeg 按实时速度解码为 320x170 rgb565 帧
@@ -195,12 +226,14 @@ fn start_video(st: &mut State, path: &Path, fps: u32) {
     stop_video(st);
     let (tx, rx) = mpsc::channel::<Vec<u8>>();
     let stop = Arc::new(AtomicBool::new(false));
+    let ended = Arc::new(AtomicBool::new(false));
     let stop_thread = stop.clone();
+    let ended_thread = ended.clone();
     let p = path.to_path_buf();
     std::thread::spawn(move || {
         eprintln!("video: decoding {:?}", p);
         let mut child = match Command::new("ffmpeg")
-            .args(["-hide_banner", "-loglevel", "error", "-re", "-stream_loop", "-1", "-i"])
+            .args(["-hide_banner", "-loglevel", "error", "-re", "-i"])
             .arg(&p)
             .args([
                 "-f", "rawvideo", "-pix_fmt", "rgb565le", "-s", "320x170", "-r",
@@ -218,6 +251,9 @@ fn start_video(st: &mut State, path: &Path, fps: u32) {
             while !stop_thread.load(Ordering::Relaxed) {
                 if let Err(e) = out.read_exact(&mut buf) {
                     eprintln!("video: read end {}", e);
+                    if !stop_thread.load(Ordering::Relaxed) {
+                        ended_thread.store(true, Ordering::Relaxed);
+                    }
                     break;
                 }
                 if tx.send(buf.clone()).is_err() {
@@ -229,19 +265,28 @@ fn start_video(st: &mut State, path: &Path, fps: u32) {
         let _ = child.kill();
     });
     let interval = Duration::from_millis((1000 / fps.max(1) as u64).max(10));
-    st.video = Some(VideoPlayer { rx, stop, next_at: Instant::now(), interval });
+    st.video = Some(VideoPlayer { rx, stop, ended, next_at: Instant::now(), interval });
+    st.video_ended = false;
 }
 
 /// 每帧调用：从队列取最新一帧刷新预览图
 pub fn tick_video(ui: &AppWindow, st: &mut State) {
-    let Some(v) = st.video.as_mut() else { return };
     let now = Instant::now();
-    if now < v.next_at {
+    let (ended, latest, interval) = {
+        let Some(v) = st.video.as_mut() else { return };
+        if now < v.next_at {
+            return;
+        }
+        let mut latest: Option<Vec<u8>> = None;
+        while let Ok(f) = v.rx.try_recv() {
+            latest = Some(f);
+        }
+        (v.ended.load(Ordering::Relaxed), latest, v.interval)
+    };
+    if ended && latest.is_none() {
+        st.video_ended = true;
+        ui.set_video_ended(true);
         return;
-    }
-    let mut latest: Option<Vec<u8>> = None;
-    while let Ok(f) = v.rx.try_recv() {
-        latest = Some(f);
     }
     let Some(raw) = latest else { return };
     let mut buf = SharedPixelBuffer::<Rgb8Pixel>::new(320, 170);
@@ -254,5 +299,7 @@ pub fn tick_video(ui: &AppWindow, st: &mut State) {
         dst[i] = Rgb8Pixel { r: (r << 3) | (r >> 2), g: (g << 2) | (g >> 4), b: (b << 3) | (b >> 2) };
     }
     ui.set_preview_img(slint::Image::from_rgb8(buf));
-    v.next_at = now + v.interval;
+    if let Some(v) = st.video.as_mut() {
+        v.next_at = now + interval;
+    }
 }

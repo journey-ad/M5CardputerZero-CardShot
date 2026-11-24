@@ -60,13 +60,26 @@ impl App {
             st.confirm_visible = true;
             st.confirm_focus = 1;
         }
+        if std::env::var("CARDSHOT_TEST_CLEAR").is_ok() {
+            st.settings_focus = 6;
+            st.confirm_kind = 1;
+            st.confirm_visible = true;
+            st.confirm_focus = 1;
+        }
+        if std::env::var("CARDSHOT_TEST_SELECT").is_ok() {
+            st.selecting = true;
+            st.selected.insert(st.grid_focus);
+        }
+        if std::env::var("CARDSHOT_TEST_ENDED").is_ok() {
+            st.video_ended = true;
+        }
         if std::env::var("CARDSHOT_TEST_PORT_EDIT").is_ok() {
-            st.settings_focus = 4;
+            st.settings_focus = 5;
             st.port_edit = true;
             st.port_buf = "8420".into();
         }
         if std::env::var("CARDSHOT_TEST_HOTKEY").is_ok() {
-            st.settings_focus = 5;
+            st.settings_focus = 3;
             st.hotkey_capture = true;
         }
     }

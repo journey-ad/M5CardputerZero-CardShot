@@ -6,6 +6,19 @@ use crate::app::poll::{load_items, poll_config, poll_status};
 use crate::daemon::Client;
 use crate::model::State;
 
+pub fn clear_selected(client: &mut Client, st: &mut State) {
+    delete_current(client, st);
+}
+
+pub fn clear_all(client: &mut Client, st: &mut State) {
+    let removed = client.clear_all();
+    st.toast(&format!("已清空 {} 项", removed));
+    st.selecting = false;
+    st.selected.clear();
+    load_items(client, st);
+    poll_status(client, st);
+}
+
 pub fn delete_current(client: &mut Client, st: &mut State) {
     let ids: Vec<String> = if st.selecting && !st.selected.is_empty() {
         let mut picked: Vec<usize> = st.selected.iter().copied().collect();
@@ -26,6 +39,7 @@ pub fn delete_current(client: &mut Client, st: &mut State) {
     let removed = client.delete(&ids);
     st.toast(&format!("已删除 {} 项", removed));
     st.selecting = false;
+    st.selected.clear();
     load_items(client, st);
     poll_status(client, st);
 }

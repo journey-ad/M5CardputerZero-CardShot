@@ -120,19 +120,21 @@ pub enum SettingRow {
     Format,
     Quality,
     Fps,
+    ShotHotkey,
     Remote,
     Port,
-    ShotHotkey,
+    Clear,
 }
 
 impl SettingRow {
-    pub const LIST: [SettingRow; 6] = [
+    pub const LIST: [SettingRow; 7] = [
         SettingRow::Format,
         SettingRow::Quality,
         SettingRow::Fps,
+        SettingRow::ShotHotkey,
         SettingRow::Remote,
         SettingRow::Port,
-        SettingRow::ShotHotkey,
+        SettingRow::Clear,
     ];
 
     pub fn at(index: usize) -> SettingRow {

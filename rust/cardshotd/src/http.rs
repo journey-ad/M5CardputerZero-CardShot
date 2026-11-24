@@ -30,7 +30,7 @@ pub fn web_dir() -> PathBuf {
     PathBuf::from("web")
 }
 
-fn display_host(bind: &str) -> String {
+pub fn display_host(bind: &str) -> String {
     if bind != "0.0.0.0" && bind != "::" {
         return bind.to_string();
     }

@@ -49,6 +49,7 @@ pub fn fmt_clock(seconds: f64) -> String {
 pub struct VideoPlayer {
     pub rx: Receiver<Vec<u8>>,
     pub stop: Arc<AtomicBool>,
+    pub ended: Arc<AtomicBool>,
     pub next_at: Instant,
     pub interval: Duration,
 }
@@ -74,6 +75,7 @@ pub struct State {
     pub fps: i64,
     pub remote_running: bool,
     pub remote_port: i64,
+    pub remote_host: String,
     pub hotkey_enabled: bool,
     pub shot_hotkey: String,
     pub output_dir: String,
@@ -83,6 +85,7 @@ pub struct State {
     pub help_visible: bool,
     pub confirm_visible: bool,
     pub confirm_focus: i32,
+    pub confirm_kind: i32,
     pub preview_name: String,
     pub preview_size: String,
     pub preview_dur: String,
@@ -96,6 +99,7 @@ pub struct State {
     pub alt_down: bool,
     pub hotkey_buffer: String,
     pub video: Option<VideoPlayer>,
+    pub video_ended: bool,
     pub pending_preview: bool,
 }
 
@@ -122,6 +126,7 @@ impl State {
             fps: DEFAULT_FPS,
             remote_running: true,
             remote_port: DEFAULT_PORT,
+            remote_host: String::new(),
             hotkey_enabled: false,
             shot_hotkey: "shift+space".into(),
             output_dir: String::new(),
@@ -131,6 +136,7 @@ impl State {
             help_visible: false,
             confirm_visible: false,
             confirm_focus: 0,
+            confirm_kind: 0,
             preview_name: String::new(),
             preview_size: String::new(),
             preview_dur: String::new(),
@@ -144,6 +150,7 @@ impl State {
             alt_down: false,
             hotkey_buffer: String::new(),
             video: None,
+            video_ended: false,
             pending_preview: false,
         }
     }
