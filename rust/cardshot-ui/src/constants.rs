@@ -24,7 +24,7 @@ pub const QUALITY_MIN: i64 = 1;
 pub const QUALITY_MAX: i64 = 100;
 pub const QUALITY_STEP: i64 = 10;
 /// 压缩质量预设档位（左右键循环）
-pub const QUALITY_PRESETS: [i64; 5] = [60, 75, 85, 90, 95];
+pub const QUALITY_PRESETS: [i64; 6] = [60, 75, 85, 90, 95, 100];
 pub const IMAGE_FORMATS: [&str; 3] = ["png", "jpeg", "webp"];
 pub const FPS_STEPS: [i64; 5] = [10, 15, 20, 25, 30];
 

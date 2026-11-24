@@ -129,6 +129,24 @@ input,select{font:inherit}
 .tile-meta{padding:9px 11px}
 .tile-name{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tile-sub{font-size:11.5px;color:hsl(var(--muted-foreground));margin-top:2px;display:flex;justify-content:space-between;gap:8px}
+/* 视图切换与列表模式 */
+.view-toggle{display:inline-flex;background:hsl(var(--secondary));border:1px solid hsl(var(--border));border-radius:calc(var(--radius) - 2px);padding:2px;gap:2px}
+.view-toggle button{width:32px;height:28px;display:grid;place-items:center;border:0;background:transparent;color:hsl(var(--muted-foreground));border-radius:calc(var(--radius) - 4px);cursor:pointer;transition:background .12s,color .12s}
+.view-toggle button.active{background:hsl(var(--card));color:hsl(var(--foreground));box-shadow:0 1px 2px rgba(0,0,0,.35)}
+.list{display:flex;flex-direction:column;gap:8px}
+.list-row{display:flex;align-items:center;gap:12px;padding:8px 10px;background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:calc(var(--radius) - 2px);cursor:pointer;transition:border-color .14s,background .12s}
+.list-row:hover{border-color:hsl(var(--ring)/.7)}
+.list-row.selected{border-color:hsl(var(--primary));box-shadow:0 0 0 2px hsl(var(--ring)/.4)}
+.list-thumb{width:80px;height:43px;flex:none;border-radius:6px;overflow:hidden;background:hsl(240 6% 5%);display:grid;place-items:center;position:relative}
+.list-thumb img{width:100%;height:100%;object-fit:contain;display:block}
+.list-thumb .dur{position:absolute;right:3px;bottom:3px;background:hsl(0 0% 0%/.68);color:#fff;font-size:10px;padding:1px 5px;border-radius:5px}
+.list-info{flex:1;min-width:0}
+.list-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-sub{font-size:11.5px;color:hsl(var(--muted-foreground));margin-top:2px;display:flex;gap:8px;align-items:center}
+.list-check{width:22px;height:22px;flex:none;border-radius:50%;border:2px solid hsl(0 0% 100%/.35);display:grid;place-items:center;color:#fff;opacity:0;transition:opacity .12s}
+.list-row.selecting .list-check{opacity:1}
+.list-row.selected .list-check{background:hsl(var(--primary));border-color:hsl(var(--primary));color:hsl(var(--primary-foreground));opacity:1}
+.marquee{position:fixed;pointer-events:none;border:1px solid hsl(var(--primary));background:hsl(var(--primary)/.12);border-radius:5px;z-index:40}
 .empty{padding:64px 20px;text-align:center;color:hsl(var(--muted-foreground))}
 .empty .ico{margin:0 auto 12px;opacity:.5}
 
@@ -280,8 +298,6 @@ function Settings({ cfg, onSaved, toast }) {
       const patch = {
         image_format: d.image_format, image_quality: Number(d.image_quality),
         record: { fps: Number(d.record.fps), bitrate: d.record.bitrate, encoder: d.record.encoder },
-        hotkeys: d.hotkeys,
-        remote: { enabled: d.remote.enabled, port: Number(d.remote.port) },
       };
       const r = await api("/api/config", { method: "POST", body: JSON.stringify({ patch }) });
       if (r.ok) { toast("设置已保存"); onSaved && onSaved(); }
@@ -302,10 +318,12 @@ function Settings({ cfg, onSaved, toast }) {
             </div>
           </div>
           <div class="field">
-            <div class="row"><label class="label" style="margin:0">压缩质量</label><span class="mono" style="font-weight:700">${d.image_quality}</span></div>
-            <input class="slider" type="range" min="1" max="100" value=${d.image_quality}
-              onInput=${(e) => up({ image_quality: Number(e.currentTarget.value) })} />
-            <div class="hint">数值越高画质越好、体积越大（PNG 为无损，质量不生效）</div>
+            <label class="label">压缩质量</label>
+            <div class="seg">
+              ${[60, 75, 85, 90, 95, 100].map((q) => html`<button class=${Number(d.image_quality) === q ? "active" : ""}
+                onClick=${() => up({ image_quality: q })}>${q}</button>`)}
+            </div>
+            <div class="hint">数值越高画质越好、体积越大；PNG 为无损，质量不生效</div>
           </div>
         </div>
       </div>
@@ -314,14 +332,18 @@ function Settings({ cfg, onSaved, toast }) {
         <div class="card-head"><div class="card-title"><${Icon} name="film" size=${16} />录制</div></div>
         <div class="card-body">
           <div class="field">
-            <label class="label">帧率 (FPS)</label>
-            <input class="input" type="number" min="1" max="60" value=${d.record.fps}
-              onInput=${(e) => upRec({ fps: e.currentTarget.value })} />
+            <label class="label">帧率</label>
+            <div class="seg">
+              ${[10, 15, 20, 25, 30].map((f) => html`<button class=${Number(d.record.fps) === f ? "active" : ""}
+                onClick=${() => upRec({ fps: f })}>${f}</button>`)}
+            </div>
           </div>
           <div class="field">
             <label class="label">码率</label>
-            <input class="input" type="text" value=${d.record.bitrate}
-              onInput=${(e) => upRec({ bitrate: e.currentTarget.value })} placeholder="如 2M / 1500k" />
+            <div class="seg">
+              ${["1M", "2M", "4M", "8M"].map((b) => html`<button class=${d.record.bitrate === b ? "active" : ""}
+                onClick=${() => upRec({ bitrate: b })}>${b}</button>`)}
+            </div>
           </div>
           <div class="field">
             <label class="label">编码器</label>
@@ -329,43 +351,6 @@ function Settings({ cfg, onSaved, toast }) {
               <option value="h264_v4l2m2m" selected=${d.record.encoder === "h264_v4l2m2m"}>H.264 硬件 (v4l2m2m)</option>
               <option value="libx264" selected=${d.record.encoder === "libx264"}>H.264 软件 (libx264)</option>
             </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head"><div class="card-title"><${Icon} name="wifi" size=${16} />远程访问</div></div>
-        <div class="card-body">
-          <div class="field row">
-            <div><div class="label" style="margin:0">启用 Web 管理</div><div class="hint">关闭后本页面将无法访问设备</div></div>
-            <button class=${"switch " + (d.remote.enabled ? "on" : "")} onClick=${() => upRemote({ enabled: !d.remote.enabled })}></button>
-          </div>
-          <div class="field">
-            <label class="label">端口</label>
-            <input class="input" type="number" min="1" max="65535" value=${d.remote.port}
-              onInput=${(e) => upRemote({ port: e.currentTarget.value })} />
-            <div class="hint">访问地址：http://${location.hostname}:${d.remote.port}/</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head"><div class="card-title"><${Icon} name="settings" size=${16} />交互</div></div>
-        <div class="card-body">
-          <div class="field row">
-            <div><div class="label" style="margin:0">全局热键</div><div class="hint">在任意应用前台时也能触发</div></div>
-            <button class=${"switch " + (d.hotkeys.enabled ? "on" : "")} onClick=${() => up({ hotkeys: { ...d.hotkeys, enabled: !d.hotkeys.enabled } })}></button>
-          </div>
-          <div class="field">
-            <label class="label">截图热键</label>
-            <input class="input" type="text" value=${d.hotkeys.shot}
-              onInput=${(e) => up({ hotkeys: { ...d.hotkeys, shot: e.currentTarget.value } })} />
-          </div>
-          <div class="field">
-            <label class="label">录制热键</label>
-            <input class="input" type="text" value=${d.hotkeys.record}
-              onInput=${(e) => up({ hotkeys: { ...d.hotkeys, record: e.currentTarget.value } })} />
-            <div class="hint">格式形如 shift+space、ctrl+alt+r；组合键可能与前台应用冲突</div>
           </div>
         </div>
       </div>
@@ -386,6 +371,11 @@ function App() {
   const [items, setItems] = useState([]);
   const [cfg, setCfg] = useState(null);
   const [sel, setSel] = useState(() => ({ mode: false, ids: new Set() }));
+  const [view, setView] = useState("grid");
+  const [marquee, setMarquee] = useState(null);
+  const gridRef = useRef(null);
+  const dragRef = useRef(null);
+  const suppressClick = useRef(false);
   const [light, setLight] = useState(-1);
   const [toastMsg, setToastMsg] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -452,6 +442,40 @@ function App() {
   const toggleSel = (id) => setSel((s) => {
     const n = new Set(s.ids); n.has(id) ? n.delete(id) : n.add(id); return { ...s, ids: n };
   });
+  const pickItem = (it, idx) => {
+    if (suppressClick.current) { suppressClick.current = false; return; }
+    sel.mode ? toggleSel(it.id) : setLight(idx);
+  };
+  const onGridDown = (e) => {
+    if (!sel.mode || e.button !== 0) return;
+    dragRef.current = { x0: e.clientX, y0: e.clientY, base: new Set(sel.ids), moved: false };
+    suppressClick.current = false;
+    setMarquee({ x: e.clientX, y: e.clientY, w: 0, h: 0 });
+  };
+  const onGridMove = (e) => {
+    const d = dragRef.current;
+    if (!d) return;
+    if (Math.abs(e.clientX - d.x0) > 3 || Math.abs(e.clientY - d.y0) > 3) d.moved = true;
+    setMarquee({ x: Math.min(e.clientX, d.x0), y: Math.min(e.clientY, d.y0),
+      w: Math.abs(e.clientX - d.x0), h: Math.abs(e.clientY - d.y0) });
+  };
+  const onGridUp = (e) => {
+    const d = dragRef.current;
+    if (!d) return;
+    dragRef.current = null;
+    setMarquee(null);
+    if (!d.moved || !gridRef.current) return;
+    suppressClick.current = true;
+    const box = { l: Math.min(e.clientX, d.x0), t: Math.min(e.clientY, d.y0),
+      r: Math.max(e.clientX, d.x0), b: Math.max(e.clientY, d.y0) };
+    const ids = new Set(d.base);
+    gridRef.current.querySelectorAll("[data-tid]").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      const hit = !(r.right < box.l || r.left > box.r || r.bottom < box.t || r.top > box.b);
+      if (hit) ids.add(el.getAttribute("data-tid"));
+    });
+    setSel({ mode: true, ids });
+  };
   const enterSelect = (id) => setSel({ mode: true, ids: new Set(id ? [id] : []) });
   const selectAll = () => setSel({ mode: true, ids: new Set(items.map((i) => i.id)) });
 
@@ -506,6 +530,10 @@ function App() {
       <div class="toolbar">
         <div class="count">共 ${items.length} 项</div>
         <div class="spacer"></div>
+        <div class="view-toggle">
+          <button class=${view === "grid" ? "active" : ""} title="缩略图" onClick=${() => setView("grid")}><${Icon} name="grid" size=${16} /></button>
+          <button class=${view === "list" ? "active" : ""} title="列表" onClick=${() => setView("list")}><${Icon} name="list" size=${16} /></button>
+        </div>
         ${sel.mode
           ? html`<span class="count">已选 ${selIds.length}</span>
               <button class="btn btn-outline btn-sm" onClick=${selectAll}>全选</button>
@@ -515,9 +543,11 @@ function App() {
       </div>
       ${items.length === 0
         ? html`<div class="empty"><${Icon} name="image" size=${40} /><div>还没有截图或录制，点击上方按钮开始</div></div>`
-        : html`<div class="grid">
-            ${items.map((it, idx) => html`<div class=${"tile " + (sel.mode ? "selecting " : "") + (sel.ids.has(it.id) ? "selected" : "")}
-              onClick=${() => sel.mode ? toggleSel(it.id) : setLight(idx)}>
+        : view === "grid"
+        ? html`<div class="grid" ref=${gridRef}
+            onMouseDown=${onGridDown} onMouseMove=${onGridMove} onMouseUp=${onGridUp} onMouseLeave=${onGridUp}>
+            ${items.map((it, idx) => html`<div data-tid=${it.id} class=${"tile " + (sel.mode ? "selecting " : "") + (sel.ids.has(it.id) ? "selected" : "")}
+              onClick=${() => pickItem(it, idx)}>
               <div class="thumb">
                 <${Thumb} id=${it.id} kind=${it.kind} />
                 ${it.kind === "video" && html`<div class="play"><span><${Icon} name="play" size=${18} /></span></div>`}
@@ -530,7 +560,23 @@ function App() {
                 <div class="tile-sub"><span>${humanSize(it.size)}</span><span>${fmtDate(it.mtime)}</span></div>
               </div>
             </div>`)}
+          </div>`
+        : html`<div class="list" ref=${gridRef}
+            onMouseDown=${onGridDown} onMouseMove=${onGridMove} onMouseUp=${onGridUp} onMouseLeave=${onGridUp}>
+            ${items.map((it, idx) => html`<div data-tid=${it.id} class=${"list-row " + (sel.mode ? "selecting " : "") + (sel.ids.has(it.id) ? "selected" : "")}
+              onClick=${() => pickItem(it, idx)}>
+              <div class="list-thumb">
+                <${Thumb} id=${it.id} kind=${it.kind} />
+                ${it.kind === "video" && it.duration ? html`<div class="dur">${mmss(it.duration)}</div>` : null}
+              </div>
+              <div class="list-info">
+                <div class="list-name">${it.name}</div>
+                <div class="list-sub"><span>${it.kind === "video" ? "视频" : "截图"}</span><span>${humanSize(it.size)}</span><span>${fmtDate(it.mtime)}</span></div>
+              </div>
+              <div class="list-check"><${Icon} name="check" size=${14} /></div>
+            </div>`)}
           </div>`}
+      ${marquee && html`<div class="marquee" style=${`left:${marquee.x}px;top:${marquee.y}px;width:${marquee.w}px;height:${marquee.h}px`}></div>`}
     </div>`}
 
     ${tab === "settings" && html`<${Settings} cfg=${cfg} toast=${toast} onSaved=${() => { refreshConfig(); refreshStatus(); }} />`}
