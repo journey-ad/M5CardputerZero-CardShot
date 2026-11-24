@@ -1,0 +1,5 @@
+#!/bin/sh
+# APPLaunch 以 root 启动，统一运行时目录后进入设备端界面
+export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/1000}
+export HOME=${HOME:-/root}
+exec /usr/share/APPLaunch/bin/cardshot-ui

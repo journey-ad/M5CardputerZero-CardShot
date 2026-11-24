@@ -62,6 +62,9 @@ pub struct State {
     pub output_dir: String,
     pub toast: String,
     pub toast_until: Option<Instant>,
+    pub help_visible: bool,
+    pub confirm_visible: bool,
+    pub confirm_focus: i32,
 }
 
 impl State {
@@ -92,6 +95,9 @@ impl State {
             output_dir: String::new(),
             toast: String::new(),
             toast_until: None,
+            help_visible: false,
+            confirm_visible: false,
+            confirm_focus: 0,
         }
     }
 

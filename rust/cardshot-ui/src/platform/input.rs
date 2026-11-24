@@ -24,8 +24,6 @@ fn code_name(code: u16) -> Option<&'static str> {
         keycode::ESC => "ESC",
         keycode::TAB => "TAB",
         keycode::BACKSPACE => "BACK",
-        keycode::KEY_D => "d",
-        keycode::KEY_M => "m",
         _ => return None,
     })
 }
@@ -41,6 +39,7 @@ pub fn spawn_keys(path: String, tx: mpsc::Sender<String>) {
         };
         // EV_KEY 结构：timeval(16) + type(2) + code(2) + value(4) = 24 字节
         let mut buf = [0u8; 24];
+        let mut shift = false;
         loop {
             if file.read_exact(&mut buf).is_err() {
                 break;
@@ -48,13 +47,27 @@ pub fn spawn_keys(path: String, tx: mpsc::Sender<String>) {
             let event_type = u16::from_le_bytes([buf[16], buf[17]]);
             let code = u16::from_le_bytes([buf[18], buf[19]]);
             let value = i32::from_le_bytes([buf[20], buf[21], buf[22], buf[23]]);
-            if event_type != 1 || value != 1 {
+            if event_type != 1 {
                 continue;
             }
-            if let Some(name) = code_name(code) {
-                if tx.send(name.to_string()).is_err() {
-                    break;
+            // Shift 的按下/抬起单独记录，供退格键组合判断
+            if code == keycode::SHIFT_LEFT || code == keycode::SHIFT_RIGHT {
+                shift = value != 0;
+                continue;
+            }
+            if value != 1 {
+                continue;
+            }
+            let name = if code == keycode::BACKSPACE {
+                if shift { "SHIFT_BACK" } else { "BACK" }
+            } else {
+                match code_name(code) {
+                    Some(n) => n,
+                    None => continue,
                 }
+            };
+            if tx.send(name.to_string()).is_err() {
+                break;
             }
         }
     });

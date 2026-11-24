@@ -2,7 +2,7 @@
 
 use serde_json::json;
 
-use crate::app::actions::{apply_config, delete_current, toggle_hotkeys, toggle_remote};
+use crate::app::actions::{apply_config, delete_current, toggle_remote};
 use crate::app::poll::{load_items, poll_config, poll_status};
 use crate::app::view::open_preview;
 use crate::constants::{
@@ -14,6 +14,32 @@ use crate::model::State;
 use crate::AppWindow;
 
 pub fn handle_key(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str) {
+    // 使用说明弹窗：任意确认键关闭
+    if st.help_visible {
+        if matches!(key, "ESC" | "ENTER" | "SPACE" | "BACK") {
+            st.help_visible = false;
+        }
+        return;
+    }
+    // 删除二次确认弹窗：左右切换，Enter 执行，Esc 取消
+    if st.confirm_visible {
+        match key {
+            "LEFT" | "RIGHT" => st.confirm_focus = 1 - st.confirm_focus,
+            "ENTER" => {
+                let do_delete = st.confirm_focus == 1;
+                st.confirm_visible = false;
+                if do_delete {
+                    delete_current(client, st);
+                    if st.page == Page::Preview {
+                        st.page = Page::Gallery;
+                    }
+                }
+            }
+            "ESC" => st.confirm_visible = false,
+            _ => {}
+        }
+        return;
+    }
     // 全局按键
     match key {
         "TAB" => {
@@ -75,6 +101,7 @@ fn handle_home(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str) {
                 poll_config(client, st);
                 st.page = Page::Settings;
             }
+            HomeAction::Help => st.help_visible = true,
         },
         _ => {}
     }
@@ -113,7 +140,11 @@ fn handle_gallery(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
             }
         }
         "ENTER" => open_preview(ui, client, st),
-        "d" | "m" => delete_current(client, st),
+        "BACK" => {
+            st.confirm_focus = 0;
+            st.confirm_visible = true;
+        }
+        "SHIFT_BACK" => delete_current(client, st),
         _ => {}
     }
 }
@@ -132,7 +163,11 @@ fn handle_preview(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
                 open_preview(ui, client, st);
             }
         }
-        "d" | "m" => {
+        "BACK" => {
+            st.confirm_focus = 0;
+            st.confirm_visible = true;
+        }
+        "SHIFT_BACK" => {
             delete_current(client, st);
             st.page = Page::Gallery;
         }
@@ -199,7 +234,6 @@ fn handle_settings(st: &mut State, client: &mut Client, key: &str) {
                     apply_config(client, st, json!({ "hotkeys": { "shot": SHOT_CHORDS[next] } }));
                 }
                 SettingRow::Remote => toggle_remote(client, st),
-                SettingRow::Hotkey => toggle_hotkeys(client, st),
             }
         }
         _ => {}

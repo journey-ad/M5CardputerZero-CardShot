@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=CardShot
+Comment=后台截图与录屏工具
+Exec=/usr/share/APPLaunch/bin/run-cardshot
+Icon=share/images/cardshot_100.png
+Terminal=false
+Categories=Utility;

@@ -26,17 +26,13 @@ docs/feasibility.md 可行性分析
 
 ## 构建
 
-守护与界面均为 aarch64 目标，用设备构建镜像交叉编译：
+守护与界面均为 aarch64 目标，在 arm64 Debian 容器内构建：
 
 ```sh
-# 构建镜像（一次即可）
-docker build --platform linux/arm64 -t cardbili-device-builder -f scripts/device.Dockerfile scripts
-
-# 编译
-docker run --rm --platform linux/arm64 -v "$PWD:/work" -v cardbili-device-cargo:/usr/local/cargo \
-  -e CARGO_TARGET_DIR=/work/rust/target -w /work/rust cardbili-device-builder \
-  bash -c 'export PATH=/usr/local/cargo/bin:$PATH; cargo build --release --target aarch64-unknown-linux-gnu'
+bash scripts/build-rust.sh
 ```
+
+产物位于 `rust/target/release/cardshotd` 与 `rust/target/release/cardshot-ui`。
 
 ## 部署
 
@@ -46,10 +42,16 @@ bash scripts/deploy-rust.sh
 
 脚本会停止旧服务、上传二进制与 Web 资源、重载并重启 systemd 用户服务 `cardshot.service`。
 
+安装到 APPLaunch（桌面入口与应用图标）：
+
+```sh
+bash scripts/install-app.sh
+```
+
 ## 使用
 
-- 截图/录制：全局热键（默认关闭，可在设置里开启并配置截图快捷键），或在 Web 管理页操作
-- 设备端界面：`cardshot-ui`，主页进入「相册」浏览，`Enter` 预览，`Space` 多选，`D` 删除，`Esc` 返回
+- 截图/录制：全局热键默认开启（`Shift+Space` 截图、`Shift+Enter` 录制开关），也可在 Web 管理页操作
+- 设备端界面：主页「相册」浏览；`Enter` 预览；`Space` 多选；`退格` 删除（弹窗二次确认）；`Shift+退格` 直接删除；`Esc` 返回；「使用说明」查看完整按键
 - 远程管理：设备与电脑在同一局域网时访问 `http://<设备IP>:8420/`
 
 ## 配置
@@ -60,7 +62,7 @@ bash scripts/deploy-rust.sh
 - `image_quality`：1–100
 - `record.fps`、`record.bitrate`、`record.encoder`
 - `remote.enabled`、`remote.bind`、`remote.port`
-- `hotkeys.enabled`、`hotkeys.shot`、`hotkeys.record`
+- `hotkeys.enabled`（默认 true）、`hotkeys.shot`、`hotkeys.record`
 
 ## 控制接口
 

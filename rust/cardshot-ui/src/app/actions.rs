@@ -1,6 +1,6 @@
 // 用户动作：截图、录制、删除、配置变更
 
-use serde_json::{json, Value};
+use serde_json::Value;
 
 use crate::app::poll::{load_items, poll_config, poll_status};
 use crate::daemon::Client;
@@ -41,9 +41,4 @@ pub fn toggle_remote(client: &mut Client, st: &mut State) {
     client.set_remote(enable);
     poll_status(client, st);
     poll_config(client, st);
-}
-
-pub fn toggle_hotkeys(client: &mut Client, st: &mut State) {
-    let enable = !st.hotkey_enabled;
-    apply_config(client, st, json!({ "hotkeys": { "enabled": enable } }));
 }

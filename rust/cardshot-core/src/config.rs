@@ -33,7 +33,7 @@ pub struct HotkeysCfg {
 impl Default for HotkeysCfg {
     fn default() -> Self {
         HotkeysCfg {
-            enabled: false,
+            enabled: true,
             shot: "shift+space".into(),
             record: "shift+enter".into(),
         }

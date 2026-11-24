@@ -38,6 +38,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             application.on_key(&key);
             dirty = true;
         }
+        if application.should_quit() {
+            break;
+        }
 
         if last_poll.elapsed() >= Duration::from_millis(POLL_INTERVAL_MS) {
             application.poll();
@@ -57,4 +60,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         std::thread::sleep(Duration::from_millis(FRAME_SLEEP_MS));
     }
+    Ok(())
 }

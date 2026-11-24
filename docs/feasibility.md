@@ -60,10 +60,11 @@ Python 版即便功能正常，运行时基线也达 23 MB 量级；Rust 版约 
 屏幕仅 320×170，键盘为 32 键（方向键映射在 Z/X/C/F 等物理键上），因此：
 
 - 不做多窗口，采用整屏分页：主页 → 相册 → 预览 / 设置，`Esc` 逐级返回
-- 不使用鼠标语义，全部用方向键移动焦点、`Enter` 确认、`Space` 多选、`D` 删除
+- 不使用鼠标语义，全部用方向键移动焦点、`Enter` 确认、`Space` 多选、`退格` 删除（二次确认）、`Shift+退格` 直接删除
 - 后台守护负责抓屏/录制，设备端界面只做相册管理，不放置截图/录制入口，避免把「常驻服务」误当成「前台工具」
-- 全局热键（组合键）作为免开界面的快捷入口，默认关闭，可在设置里开关并配置截图快捷键
+- 全局热键（组合键）作为免开界面的快捷入口，默认开启，可在设置里配置截图快捷键
 - 组合键与前台应用可能存在冲突，实践中通过可配置 + ACT LED 闪烁反馈降低误触与不确定感
+- 界面以功能布局本身表达操作：主页卡片带图标与计数，缩略图角标用图标区分图片/视频，视频中心为圆圈三角播放标记，方向切换用三角箭头；按键细节收进「使用说明」弹窗，不在界面堆砌文字
 
 ## 7. 远程 Web 管理
 
@@ -80,3 +81,15 @@ Python 版即便功能正常，运行时基线也达 23 MB 量级；Rust 版约 
 ## 9. 结论
 
 后台抓屏、三种格式截图、硬件编码录屏、常驻低内存、小屏键盘交互、远程 Web 管理均已在本机实测可行，并已落地为 Rust 守护 + Rust/Slint 设备界面 + Web 管理页的实现。
+
+## 10. APPLaunch 集成与打包
+
+界面按 CardBili 的约定集成到 APPLaunch：
+
+- 桌面入口 `/usr/share/APPLaunch/applications/cardshot.desktop`，`Terminal=false`，`Exec` 指向包装脚本 `run-cardshot`
+- 包装脚本设置 `XDG_RUNTIME_DIR=/run/user/1000` 后启动 `/usr/share/APPLaunch/bin/cardshot-ui`，保证与以用户服务运行的守护共用控制 socket
+- 图标 `share/images/cardshot_100.png`（100px 桌面）与 `cardshot_256.png`（256px 商店/详情），由 `cardputer-zero-application` 技能脚本生成
+- 图标素材取自 Pixelarticons（MIT），应用内缩略图角标、播放标记、方向箭头均为同库 SVG，由 Slint 原生渲染，不做 PNG 转换
+- 字体沿用 CardBili 的 Fusion Pixel 预光栅化管线（`build/font_cache.rs` + `build/ui_fonts.rs`），界面文字无额外运行时依赖
+
+安装：`bash scripts/install-app.sh`（写入 APPLaunch 目录并重启 APPLaunch 用户服务）。

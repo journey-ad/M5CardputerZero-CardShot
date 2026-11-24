@@ -9,8 +9,8 @@ pub const GRID_COLS: usize = 3;
 pub const GRID_ROWS: usize = 2;
 pub const GRID_PAGE: usize = GRID_COLS * GRID_ROWS;
 
-/// 主页四宫格列数
-pub const HOME_COLS: usize = 2;
+/// 主页卡片按单列纵向排列
+pub const HOME_COLS: usize = 1;
 
 pub const FRAME_SLEEP_MS: u64 = 30;
 pub const POLL_INTERVAL_MS: u64 = 500;
@@ -75,10 +75,10 @@ impl Page {
 
     pub fn hint(self) -> &'static str {
         match self {
-            Page::Home => "方向键选择  Enter 确认  Esc 退出",
-            Page::Gallery => "方向键浏览 Enter预览 空格多选 D删除",
-            Page::Preview => "左右切换  D删除  Esc返回",
-            Page::Settings => "上下选择 左右调整 Esc返回",
+            Page::Home => "▲▼ 选择   Enter 确认   Esc 退出",
+            Page::Gallery => "◀▶ 移动   Enter 预览   空格 多选   退格 删除",
+            Page::Preview => "◀▶ 切换   退格 删除   Shift+退格 直删  Esc返回",
+            Page::Settings => "▲▼ 选择   ◀▶ 调整   Esc 返回",
         }
     }
 
@@ -102,10 +102,11 @@ impl Page {
 pub enum HomeAction {
     Gallery,
     Settings,
+    Help,
 }
 
 impl HomeAction {
-    pub const LIST: [HomeAction; 2] = [HomeAction::Gallery, HomeAction::Settings];
+    pub const LIST: [HomeAction; 3] = [HomeAction::Gallery, HomeAction::Settings, HomeAction::Help];
 
     pub fn at(index: usize) -> HomeAction {
         HomeAction::LIST[index.min(HomeAction::LIST.len() - 1)]
@@ -120,18 +121,16 @@ pub enum SettingRow {
     Port,
     ShotHotkey,
     Remote,
-    Hotkey,
 }
 
 impl SettingRow {
-    pub const LIST: [SettingRow; 7] = [
+    pub const LIST: [SettingRow; 6] = [
         SettingRow::Format,
         SettingRow::Quality,
         SettingRow::Fps,
         SettingRow::Port,
         SettingRow::ShotHotkey,
         SettingRow::Remote,
-        SettingRow::Hotkey,
     ];
 
     pub fn at(index: usize) -> SettingRow {
@@ -146,6 +145,8 @@ pub mod keycode {
     pub const TAB: u16 = 15;
     pub const ENTER: u16 = 28;
     pub const SPACE: u16 = 57;
+    pub const SHIFT_LEFT: u16 = 42;
+    pub const SHIFT_RIGHT: u16 = 54;
     pub const UP: u16 = 103;
     pub const DOWN: u16 = 108;
     pub const LEFT: u16 = 105;

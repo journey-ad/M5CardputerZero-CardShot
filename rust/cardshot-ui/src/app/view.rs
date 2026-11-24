@@ -67,7 +67,7 @@ pub fn set_gallery_model(ui: &AppWindow, client: &mut Client, st: &mut State) {
         let duration = it.duration.map(fmt_duration).unwrap_or_default();
         model.push(GalleryItem {
             img,
-            kind: if it.kind == "image" { "图片".into() } else { "视频".into() },
+            kind: it.kind.clone().into(),
             name: it.name.clone().into(),
             sub: human_size(it.size).into(),
             dur: duration.into(),
@@ -90,24 +90,6 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     ui.set_count_images(st.count_images as i32);
     ui.set_count_videos(st.count_videos as i32);
     ui.set_size_label(human_size(st.total_bytes).into());
-    ui.set_c1(
-        format!(
-            "{} 项 · {} 图 {} 影 · {}",
-            st.total_items(),
-            st.count_images,
-            st.count_videos,
-            human_size(st.total_bytes)
-        )
-        .into(),
-    );
-    ui.set_c2(
-        format!(
-            "端口 {} · 远程 {}",
-            st.remote_port,
-            if st.remote_running { "已开启" } else { "已关闭" }
-        )
-        .into(),
-    );
     ui.set_s_fmt(st.image_format.to_uppercase().into());
     ui.set_s_quality(st.image_quality as i32);
     ui.set_s_fps(st.fps as i32);
@@ -115,6 +97,9 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     ui.set_s_shot(st.shot_hotkey.clone().into());
     ui.set_s_remote(if st.remote_running { "开".into() } else { "关".into() });
     ui.set_s_hotkey(if st.hotkey_enabled { "开".into() } else { "关".into() });
+    ui.set_help_visible(st.help_visible);
+    ui.set_confirm_visible(st.confirm_visible);
+    ui.set_confirm_focus(st.confirm_focus);
     ui.set_toast(st.toast_text().into());
 }
 
@@ -126,12 +111,10 @@ pub fn open_preview(ui: &AppWindow, client: &mut Client, st: &mut State) {
     let it = st.items[idx].clone();
     let img = item_image(client, st, idx, true).unwrap_or_default();
     let duration = it.duration.map(fmt_duration).unwrap_or_default();
-    let sub = if duration.is_empty() {
-        format!("{} · {}", it.name, human_size(it.size))
-    } else {
-        format!("{} · {} · {}", it.name, human_size(it.size), duration)
-    };
     ui.set_preview_img(img);
-    ui.set_preview_sub(sub.into());
+    ui.set_preview_name(it.name.clone().into());
+    ui.set_preview_size(human_size(it.size).into());
+    ui.set_preview_dur(duration.into());
+    ui.set_preview_kind(it.kind.clone().into());
     st.page = crate::constants::Page::Preview;
 }
