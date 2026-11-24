@@ -124,6 +124,7 @@ pub enum SettingRow {
     Fps,
     ShotHotkey,
     RecordHotkey,
+    RecordAudio,
     Remote,
     Port,
     Clear,
@@ -132,7 +133,7 @@ pub enum SettingRow {
 /// 每个设置分类页包含的行索引区间（含首尾），由 SettingRow 顺序推导
 pub const SETTINGS_TAB_RANGES: [(usize, usize); 4] = [
     (SettingRow::Autostart.index(), SettingRow::Fps.index()),
-    (SettingRow::ShotHotkey.index(), SettingRow::RecordHotkey.index()),
+    (SettingRow::ShotHotkey.index(), SettingRow::RecordAudio.index()),
     (SettingRow::Remote.index(), SettingRow::Port.index()),
     (SettingRow::Clear.index(), SettingRow::Clear.index()),
 ];
@@ -146,7 +147,7 @@ pub fn settings_tab_of(focus: usize) -> usize {
 }
 
 impl SettingRow {
-    pub const LIST: [SettingRow; 10] = [
+    pub const LIST: [SettingRow; 11] = [
         SettingRow::Autostart,
         SettingRow::Language,
         SettingRow::Format,
@@ -154,6 +155,7 @@ impl SettingRow {
         SettingRow::Fps,
         SettingRow::ShotHotkey,
         SettingRow::RecordHotkey,
+        SettingRow::RecordAudio,
         SettingRow::Remote,
         SettingRow::Port,
         SettingRow::Clear,
@@ -168,9 +170,10 @@ impl SettingRow {
             SettingRow::Fps => 4,
             SettingRow::ShotHotkey => 5,
             SettingRow::RecordHotkey => 6,
-            SettingRow::Remote => 7,
-            SettingRow::Port => 8,
-            SettingRow::Clear => 9,
+            SettingRow::RecordAudio => 7,
+            SettingRow::Remote => 8,
+            SettingRow::Port => 9,
+            SettingRow::Clear => 10,
         }
     }
 

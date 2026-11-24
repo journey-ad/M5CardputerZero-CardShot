@@ -56,6 +56,9 @@ pub fn poll_config(client: &mut Client, st: &mut State) {
     if let Some(f) = c.pointer("/record/fps").and_then(|x| x.as_i64()) {
         st.fps = f;
     }
+    if let Some(b) = c.pointer("/record/audio").and_then(|x| x.as_bool()) {
+        st.record_audio = b;
+    }
     if let Some(l) = c.pointer("/language").and_then(|x| x.as_str()) {
         st.language = crate::i18n::normalize(l).to_string();
     }

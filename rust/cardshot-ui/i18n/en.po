@@ -258,3 +258,9 @@ msgstr "Delete all screenshots and recordings; this cannot be undone"
 msgid "按 H 关闭"
 msgstr "Press H to close"
 
+
+msgid "麦克风录音"
+msgstr "Microphone"
+
+msgid "录制视频时同步录入麦克风声音，默认关闭"
+msgstr "Capture microphone audio while recording; off by default"

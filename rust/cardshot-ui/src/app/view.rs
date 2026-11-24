@@ -185,6 +185,7 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     };
     ui.set_s_record(record_text.into());
     ui.set_hotkey_capture(st.hotkey_capture);
+    ui.set_s_record_audio(if st.record_audio { crate::i18n::tr(lang, "开").into() } else { crate::i18n::tr(lang, "关").into() });
     ui.set_s_remote(if st.remote_running { crate::i18n::tr(lang, "开").into() } else { crate::i18n::tr(lang, "关").into() });
     ui.set_help_visible(st.help_visible);
     ui.set_confirm_visible(st.confirm_visible);

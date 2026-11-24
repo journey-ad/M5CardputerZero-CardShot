@@ -342,6 +342,7 @@ component SettingsScreen inherits Rectangle {
     in property <string> port-text: "8420";
     in property <string> shot-text: "shift+space";
     in property <string> record-text: "shift+enter";
+    in property <string> s-record-audio: "关";
     in property <bool> port-disabled: false;
     in property <int> quality: 90;
     in property <int> fps: 20;
@@ -375,16 +376,17 @@ component SettingsScreen inherits Rectangle {
 
     if root.set-tab == 1 : SettingRow { x: 8px; y: 52px;  width: 304px; label: I18n.tr("截图快捷键"); mode: 0; value: root.shot-text; focused: root.focus-idx == 5; }
     if root.set-tab == 1 : SettingRow { x: 8px; y: 82px;  width: 304px; label: I18n.tr("录制快捷键"); mode: 0; value: root.record-text; focused: root.focus-idx == 6; }
+    if root.set-tab == 1 : SettingRow { x: 8px; y: 112px; width: 304px; label: I18n.tr("麦克风录音"); mode: 2; value: root.s-record-audio; focused: root.focus-idx == 7; }
 
-    if root.set-tab == 2 : SettingRow { x: 8px; y: 52px;  width: 304px; label: I18n.tr("Web管理面板"); mode: 2; value: root.remote; focused: root.focus-idx == 7; }
-    if root.set-tab == 2 : SettingRow { x: 8px; y: 82px;  width: 304px; label: I18n.tr("服务端口");   mode: 3; value: root.s-port-host; value2: root.s-port-value; focused: root.focus-idx == 8; disabled: root.port-disabled; }
+    if root.set-tab == 2 : SettingRow { x: 8px; y: 52px;  width: 304px; label: I18n.tr("Web管理面板"); mode: 2; value: root.remote; focused: root.focus-idx == 8; }
+    if root.set-tab == 2 : SettingRow { x: 8px; y: 82px;  width: 304px; label: I18n.tr("服务端口");   mode: 3; value: root.s-port-host; value2: root.s-port-value; focused: root.focus-idx == 9; disabled: root.port-disabled; }
     if root.set-tab == 2 : Text {
         x: 12px; y: 114px; width: 296px; height: 14px; vertical-alignment: center;
         text: I18n.tr("同一局域网内用浏览器访问该端口"); color: #6B7885;
         font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
     }
 
-    if root.set-tab == 3 : SettingRow { x: 8px; y: 52px;  width: 304px; label: I18n.tr("清空数据"); mode: 0; value: I18n.tr("全部删除"); focused: root.focus-idx == 9; }
+    if root.set-tab == 3 : SettingRow { x: 8px; y: 52px;  width: 304px; label: I18n.tr("清空数据"); mode: 0; value: I18n.tr("全部删除"); focused: root.focus-idx == 10; }
     if root.set-tab == 3 : Rectangle {
         x: 8px; y: 86px; width: 304px; height: 48px; border-radius: 7px;
         background: #0E151B; border-width: 1px; border-color: #1E2A33;
@@ -536,6 +538,7 @@ export component AppWindow inherits Window {
     in property <string> s-port-text: "8420";
     in property <string> s-port-host: "";
     in property <string> s-port-value: "8420";
+    in property <string> s-record-audio: "关";
     in property <bool> port-edit: false;
     in property <bool> port-disabled: false;
     in property <bool> hotkey-capture: false;
@@ -574,7 +577,7 @@ export component AppWindow inherits Window {
         y: 0; width: parent.width; height: parent.height - 18px;
         focus-idx: root.set-focus; fmt: root.s-fmt; quality: root.s-quality; fps: root.s-fps;
         port: root.s-port; shot: root.s-shot; record: root.s-record; remote: root.s-remote; set-tab: root.set-tab; s-autostart: root.s-autostart; s-language: root.s-language;
-        port-text: root.s-port-text; shot-text: root.s-shot; record-text: root.s-record;
+        port-text: root.s-port-text; shot-text: root.s-shot; record-text: root.s-record; s-record-audio: root.s-record-audio;
         s-port-host: root.s-port-host; s-port-value: root.s-port-value;
         port-disabled: root.port-disabled;
     }

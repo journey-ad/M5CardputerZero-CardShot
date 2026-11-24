@@ -118,6 +118,7 @@ pub fn setting_help(row: SettingRow) -> (&'static str, &'static str) {
         SettingRow::Fps => ("录制帧率", "录屏每秒采样的帧数，越高画面越流畅，文件越大"),
         SettingRow::ShotHotkey => ("截图快捷键", "按 Enter 后按下组合键即可保存为截图快捷键"),
         SettingRow::RecordHotkey => ("录制快捷键", "按 Enter 后按下组合键即可保存为录制快捷键"),
+        SettingRow::RecordAudio => ("麦克风录音", "录制视频时同步录入麦克风声音，默认关闭"),
         SettingRow::Remote => ("Web管理面板", "开启后可在同一局域网内用浏览器管理相册"),
         SettingRow::Port => ("服务端口", "Web 管理面板监听的端口，按 Enter 手动输入"),
         SettingRow::Clear => ("清空数据", "删除全部截图与录像，此操作不可恢复"),

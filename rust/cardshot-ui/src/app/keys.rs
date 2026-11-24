@@ -431,6 +431,11 @@ fn handle_settings(st: &mut State, client: &mut Client, key: &str) {
                     let next = cycle(&FPS_STEPS, st.fps, dir);
                     apply_config(client, st, json!({ "record": { "fps": next } }));
                 }
+                SettingRow::RecordAudio => {
+                    let next = !st.record_audio;
+                    apply_config(client, st, json!({ "record": { "audio": next } }));
+                    st.record_audio = next;
+                }
                 SettingRow::Remote => {
                     if matches!(key, "ENTER" | "LEFT" | "RIGHT") {
                         toggle_remote(client, st);

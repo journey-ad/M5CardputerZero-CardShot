@@ -22,6 +22,8 @@ pub struct RecordCfg {
     pub bitrate: String,
     pub encoder: String,
     pub audio: bool,
+    pub audio_device: String,
+    pub max_seconds: u64,
 }
 
 impl Default for RecordCfg {
@@ -29,8 +31,10 @@ impl Default for RecordCfg {
         RecordCfg {
             fps: 20,
             bitrate: "2M".into(),
-            encoder: "h264_v4l2m2m".into(),
+            encoder: "libx264".into(),
             audio: false,
+            audio_device: "default".to_string(),
+            max_seconds: 120,
         }
     }
 }
