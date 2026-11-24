@@ -49,8 +49,8 @@ component StatChip inherits Rectangle {
     border-width: 1px;
     border-color: #202830;
     Image {
-        x: 10px; y: (parent.height - 11px) / 2; width: 11px; height: 11px;
-        source: root.icon; opacity: 0.75;
+        x: 10px; y: (parent.height - 12px) / 2; width: 12px; height: 12px;
+        source: root.icon; opacity: 1.0;
     }
     Text {
         x: 27px; y: 0; height: parent.height; vertical-alignment: center;
@@ -107,8 +107,8 @@ component HomeScreen inherits Rectangle {
     in property <string> size-label: "";
     width: 100%; height: 100%; background: transparent;
 
-    StatChip { x: 9px;  y: 27px; width: 148px; icon: @image-url("icons/camera.svg");      value: root.count-images; label: "截图"; }
-    StatChip { x: 163px; y: 27px; width: 148px; icon: @image-url("icons/video-sharp.svg"); value: root.count-videos; label: "录制"; }
+    StatChip { x: 9px;  y: 27px; width: 148px; icon: @image-url("icons/camera.svg"); value: root.count-images; label: "截图"; }
+    StatChip { x: 163px; y: 27px; width: 148px; icon: @image-url("icons/video.svg"); value: root.count-videos; label: "录制"; }
 
     ActionRow {
         x: 9px; y: 63px; width: 302px;
@@ -146,9 +146,9 @@ component GalleryTile inherits Rectangle {
         x: 0; y: 0; width: parent.width; height: parent.height - 14px;
         source: root.img; image-fit: contain;
     }
-    Rectangle { x: 4px; y: 4px; width: 15px; height: 15px; border-radius: 4px; background: #000000B0; }
-    Image { x: 6px; y: 6px; width: 11px; height: 11px; source: @image-url("icons/camera.svg");       visible: root.kind == "image"; }
-    Image { x: 6px; y: 6px; width: 11px; height: 11px; source: @image-url("icons/video-sharp.svg"); visible: root.kind == "video"; }
+    Rectangle { x: 4px; y: 4px; width: 16px; height: 16px; border-radius: 4px; background: #000000B0; }
+    Image { x: 6px; y: 6px; width: 12px; height: 12px; source: @image-url("icons/camera.svg"); visible: root.kind == "image"; }
+    Image { x: 6px; y: 6px; width: 12px; height: 12px; source: @image-url("icons/play.svg"); visible: root.kind == "video"; }
     Image {
         x: (parent.width - 24px) / 2; y: (parent.height - 14px - 24px) / 2;
         width: 24px; height: 24px; source: @image-url("icons/play-circle.svg");
@@ -344,8 +344,8 @@ component HintRow inherits Rectangle {
     // 主页
     if root.page == 0 : KeyCap  { x: 8px;   y: 2px; label: "Enter"; w: 30px; }
     if root.page == 0 : HintText { x: 41px; y: 0; text: "打开"; }
-    if root.page == 0 : KeyCap  { x: parent.width - 52px; y: 2px; label: "Esc"; w: 22px; }
-    if root.page == 0 : HintText { x: parent.width - 43px; y: 0; text: "长按退出"; }
+    if root.page == 0 : KeyCap  { x: parent.width - 74px; y: 2px; label: "Esc"; w: 22px; }
+    if root.page == 0 : HintText { x: parent.width - 50px; y: 0; text: "长按退出"; }
 
     // 相册
     if root.page == 1 : KeyCap  { x: 8px;   y: 2px; label: "Z"; w: 14px; }
