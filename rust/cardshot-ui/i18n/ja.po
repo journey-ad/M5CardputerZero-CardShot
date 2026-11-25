@@ -264,3 +264,24 @@ msgstr "スペース"
 
 msgid "退格"
 msgstr "バックスペース"
+
+msgid " 项"
+msgstr " 件"
+
+msgid "数字输入"
+msgstr "数値入力"
+
+msgid "保存"
+msgstr "保存"
+
+msgid "按下组合键"
+msgstr "キーを押す"
+
+msgid "开关"
+msgstr "切替"
+
+msgid "输入"
+msgstr "入力"
+
+msgid "清空"
+msgstr "消去"

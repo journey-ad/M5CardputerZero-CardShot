@@ -141,6 +141,7 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
         crate::i18n::tr(lang, st.page.hint())
     };
     ui.set_hint(hint.into());
+    ui.set_hints(slint::ModelRc::new(slint::VecModel::from(hint_items(st))));
     ui.set_set_tab(st.settings_tab as i32);
     ui.set_s_autostart(if st.autostart { crate::i18n::tr(lang, "开").into() } else { crate::i18n::tr(lang, "关").into() });
     ui.set_s_language(crate::i18n::lang_name(&st.language).into());
@@ -196,7 +197,7 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     ui.set_confirm_focus(st.confirm_focus);
     ui.set_preview_pos(st.preview_pos.clone().into());
     ui.set_video_ended(st.video_ended);
-    if st.confirm_kind == 1 {
+    if st.confirm_kind == crate::constants::CONFIRM_CLEAR {
         ui.set_confirm_title("清空全部数据".into());
         ui.set_confirm_desc("确定删除所有截图与录制？删除后无法恢复".into());
     } else {
@@ -333,3 +334,103 @@ pub fn tick_video(ui: &AppWindow, st: &mut State) {
 
 
 
+
+
+fn key_width(text: &str) -> f32 {
+    let cjk = text.chars().any(|c| (c as u32) > 0x2E80);
+    let per = if cjk { 8.5 } else { 5.2 };
+    text.chars().count() as f32 * per + 8.0
+}
+
+fn hint_items(st: &crate::model::State) -> Vec<crate::HintItem> {
+    use crate::constants::{Page, SettingRow};
+    let lang = st.language.as_str();
+    let t = |k: &str| crate::i18n::tr(lang, k);
+    let label = |text: String| crate::HintItem {
+        kind: crate::constants::HINT_TEXT,
+        text: text.clone().into(),
+        w: key_width(&text) - 2.0,
+        vertical: false,
+    };
+    let key = |k: &str| crate::HintItem {
+        kind: crate::constants::HINT_KEY,
+        text: t(k).into(),
+        w: key_width(&t(k)),
+        vertical: false,
+    };
+    let arrow = |vertical: bool| crate::HintItem {
+        kind: crate::constants::HINT_ARROW,
+        text: "".into(),
+        w: 34.0,
+        vertical,
+    };
+    let stretch = || crate::HintItem {
+        kind: crate::constants::HINT_STRETCH,
+        text: "".into(),
+        w: 0.0,
+        vertical: false,
+    };
+
+    if st.page == Page::Settings {
+        let row = SettingRow::at(st.settings_focus);
+        if st.port_edit {
+            return vec![label(t("数字输入")), key("Enter"), label(t("保存")), key("Esc"), label(t("取消"))];
+        }
+        if st.hotkey_capture || st.hotkey_record {
+            return vec![label(t("按下组合键")), key("Esc"), label(t("取消"))];
+        }
+        let mut v = vec![arrow(true), label(t("选择"))];
+        if matches!(row, SettingRow::Format | SettingRow::Quality | SettingRow::Fps) {
+            v.push(arrow(false));
+            v.push(label(t("调整")));
+        } else {
+            let action = match row {
+                SettingRow::Autostart | SettingRow::Remote => "开关",
+                SettingRow::ShotHotkey | SettingRow::RecordHotkey => "设置",
+                SettingRow::Port => "输入",
+                SettingRow::Clear => "清空",
+                _ => "",
+            };
+            if !action.is_empty() {
+                v.push(key("Enter"));
+                v.push(label(t(action)));
+            }
+        }
+        v.push(stretch());
+        v.push(key("Esc"));
+        v.push(label(t("返回")));
+        return v;
+    }
+
+    match st.page {
+        Page::Home => vec![
+            key("Enter"),
+            label(t("打开")),
+            stretch(),
+            key("Esc"),
+            label(t("长按退出")),
+        ],
+        Page::Gallery if st.selecting => vec![
+            label(format!("{}{}{}", t("已选 "), st.selected.len(), t(" 项"))),
+            stretch(),
+            key("空格"),
+            label(t("选择")),
+            key("退格"),
+            label(t("删除")),
+            key("Esc"),
+            label(t("取消")),
+        ],
+        Page::Gallery => vec![
+            arrow(false),
+            label(t("移动")),
+            key("Enter"),
+            label(t("预览")),
+            key("空格"),
+            label(t("多选")),
+            key("退格"),
+            label(t("删除")),
+        ],
+        Page::Preview => vec![key("退格"), label(t("删除")), key("Esc"), label(t("返回"))],
+        Page::Settings => Vec::new(),
+    }
+}

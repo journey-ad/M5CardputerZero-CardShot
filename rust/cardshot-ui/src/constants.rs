@@ -242,3 +242,11 @@ pub mod keycode {
     pub const KEY_9: u16 = 10;
     pub const KEY_0: u16 = 11;
 }
+
+pub const HINT_TEXT: i32 = 0;
+pub const HINT_KEY: i32 = 1;
+pub const HINT_ARROW: i32 = 2;
+pub const HINT_STRETCH: i32 = 3;
+
+pub const CONFIRM_DELETE: i32 = 0;
+pub const CONFIRM_CLEAR: i32 = 1;

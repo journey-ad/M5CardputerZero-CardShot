@@ -73,7 +73,7 @@ pub fn handle_key(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
                 let do_it = st.confirm_focus == 1;
                 let kind = st.confirm_kind;
                 st.confirm_visible = false;
-                st.confirm_kind = 0;
+                st.confirm_kind = crate::constants::CONFIRM_DELETE;
                 if do_it {
                     if kind == 1 {
                         clear_all(client, st);
@@ -87,7 +87,7 @@ pub fn handle_key(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
             }
             "ESC" => {
                 st.confirm_visible = false;
-                st.confirm_kind = 0;
+                st.confirm_kind = crate::constants::CONFIRM_DELETE;
             }
             _ => {}
         }
@@ -217,7 +217,7 @@ fn handle_gallery(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
         }
         "ENTER" => open_preview(ui, client, st),
         "BACK" => {
-            st.confirm_kind = 0;
+            st.confirm_kind = crate::constants::CONFIRM_DELETE;
             st.confirm_focus = 0;
             st.confirm_visible = true;
         }
@@ -253,7 +253,7 @@ fn handle_preview(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
             }
         }
         "BACK" => {
-            st.confirm_kind = 0;
+            st.confirm_kind = crate::constants::CONFIRM_DELETE;
             st.confirm_focus = 0;
             st.confirm_visible = true;
         }
@@ -488,7 +488,7 @@ fn handle_settings(st: &mut State, client: &mut Client, key: &str) {
                 }
                 SettingRow::Clear => {
                     if key == "ENTER" {
-                        st.confirm_kind = 1;
+                        st.confirm_kind = crate::constants::CONFIRM_CLEAR;
                         st.confirm_focus = 0;
                         st.confirm_visible = true;
                     }

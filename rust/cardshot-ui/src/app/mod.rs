@@ -72,7 +72,7 @@ impl App {
         if std::env::var("CARDSHOT_TEST_CLEAR").is_ok() {
             st.settings_focus = SettingRow::Clear.index();
             st.settings_tab = 3;
-            st.confirm_kind = 1;
+            st.confirm_kind = crate::constants::CONFIRM_CLEAR;
             st.confirm_visible = true;
             st.confirm_focus = 1;
         }

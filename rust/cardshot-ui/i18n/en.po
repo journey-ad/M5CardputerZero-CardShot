@@ -270,3 +270,24 @@ msgstr "Space"
 
 msgid "退格"
 msgstr "Back"
+
+msgid " 项"
+msgstr " items"
+
+msgid "数字输入"
+msgstr "Number input"
+
+msgid "保存"
+msgstr "Save"
+
+msgid "按下组合键"
+msgstr "Press a combo"
+
+msgid "开关"
+msgstr "Toggle"
+
+msgid "输入"
+msgstr "Edit"
+
+msgid "清空"
+msgstr "Clear"
