@@ -1,7 +1,12 @@
 [Desktop Entry]
 Type=Application
 Name=CardShot
-Comment=后台截图与录屏工具
+GenericName=Screenshot and recorder
+Comment=Background screenshot and screen recording
+Name[zh_CN]=CardShot
+Comment[zh_CN]=后台截图与录屏
+Name[ja]=CardShot
+Comment[ja]=バックグラウンドのスクリーンショットと画面録画
 Exec=/usr/share/APPLaunch/bin/run-cardshot
 Icon=share/images/cardshot_100.png
 Terminal=false

@@ -4,6 +4,7 @@ Cardputer Zero（aarch64 Linux，320×170 帧缓冲）上的后台截图 / 录�
 
 由三部分组成：
 
+- `crates/cardshot-core`：抓帧、编码、录制、相册等公共库
 - `crates/cardshotd`：常驻后台守护，读全局 `/dev/fb0` 抓取任意前台应用画面，支持截图、录屏、相册、Unix socket 控制与 HTTP 远程管理
 - `crates/cardshot-ui`：设备端界面（Rust + Slint），相册管理工具：浏览、预览、多选删除、设置
 - `service/web`：远程 Web 管理页（Preact + htm，无构建步骤）
@@ -18,9 +19,9 @@ crates/
 service/
   cardshot.service   systemd 用户服务
   web/              Web 管理页与本地化依赖
-design/             HTML 设计原型与图标、字体
+reference/          设计原型与调研参考资料
 scripts/            连接设备、构建与部署
-docs/feasibility.md 可行性分析
+docs/               可行性分析
 ```
 
 ## 构建
@@ -84,8 +85,6 @@ HTTP API：
 ![相册](docs/screenshots/02-gallery.png)
 ![预览](docs/screenshots/03-preview.png)
 ![设置](docs/screenshots/04-settings.png)
-![使用说明](docs/screenshots/05-help.png)
-![删除确认](docs/screenshots/06-confirm.png)
 
 远程 Web 管理页：设置项与设备端保持一致（常规：后台常驻、语言、图片格式、压缩质量、录制帧率；数据：清空数据），语言与设备端共用同一设置，支持中文/英文/日文；相册支持缩略图/列表切换、每页数量与翻页、拖拽框选多选；预览支持 1X/2X/3X 像素级缩放、复制当前倍率图片与下载（图片下载为当前倍率版本，视频下载原文件）
 
