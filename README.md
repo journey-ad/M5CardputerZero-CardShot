@@ -17,10 +17,9 @@ rust/
   cardshot-ui/     设备端 Slint 界面
 service/
   cardshot.service   systemd 用户服务
-  config.default.json 默认配置
   web/              Web 管理页与本地化依赖
 design/             HTML 设计原型与图标、字体
-scripts/            连接设备、构建部署、控制客户端
+scripts/            连接设备、构建与部署
 docs/feasibility.md 可行性分析
 ```
 

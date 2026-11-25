@@ -125,9 +125,15 @@ impl Default for Config {
 
 impl Config {
     pub fn load(path: &str) -> Config {
-        match std::fs::read_to_string(expand_home(path)) {
-            Ok(s) => serde_json::from_str(&s).unwrap_or_default(),
-            Err(_) => Config::default(),
+        let p = expand_home(path);
+        match std::fs::read_to_string(&p) {
+            Ok(s) => serde_json::from_str(&s).expect("配置文件解析失败"),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                let cfg = Config::default();
+                cfg.save(path).expect("写入默认配置失败");
+                cfg
+            }
+            Err(e) => panic!("读取配置失败: {e}"),
         }
     }
 

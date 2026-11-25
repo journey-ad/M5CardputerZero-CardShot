@@ -9,15 +9,10 @@ pub const W: u32 = 320;
 pub const H: u32 = 170;
 pub const FRAME_BYTES: usize = (W as usize) * (H as usize) * 2;
 
-pub fn fb_path() -> String {
-    std::env::var("APPLAUNCH_LINUX_FBDEV_DEVICE")
-        .ok()
-        .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| "/dev/fb0".into())
-}
+pub const FB_PATH: &str = "/dev/fb0";
 
 pub fn read_frame() -> Result<Vec<u8>> {
-    let mut f = File::open(fb_path())?;
+    let mut f = File::open(FB_PATH)?;
     let mut buf = vec![0u8; FRAME_BYTES];
     use std::io::Read;
     f.read_exact(&mut buf)?;

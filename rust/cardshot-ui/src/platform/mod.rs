@@ -44,10 +44,7 @@ impl Display {
         }))
         .expect("set_platform");
 
-        let fb_path = std::env::var("APPLAUNCH_LINUX_FBDEV_DEVICE")
-            .or_else(|_| std::env::var("CARDSHOT_FB"))
-            .unwrap_or_else(|_| "/dev/fb0".into());
-        let file = OpenOptions::new().read(true).write(true).open(&fb_path)?;
+        let file = OpenOptions::new().read(true).write(true).open("/dev/fb0")?;
         let fbmap = unsafe { memmap2::MmapOptions::new().len(FB_BYTES).map_mut(&file)? };
         let buffer = vec![Rgb565Pixel(0); FB_BYTES / 2];
 

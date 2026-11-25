@@ -4,6 +4,9 @@ mod font_cache;
 mod ui_fonts;
 
 fn main() {
+    for d in ["ui", "src", "i18n", "fonts"] {
+        println!("cargo:rerun-if-changed={d}");
+    }
     let m = std::env::var("CARGO_MANIFEST_DIR").unwrap();
     let f8 = format!("{m}/fonts/fusion8.ttf");
     let f10 = format!("{m}/fonts/fusion10.ttf");

@@ -55,10 +55,7 @@ fn parse_chord(s: &str) -> Chord {
 }
 
 pub fn spawn(core: Arc<Core>) {
-    let dev = std::env::var("APPLAUNCH_LINUX_KEYBOARD_DEVICE")
-        .ok()
-        .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| "/dev/input/event3".into());
+    let dev = "/dev/input/by-path/platform-3f804000.i2c-event";
     std::thread::spawn(move || {
         let mut f = match File::open(&dev) {
             Ok(f) => f,

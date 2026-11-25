@@ -26,7 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ui.show()?;
 
     let (tx, rx) = mpsc::channel::<String>();
-    input::spawn_keys(input::keyboard_path(), tx);
+    input::spawn_keys(input::KEYBOARD_PATH.to_string(), tx);
 
     let mut application = App::new(ui);
     application.init();

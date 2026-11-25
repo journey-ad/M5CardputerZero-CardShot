@@ -6,12 +6,7 @@ use std::sync::mpsc;
 
 use crate::constants::keycode;
 
-/// 读取按键的设备路径，优先环境变量，回退到 Cardputer 默认键盘
-pub fn keyboard_path() -> String {
-    std::env::var("APPLAUNCH_LINUX_KEYBOARD_DEVICE")
-        .or_else(|_| std::env::var("CARDSHOT_KBD"))
-        .unwrap_or_else(|_| "/dev/input/by-path/platform-3f804000.i2c-event".into())
-}
+pub const KEYBOARD_PATH: &str = "/dev/input/by-path/platform-3f804000.i2c-event";
 
 fn code_name(code: u16) -> Option<&'static str> {
     Some(match code {

@@ -14,20 +14,10 @@ pub struct RemoteHandle {
 }
 
 pub fn web_dir() -> PathBuf {
-    if let Ok(d) = std::env::var("CARDSHOT_WEB_DIR") {
-        if !d.is_empty() {
-            return PathBuf::from(d);
-        }
-    }
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(p) = exe.parent() {
-            let w = p.join("web");
-            if w.is_dir() {
-                return w;
-            }
-        }
-    }
-    PathBuf::from("web")
+    std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.join("web")))
+        .unwrap_or_else(|| PathBuf::from("web"))
 }
 
 pub fn display_host(bind: &str) -> String {
