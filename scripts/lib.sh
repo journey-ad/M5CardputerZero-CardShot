@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT=$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 ENV_FILE=${DEVICE_ENV_FILE:-$ROOT/.secrets/device.env}
 if [ -f "$ENV_FILE" ]; then
+    # shellcheck disable=SC1090
     set -a; . "$ENV_FILE"; set +a
 fi
 : "${DEVICE_IP:?请配置 DEVICE_IP}"

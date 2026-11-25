@@ -24,5 +24,6 @@ install -m 0644 $REMOTE/packaging/share/images/cardshot_100.png /usr/share/APPLa
 install -m 0644 $REMOTE/packaging/share/images/cardshot_256.png /usr/share/APPLaunch/share/images/cardshot_256.png
 '"
 # 重启 APPLaunch 使用户服务加载新条目
+# shellcheck disable=SC2016
 ssh_run 'export XDG_RUNTIME_DIR=/run/user/$(id -u); systemctl --user restart APPLaunch.service 2>/dev/null || true'
 echo "已安装 CardShot 到 APPLaunch"
