@@ -30,10 +30,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut application = App::new(ui);
     application.init();
-    // 调试钩子：启动后注入一串按键，便于离线验证交互
+    // 环境变量 CARDSHOT_TEST_KEYS 在启动后注入按键序列
     if let Ok(keys) = std::env::var("CARDSHOT_TEST_KEYS") {
-        for k in keys.split(',').filter(|s| !s.is_empty()) {
-            application.on_key(k);
+        for key in keys.split(',').filter(|part| !part.is_empty()) {
+            application.on_key(key);
         }
     }
 

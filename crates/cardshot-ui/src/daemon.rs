@@ -47,35 +47,40 @@ impl Client {
     }
 
     pub fn items(&mut self) -> Vec<Item> {
-        let v = self.call("items", json!({}));
-        v.get("items")
-            .and_then(|x| x.as_array())
+        let value = self.call("items", json!({}));
+        value
+            .get("items")
+            .and_then(|item| item.as_array())
             .map(|arr| {
                 arr.iter()
-                    .filter_map(|x| serde_json::from_value::<Item>(x.clone()).ok())
+                    .filter_map(|item| serde_json::from_value::<Item>(item.clone()).ok())
                     .collect()
             })
             .unwrap_or_default()
     }
 
     pub fn clear_all(&mut self) -> usize {
-        let v = self.call("clear_all", json!({}));
-        v.get("removed").and_then(|x| x.as_u64()).unwrap_or(0) as usize
+        let value = self.call("clear_all", json!({}));
+        value
+            .get("removed")
+            .and_then(|item| item.as_u64())
+            .unwrap_or(0) as usize
     }
 
     pub fn thumb_path(&mut self, id: &str) -> Option<PathBuf> {
-        let v = self.call("thumb", json!({ "id": id }));
-        v.get("path")
-            .and_then(|x| x.as_str())
+        let value = self.call("thumb", json!({ "id": id }));
+        value
+            .get("path")
+            .and_then(|item| item.as_str())
             .map(PathBuf::from)
-            .filter(|p| p.exists())
+            .filter(|path| path.exists())
     }
 
     #[allow(dead_code)]
     pub fn shot(&mut self) -> bool {
         self.call("shot", json!({}))
             .get("ok")
-            .and_then(|x| x.as_bool())
+            .and_then(|item| item.as_bool())
             .unwrap_or(false)
     }
 
@@ -84,13 +89,13 @@ impl Client {
     pub fn toggle_record(&mut self) -> Option<bool> {
         self.call("record_toggle", json!({}))
             .get("recording")
-            .and_then(|x| x.as_bool())
+            .and_then(|item| item.as_bool())
     }
 
     pub fn delete(&mut self, ids: &[String]) -> u64 {
         self.call("delete", json!({ "ids": ids }))
             .get("removed")
-            .and_then(|x| x.as_u64())
+            .and_then(|item| item.as_u64())
             .unwrap_or(0)
     }
 
@@ -99,7 +104,11 @@ impl Client {
     }
 
     pub fn set_remote(&mut self, enabled: bool) {
-        let cmd = if enabled { "remote_start" } else { "remote_stop" };
+        let cmd = if enabled {
+            "remote_start"
+        } else {
+            "remote_stop"
+        };
         self.call(cmd, json!({}));
     }
 }

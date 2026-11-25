@@ -12,10 +12,10 @@ pub const FRAME_BYTES: usize = (W as usize) * (H as usize) * 2;
 pub const FB_PATH: &str = "/dev/fb0";
 
 pub fn read_frame() -> Result<Vec<u8>> {
-    let mut f = File::open(FB_PATH)?;
+    let mut file = File::open(FB_PATH)?;
     let mut buf = vec![0u8; FRAME_BYTES];
     use std::io::Read;
-    f.read_exact(&mut buf)?;
+    file.read_exact(&mut buf)?;
     Ok(buf)
 }
 
@@ -23,14 +23,14 @@ pub fn frame_to_rgb(raw: &[u8]) -> RgbImage {
     let mut img = RgbImage::new(W, H);
     for y in 0..H {
         for x in 0..W {
-            let i = ((y * W + x) as usize) * 2;
-            if i + 1 >= raw.len() {
+            let byte_index = ((y * W + x) as usize) * 2;
+            if byte_index + 1 >= raw.len() {
                 continue;
             }
-            let v = u16::from_le_bytes([raw[i], raw[i + 1]]);
-            let r = ((v >> 11) & 0x1f) as u32;
-            let g = ((v >> 5) & 0x3f) as u32;
-            let b = (v & 0x1f) as u32;
+            let pixel = u16::from_le_bytes([raw[byte_index], raw[byte_index + 1]]);
+            let r = ((pixel >> 11) & 0x1f) as u32;
+            let g = ((pixel >> 5) & 0x3f) as u32;
+            let b = (pixel & 0x1f) as u32;
             img.put_pixel(
                 x,
                 y,
@@ -54,17 +54,18 @@ pub fn ext_for(fmt: &str) -> &'static str {
 }
 
 pub fn save_frame(raw: &[u8], path: &Path, fmt: &str, quality: u8) -> Result<()> {
-    if let Some(p) = path.parent() {
-        std::fs::create_dir_all(p).ok();
+    if let Some(parent_dir) = path.parent() {
+        std::fs::create_dir_all(parent_dir).ok();
     }
     match fmt {
         "jpeg" | "jpg" => {
             let img = frame_to_rgb(raw);
-            let f = File::create(path)?;
+            let file = File::create(path)?;
             let mut enc =
-                image::codecs::jpeg::JpegEncoder::new_with_quality(f, quality.clamp(1, 100));
-            enc.encode_image(&img)
-                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+                image::codecs::jpeg::JpegEncoder::new_with_quality(file, quality.clamp(1, 100));
+            enc.encode_image(&img).map_err(|error| {
+                std::io::Error::new(std::io::ErrorKind::Other, error.to_string())
+            })?;
         }
         "webp" => {
             save_webp(raw, path, quality)?;
@@ -72,14 +73,16 @@ pub fn save_frame(raw: &[u8], path: &Path, fmt: &str, quality: u8) -> Result<()>
         _ => {
             let img = frame_to_rgb(raw);
             img.save_with_format(path, image::ImageFormat::Png)
-                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+                .map_err(|error| {
+                    std::io::Error::new(std::io::ErrorKind::Other, error.to_string())
+                })?;
         }
     }
     Ok(())
 }
 
 fn save_webp(raw: &[u8], path: &Path, quality: u8) -> Result<()> {
-    let q = quality.clamp(1, 100).to_string();
+    let quality_text = quality.clamp(1, 100).to_string();
     let mut child = Command::new("ffmpeg")
         .args([
             "-hide_banner",
@@ -99,7 +102,7 @@ fn save_webp(raw: &[u8], path: &Path, quality: u8) -> Result<()> {
             "-c:v",
             "libwebp",
             "-quality",
-            &q,
+            &quality_text,
         ])
         .arg(path)
         .stdin(Stdio::piped())

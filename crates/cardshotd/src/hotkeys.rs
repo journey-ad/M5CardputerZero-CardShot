@@ -25,21 +25,55 @@ fn key_code(name: &str) -> Option<u16> {
         "space" => 57,
         "enter" => 28,
         "tab" => 15,
-        "a" => 30, "b" => 48, "c" => 46, "d" => 32, "e" => 18, "f" => 33,
-        "g" => 34, "h" => 35, "i" => 23, "j" => 36, "k" => 37, "l" => 38,
-        "m" => 50, "n" => 49, "o" => 24, "p" => 25, "q" => 16, "r" => 19,
-        "s" => 31, "t" => 20, "u" => 22, "v" => 47, "w" => 17, "x" => 45,
-        "y" => 21, "z" => 44,
-        "1" => 2, "2" => 3, "3" => 4, "4" => 5, "5" => 6,
-        "6" => 7, "7" => 8, "8" => 9, "9" => 10, "0" => 11,
+        "a" => 30,
+        "b" => 48,
+        "c" => 46,
+        "d" => 32,
+        "e" => 18,
+        "f" => 33,
+        "g" => 34,
+        "h" => 35,
+        "i" => 23,
+        "j" => 36,
+        "k" => 37,
+        "l" => 38,
+        "m" => 50,
+        "n" => 49,
+        "o" => 24,
+        "p" => 25,
+        "q" => 16,
+        "r" => 19,
+        "s" => 31,
+        "t" => 20,
+        "u" => 22,
+        "v" => 47,
+        "w" => 17,
+        "x" => 45,
+        "y" => 21,
+        "z" => 44,
+        "1" => 2,
+        "2" => 3,
+        "3" => 4,
+        "4" => 5,
+        "5" => 6,
+        "6" => 7,
+        "7" => 8,
+        "8" => 9,
+        "9" => 10,
+        "0" => 11,
         _ => return None,
     })
 }
 
-fn parse_chord(s: &str) -> Chord {
-    let l = s.to_lowercase();
-    let mut chord = Chord { ctrl: false, alt: false, shift: false, code: None };
-    for part in l.split('+') {
+fn parse_chord(text: &str) -> Chord {
+    let lower = text.to_lowercase();
+    let mut chord = Chord {
+        ctrl: false,
+        alt: false,
+        shift: false,
+        code: None,
+    };
+    for part in lower.split('+') {
         match part.trim() {
             "ctrl" | "control" => chord.ctrl = true,
             "alt" => chord.alt = true,
@@ -57,10 +91,10 @@ fn parse_chord(s: &str) -> Chord {
 pub fn spawn(core: Arc<Core>) {
     let dev = "/dev/input/by-path/platform-3f804000.i2c-event";
     std::thread::spawn(move || {
-        let mut f = match File::open(&dev) {
-            Ok(f) => f,
-            Err(e) => {
-                eprintln!("cardshotd: hotkeys open {dev} failed: {e}");
+        let mut file = match File::open(&dev) {
+            Ok(file) => file,
+            Err(error) => {
+                eprintln!("cardshotd: hotkeys open {dev} failed: {error}");
                 return;
             }
         };
@@ -69,11 +103,12 @@ pub fn spawn(core: Arc<Core>) {
         let mut ctrl = false;
         let mut alt = false;
         loop {
-            if f.read_exact(&mut buf).is_err() {
+            if file.read_exact(&mut buf).is_err() {
                 std::thread::sleep(std::time::Duration::from_millis(200));
                 continue;
             }
-            let ev: InputEvent = unsafe { std::ptr::read_unaligned(buf.as_ptr() as *const InputEvent) };
+            let ev: InputEvent =
+                unsafe { std::ptr::read_unaligned(buf.as_ptr() as *const InputEvent) };
             if ev.type_ != 1 {
                 continue;
             }
@@ -101,7 +136,9 @@ pub fn spawn(core: Arc<Core>) {
             }
             let shot = parse_chord(&cfg.hotkeys.shot);
             let rec = parse_chord(&cfg.hotkeys.record);
-            let matches = |ch: &Chord| ch.ctrl == ctrl && ch.alt == alt && ch.shift == shift && ch.code == Some(ev.code);
+            let matches = |ch: &Chord| {
+                ch.ctrl == ctrl && ch.alt == alt && ch.shift == shift && ch.code == Some(ev.code)
+            };
             if matches(&shot) {
                 let _ = dispatch(&core, "shot", &json!({}));
             } else if matches(&rec) {

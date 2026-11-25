@@ -1,8 +1,8 @@
 // 字形结构与当前锁定的 Slint 1.8 软件渲染器一致
+use i_slint_core::textlayout::TextShaper;
 use slint::private_unstable_api::re_exports::{
     BitmapFont, BitmapGlyph, BitmapGlyphs, CharacterMapEntry, Slice,
 };
-use i_slint_core::textlayout::TextShaper;
 
 static PIXELS: [u8; include_bytes!(concat!(env!("OUT_DIR"), "/ui_fonts.bin")).len()] =
     *include_bytes!(concat!(env!("OUT_DIR"), "/ui_fonts.bin"));

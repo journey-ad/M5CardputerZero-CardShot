@@ -25,7 +25,11 @@ pub fn open_preview(ui: &AppWindow, client: &mut Client, st: &mut State) {
             st.video_ended = true;
             ui.set_video_ended(true);
         } else {
-            let base = if st.video_dir.is_empty() { st.output_dir.clone() } else { st.video_dir.clone() };
+            let base = if st.video_dir.is_empty() {
+                st.output_dir.clone()
+            } else {
+                st.video_dir.clone()
+            };
             let path = expand_home(&base).join(&it.name);
             start_video(st, &path, st.fps.max(1) as u32);
         }
@@ -37,8 +41,8 @@ pub fn open_preview(ui: &AppWindow, client: &mut Client, st: &mut State) {
 /// 停止当前视频解码线程
 
 pub fn stop_video(st: &mut State) {
-    if let Some(v) = st.video.take() {
-        v.stop.store(true, Ordering::Relaxed);
+    if let Some(video) = st.video.take() {
+        video.stop.store(true, Ordering::Relaxed);
     }
     st.video_ended = false;
 }
@@ -52,28 +56,38 @@ pub(crate) fn start_video(st: &mut State, path: &Path, fps: u32) {
     let ended = Arc::new(AtomicBool::new(false));
     let stop_thread = stop.clone();
     let ended_thread = ended.clone();
-    let p = path.to_path_buf();
+    let path = path.to_path_buf();
     std::thread::spawn(move || {
-        eprintln!("video: decoding {:?}", p);
+        eprintln!("video: decoding {:?}", path);
         let mut child = match Command::new("ffmpeg")
             .args(["-hide_banner", "-loglevel", "error", "-re", "-i"])
-            .arg(&p)
+            .arg(&path)
             .args([
-                "-f", "rawvideo", "-pix_fmt", "rgb565le", "-s", "320x170", "-r",
-                &fps.to_string(), "-",
+                "-f",
+                "rawvideo",
+                "-pix_fmt",
+                "rgb565le",
+                "-s",
+                "320x170",
+                "-r",
+                &fps.to_string(),
+                "-",
             ])
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
             .spawn()
         {
-            Ok(c) => c,
-            Err(e) => { eprintln!("video: spawn failed {}", e); return; }
+            Ok(child) => child,
+            Err(error) => {
+                eprintln!("video: spawn failed {}", error);
+                return;
+            }
         };
         if let Some(mut out) = child.stdout.take() {
             let mut buf = vec![0u8; FB_BYTES];
             while !stop_thread.load(Ordering::Relaxed) {
-                if let Err(e) = out.read_exact(&mut buf) {
-                    eprintln!("video: read end {}", e);
+                if let Err(error) = out.read_exact(&mut buf) {
+                    eprintln!("video: read end {}", error);
                     if !stop_thread.load(Ordering::Relaxed) {
                         ended_thread.store(true, Ordering::Relaxed);
                     }
@@ -88,7 +102,13 @@ pub(crate) fn start_video(st: &mut State, path: &Path, fps: u32) {
         let _ = child.kill();
     });
     let interval = Duration::from_millis((1000 / fps.max(1) as u64).max(10));
-    st.video = Some(VideoPlayer { rx, stop, ended, next_at: Instant::now(), interval });
+    st.video = Some(VideoPlayer {
+        rx,
+        stop,
+        ended,
+        next_at: Instant::now(),
+        interval,
+    });
     st.video_ended = false;
 }
 
@@ -97,15 +117,17 @@ pub(crate) fn start_video(st: &mut State, path: &Path, fps: u32) {
 pub fn tick_video(ui: &AppWindow, st: &mut State) {
     let now = Instant::now();
     let (ended, latest, interval) = {
-        let Some(v) = st.video.as_mut() else { return };
-        if now < v.next_at {
+        let Some(video) = st.video.as_mut() else {
+            return;
+        };
+        if now < video.next_at {
             return;
         }
         let mut latest: Option<Vec<u8>> = None;
-        while let Ok(f) = v.rx.try_recv() {
-            latest = Some(f);
+        while let Ok(frame) = video.rx.try_recv() {
+            latest = Some(frame);
         }
-        (v.ended.load(Ordering::Relaxed), latest, v.interval)
+        (video.ended.load(Ordering::Relaxed), latest, video.interval)
     };
     if ended && latest.is_none() {
         st.video_ended = true;
@@ -115,15 +137,19 @@ pub fn tick_video(ui: &AppWindow, st: &mut State) {
     let Some(raw) = latest else { return };
     let mut buf = SharedPixelBuffer::<Rgb8Pixel>::new(320, 170);
     let dst = buf.make_mut_slice();
-    for i in 0..dst.len() {
-        let v = (raw[i * 2] as u16) | ((raw[i * 2 + 1] as u16) << 8);
-        let r = ((v >> 11) & 0x1f) as u8;
-        let g = ((v >> 5) & 0x3f) as u8;
-        let b = (v & 0x1f) as u8;
-        dst[i] = Rgb8Pixel { r: (r << 3) | (r >> 2), g: (g << 2) | (g >> 4), b: (b << 3) | (b >> 2) };
+    for index in 0..dst.len() {
+        let video = (raw[index * 2] as u16) | ((raw[index * 2 + 1] as u16) << 8);
+        let red = ((video >> 11) & 0x1f) as u8;
+        let green = ((video >> 5) & 0x3f) as u8;
+        let blue = (video & 0x1f) as u8;
+        dst[index] = Rgb8Pixel {
+            r: (red << 3) | (red >> 2),
+            g: (green << 2) | (green >> 4),
+            b: (blue << 3) | (blue >> 2),
+        };
     }
     ui.set_preview_img(slint::Image::from_rgb8(buf));
-    if let Some(v) = st.video.as_mut() {
-        v.next_at = now + interval;
+    if let Some(video) = st.video.as_mut() {
+        video.next_at = now + interval;
     }
 }

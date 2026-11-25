@@ -21,16 +21,16 @@ pub struct Item {
     pub duration: Option<f64>,
 }
 
-pub fn human_size(n: u64) -> String {
+pub fn human_size(bytes: u64) -> String {
     const KB: f64 = 1024.0;
     const MB: f64 = 1024.0 * 1024.0;
-    let n = n as f64;
-    if n >= MB {
-        format!("{:.1}MB", n / MB)
-    } else if n >= KB {
-        format!("{:.0}KB", n / KB)
+    let bytes = bytes as f64;
+    if bytes >= MB {
+        format!("{:.1}MB", bytes / MB)
+    } else if bytes >= KB {
+        format!("{:.0}KB", bytes / KB)
     } else {
-        format!("{}B", n as u64)
+        format!("{}B", bytes as u64)
     }
 }
 
@@ -171,12 +171,14 @@ impl State {
 
     pub fn toast(&mut self, msg: &str) {
         self.toast = msg.to_string();
-        self.toast_until = Some(Instant::now() + std::time::Duration::from_millis(crate::constants::TOAST_DURATION_MS));
+        self.toast_until = Some(
+            Instant::now() + std::time::Duration::from_millis(crate::constants::TOAST_DURATION_MS),
+        );
     }
 
     pub fn toast_text(&self) -> String {
         match self.toast_until {
-            Some(t) if Instant::now() < t => self.toast.clone(),
+            Some(deadline) if Instant::now() < deadline => self.toast.clone(),
             _ => String::new(),
         }
     }
@@ -185,7 +187,7 @@ impl State {
         self.count_images + self.count_videos
     }
 
-    /// 保证当前选中项在当前页范围内
+    /// 把选中项滚动到当前页范围内
     pub fn fix_scroll(&mut self) {
         use crate::constants::GRID_PAGE;
         if self.items.is_empty() {

@@ -18,7 +18,7 @@ export component HomeScreen inherits Rectangle {
     ActionRow {
         x: 9px; y: 63px; width: 302px;
         icon: @image-url("../icons/gallery-thumbnails.svg");
-        label: I18n.tr("相册"); right: (root.count-images + root.count-videos) + " 项";
+        label: I18n.tr("相册"); right: (root.count-images + root.count-videos) + I18n.tr("项");
         focused: root.focus-idx == 0;
     }
     ActionRow {

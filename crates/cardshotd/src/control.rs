@@ -7,16 +7,16 @@ use std::sync::Arc;
 pub fn spawn(core: Arc<Core>, sock: String) {
     let _ = std::fs::remove_file(&sock);
     let listener = match UnixListener::bind(&sock) {
-        Ok(l) => l,
-        Err(e) => {
-            eprintln!("cardshotd: bind socket {sock} failed: {e}");
+        Ok(listener) => listener,
+        Err(error) => {
+            eprintln!("cardshotd: bind socket {sock} failed: {error}");
             return;
         }
     };
     std::thread::spawn(move || {
         for stream in listener.incoming() {
             let stream = match stream {
-                Ok(s) => s,
+                Ok(line) => line,
                 Err(_) => continue,
             };
             let core = core.clone();
@@ -25,28 +25,29 @@ pub fn spawn(core: Arc<Core>, sock: String) {
                 let reader = BufReader::new(stream);
                 for line in reader.lines() {
                     let line = match line {
-                        Ok(l) => l,
+                        Ok(text_line) => text_line,
                         Err(_) => break,
                     };
                     let line = line.trim().to_string();
                     if line.is_empty() {
                         continue;
                     }
-                    let (cmd, args) = if line.starts_with('{') {
-                        let v: Value = serde_json::from_str(&line).unwrap_or_else(|_| json!({}));
-                        let c = v
+                    let (command_name, args) = if line.starts_with('{') {
+                        let value: Value =
+                            serde_json::from_str(&line).unwrap_or_else(|_| json!({}));
+                        let command = value
                             .get("cmd")
-                            .and_then(|x| x.as_str())
+                            .and_then(|value| value.as_str())
                             .unwrap_or("")
                             .to_string();
-                        (c, v)
+                        (command, value)
                     } else {
                         (line, json!({}))
                     };
-                    let resp = dispatch(&core, &cmd, &args);
-                    if let Some(w) = writer.as_mut() {
-                        let _ = w.write_all(&serde_json::to_vec(&resp).unwrap_or_default());
-                        let _ = w.write_all(b"\n");
+                    let resp = dispatch(&core, &command_name, &args);
+                    if let Some(writer) = writer.as_mut() {
+                        let _ = writer.write_all(&serde_json::to_vec(&resp).unwrap_or_default());
+                        let _ = writer.write_all(b"\n");
                     }
                 }
             });

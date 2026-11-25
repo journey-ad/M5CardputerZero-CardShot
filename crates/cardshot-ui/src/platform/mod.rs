@@ -69,7 +69,8 @@ impl Display {
             renderer.render(buffer, WIDTH as usize);
         });
         if redrawn {
-            let bytes = unsafe { std::slice::from_raw_parts(buffer.as_ptr() as *const u8, FB_BYTES) };
+            let bytes =
+                unsafe { std::slice::from_raw_parts(buffer.as_ptr() as *const u8, FB_BYTES) };
             fbmap[..].copy_from_slice(bytes);
             let _ = file.sync_data();
         }

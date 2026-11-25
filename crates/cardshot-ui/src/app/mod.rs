@@ -6,10 +6,10 @@ pub mod poll;
 pub mod view;
 
 use crate::constants::{Page, SettingRow};
-use slint::ComponentHandle;
 use crate::daemon::Client;
 use crate::model::State;
 use crate::AppWindow;
+use slint::ComponentHandle;
 
 pub struct App {
     ui: AppWindow,
@@ -21,7 +21,8 @@ pub struct App {
 
 impl App {
     pub fn new(ui: AppWindow) -> App {
-        ui.global::<crate::I18n>().on_lookup(|text| crate::i18n::tr_current(text.as_str()).into());
+        ui.global::<crate::I18n>()
+            .on_lookup(|text| crate::i18n::tr_current(text.as_str()).into());
         App {
             ui,
             st: State::new(),
@@ -31,34 +32,45 @@ impl App {
         }
     }
 
-    /// 初始化：拉取一次状态与配置，并支持通过环境变量指定起始页（便于调试）
+    /// 初始化：拉取一次状态与配置，可通过环境变量指定起始页
     pub fn init(&mut self) {
         let App { st, client, .. } = self;
-        let Some(c) = client.as_mut() else { return };
-        poll::poll_status(c, st);
-        poll::poll_config(c, st);
-        if let Ok(page) = std::env::var("CARDSHOT_START_PAGE").unwrap_or_default().parse::<i32>() {
+        let Some(client) = client.as_mut() else {
+            return;
+        };
+        poll::poll_status(client, st);
+        poll::poll_config(client, st);
+        if let Ok(page) = std::env::var("CARDSHOT_START_PAGE")
+            .unwrap_or_default()
+            .parse::<i32>()
+        {
             st.page = Page::ALL
                 .iter()
                 .copied()
-                .find(|p| p.index() == page)
+                .find(|page_value| page_value.index() == page)
                 .unwrap_or(Page::Home);
         }
         if st.page != Page::Home {
-            poll::load_items(c, st);
+            poll::load_items(client, st);
         }
-        if let Ok(idx) = std::env::var("CARDSHOT_TEST_INDEX").unwrap_or_default().parse::<usize>() {
+        if let Ok(idx) = std::env::var("CARDSHOT_TEST_INDEX")
+            .unwrap_or_default()
+            .parse::<usize>()
+        {
             st.grid_focus = idx;
         }
         // 起始页为预览时，等列表加载完成后由 tick 打开首项
         if st.page == Page::Preview {
             st.pending_preview = true;
         }
-        // 调试钩子：直接展示弹窗，便于离线截图验证
-        if let Ok(l) = std::env::var("CARDSHOT_TEST_LANG") {
-            st.language = crate::i18n::normalize(&l).to_string();
+        // 环境变量 CARDSHOT_TEST_HELP / CARDSHOT_TEST_CONFIRM 直接打开对应弹窗
+        if let Ok(language) = std::env::var("CARDSHOT_TEST_LANG") {
+            st.language = crate::i18n::normalize(&language).to_string();
         }
-        if let Ok(idx) = std::env::var("CARDSHOT_TEST_SETTINGS").unwrap_or_default().parse::<usize>() {
+        if let Ok(idx) = std::env::var("CARDSHOT_TEST_SETTINGS")
+            .unwrap_or_default()
+            .parse::<usize>()
+        {
             st.settings_focus = idx;
             st.settings_tab = crate::constants::settings_tab_of(idx);
         }
@@ -108,8 +120,10 @@ impl App {
                 return;
             }
         } else if key == "ESC_UP" {
-            if let Some(t) = self.esc_down.take() {
-                if self.st.page == Page::Home && t.elapsed() >= std::time::Duration::from_millis(700) {
+            if let Some(instant) = self.esc_down.take() {
+                if self.st.page == Page::Home
+                    && instant.elapsed() >= std::time::Duration::from_millis(700)
+                {
                     self.quit = true;
                 }
             }
@@ -119,8 +133,8 @@ impl App {
             self.esc_down = None;
         }
         let App { ui, st, client, .. } = self;
-        if let Some(c) = client.as_mut() {
-            keys::handle_key(ui, st, c, key);
+        if let Some(client) = client.as_mut() {
+            keys::handle_key(ui, st, client, key);
         }
     }
 
@@ -130,8 +144,8 @@ impl App {
 
     pub fn poll(&mut self) {
         let App { st, client, .. } = self;
-        if let Some(c) = client.as_mut() {
-            poll::poll_status(c, st);
+        if let Some(client) = client.as_mut() {
+            poll::poll_status(client, st);
         }
     }
 
@@ -139,8 +153,8 @@ impl App {
     pub fn rebuild_model(&mut self) {
         let App { ui, st, client, .. } = self;
         if matches!(st.page, Page::Gallery | Page::Preview) {
-            if let Some(c) = client.as_mut() {
-                view::set_gallery_model(ui, c, st);
+            if let Some(client) = client.as_mut() {
+                view::set_gallery_model(ui, client, st);
             }
         }
     }
@@ -153,8 +167,8 @@ impl App {
     pub fn tick(&mut self) {
         let App { ui, st, client, .. } = self;
         if st.pending_preview && !st.items.is_empty() {
-            if let Some(c) = client.as_mut() {
-                view::open_preview(ui, c, st);
+            if let Some(client) = client.as_mut() {
+                view::open_preview(ui, client, st);
             }
             st.pending_preview = false;
         }

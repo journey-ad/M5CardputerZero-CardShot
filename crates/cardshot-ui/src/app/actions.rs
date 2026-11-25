@@ -25,7 +25,7 @@ pub fn delete_current(client: &mut Client, st: &mut State) {
         picked.sort_unstable();
         picked
             .iter()
-            .filter_map(|i| st.items.get(*i).map(|it| it.id.clone()))
+            .filter_map(|item_index| st.items.get(*item_index).map(|it| it.id.clone()))
             .collect()
     } else {
         st.items

@@ -6,8 +6,8 @@
 
 use crate::constants::SettingRow;
 use std::collections::HashMap;
-use std::sync::OnceLock;
 use std::sync::atomic::{AtomicU8, Ordering};
+use std::sync::OnceLock;
 
 pub const LANGS: [&str; 3] = ["zh", "en", "ja"];
 
@@ -104,8 +104,8 @@ fn parse_po(source: &str) -> HashMap<String, String> {
 }
 
 fn unquote(value: &str) -> String {
-    let v = value.trim().trim_start_matches('"').trim_end_matches('"');
-    v.replace("\\n", "\n").replace("\\\"", "\"")
+    let text = value.trim().trim_start_matches('"').trim_end_matches('"');
+    text.replace("\\n", "\n").replace("\\\"", "\"")
 }
 
 /// 设置文案键：设置项标题与说明
@@ -113,8 +113,14 @@ pub fn setting_help(row: SettingRow) -> (&'static str, &'static str) {
     match row {
         SettingRow::Autostart => ("后台常驻", "随系统启动后自动在后台运行，关闭后需手动启动"),
         SettingRow::Language => ("语言设置", "切换界面语言，立即生效"),
-        SettingRow::Format => ("图片格式", "截图保存的编码格式，PNG 无损，JPEG 与 WebP 体积更小"),
-        SettingRow::Quality => ("压缩质量", "JPEG 与 WebP 的编码质量，数值越高越清晰，文件也越大"),
+        SettingRow::Format => (
+            "图片格式",
+            "截图保存的编码格式，PNG 无损，JPEG 与 WebP 体积更小",
+        ),
+        SettingRow::Quality => (
+            "压缩质量",
+            "JPEG 与 WebP 的编码质量，数值越高越清晰，文件也越大",
+        ),
         SettingRow::Fps => ("录制帧率", "录屏每秒采样的帧数，越高画面越流畅，文件越大"),
         SettingRow::ShotHotkey => ("截图快捷键", "按 Enter 后按下组合键即可保存为截图快捷键"),
         SettingRow::RecordHotkey => ("录制快捷键", "按 Enter 后按下组合键即可保存为录制快捷键"),
@@ -124,4 +130,3 @@ pub fn setting_help(row: SettingRow) -> (&'static str, &'static str) {
         SettingRow::Clear => ("清空数据", "删除全部截图与录像，此操作不可恢复"),
     }
 }
-

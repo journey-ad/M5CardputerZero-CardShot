@@ -6,7 +6,7 @@ pub fn generate(name: &str, inputs: &[&str], outputs: &[&str], generate: impl Fn
     let mut hash = DefaultHasher::new();
     include_bytes!("font_cache.rs").hash(&mut hash);
     let lock = std::env::var("CARGO_MANIFEST_DIR")
-        .map(|m| format!("{m}/../Cargo.lock"))
+        .map(|manifest_dir| format!("{manifest_dir}/../Cargo.lock"))
         .unwrap_or_else(|_| "Cargo.lock".into());
     for path in inputs.iter().copied().chain([lock.as_str()]) {
         println!("cargo:rerun-if-changed={path}");

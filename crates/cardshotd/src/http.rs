@@ -16,7 +16,7 @@ pub struct RemoteHandle {
 pub fn web_dir() -> PathBuf {
     std::env::current_exe()
         .ok()
-        .and_then(|p| p.parent().map(|d| d.join("web")))
+        .and_then(|path| path.parent().map(|parent| parent.join("web")))
         .unwrap_or_else(|| PathBuf::from("web"))
 }
 
@@ -24,10 +24,10 @@ pub fn display_host(bind: &str) -> String {
     if bind != "0.0.0.0" && bind != "::" {
         return bind.to_string();
     }
-    if let Ok(s) = std::net::UdpSocket::bind("0.0.0.0:0") {
-        if s.connect("8.8.8.8:80").is_ok() {
-            if let Ok(a) = s.local_addr() {
-                return a.ip().to_string();
+    if let Ok(socket) = std::net::UdpSocket::bind("0.0.0.0:0") {
+        if socket.connect("8.8.8.8:80").is_ok() {
+            if let Ok(addr) = socket.local_addr() {
+                return addr.ip().to_string();
             }
         }
     }
@@ -35,25 +35,25 @@ pub fn display_host(bind: &str) -> String {
 }
 
 pub fn start(core: &Arc<Core>) -> Result<String, String> {
-    if let Some(h) = core.remote.lock().unwrap().as_ref() {
-        return Ok(h.url.clone());
+    if let Some(remote_handle) = core.remote.lock().unwrap().as_ref() {
+        return Ok(remote_handle.url.clone());
     }
     let (bind, port) = {
-        let c = core.cfg.lock().unwrap();
-        (c.remote.bind.clone(), c.remote.port)
+        let config_guard = core.cfg.lock().unwrap();
+        (config_guard.remote.bind.clone(), config_guard.remote.port)
     };
     let addr = format!("{}:{}", bind, port);
-    let server = Server::http(&addr).map_err(|e| format!("bind {addr} failed: {e}"))?;
+    let server = Server::http(&addr).map_err(|error| format!("bind {addr} failed: {error}"))?;
     let url = format!("http://{}:{}/", display_host(&bind), port);
     let stop = Arc::new(AtomicBool::new(false));
-    let c = core.clone();
-    let st = stop.clone();
+    let core_ref = core.clone();
+    let stop_flag = stop.clone();
     let handle = std::thread::spawn(move || loop {
-        if st.load(Ordering::SeqCst) {
+        if stop_flag.load(Ordering::SeqCst) {
             break;
         }
         match server.recv_timeout(Duration::from_millis(300)) {
-            Ok(Some(req)) => handle_req(&c, req),
+            Ok(Some(req)) => handle_req(&core_ref, req),
             Ok(None) => {}
             Err(_) => break,
         }
@@ -68,16 +68,16 @@ pub fn start(core: &Arc<Core>) -> Result<String, String> {
 
 pub fn stop(core: &Arc<Core>) {
     let taken = core.remote.lock().unwrap().take();
-    if let Some(mut h) = taken {
-        h.stop.store(true, Ordering::SeqCst);
-        if let Some(j) = h.handle.take() {
-            let _ = j.join();
+    if let Some(mut remote_handle) = taken {
+        remote_handle.stop.store(true, Ordering::SeqCst);
+        if let Some(join_handle) = remote_handle.handle.take() {
+            let _ = join_handle.join();
         }
     }
 }
 
-fn hdr(k: &str, v: &str) -> Header {
-    Header::from_bytes(k.as_bytes(), v.as_bytes()).unwrap()
+fn hdr(name: &str, value: &str) -> Header {
+    Header::from_bytes(name.as_bytes(), value.as_bytes()).unwrap()
 }
 
 fn mime_for(name: &str) -> &'static str {
@@ -98,66 +98,70 @@ fn mime_for(name: &str) -> &'static str {
     }
 }
 
-fn split_url(u: &str) -> (String, String) {
-    match u.split_once('?') {
-        Some((p, q)) => (p.to_string(), q.to_string()),
-        None => (u.to_string(), String::new()),
+fn split_url(url: &str) -> (String, String) {
+    match url.split_once('?') {
+        Some((path, query)) => (path.to_string(), query.to_string()),
+        None => (url.to_string(), String::new()),
     }
 }
 
-fn hex(c: u8) -> Option<u8> {
-    match c {
-        b'0'..=b'9' => Some(c - b'0'),
-        b'a'..=b'f' => Some(c - b'a' + 10),
-        b'A'..=b'F' => Some(c - b'A' + 10),
+fn hex(value: u8) -> Option<u8> {
+    match value {
+        b'0'..=b'9' => Some(value - b'0'),
+        b'a'..=b'f' => Some(value - b'a' + 10),
+        b'A'..=b'F' => Some(value - b'A' + 10),
         _ => None,
     }
 }
 
-fn udecode(s: &str) -> String {
-    let b = s.as_bytes();
+fn udecode(encoded: &str) -> String {
+    let bytes = encoded.as_bytes();
     let mut out = Vec::new();
-    let mut i = 0;
-    while i < b.len() {
-        if b[i] == b'%' && i + 2 < b.len() {
-            if let (Some(h), Some(l)) = (hex(b[i + 1]), hex(b[i + 2])) {
-                out.push(h * 16 + l);
-                i += 3;
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] == b'%' && index + 2 < bytes.len() {
+            if let (Some(high), Some(low)) = (hex(bytes[index + 1]), hex(bytes[index + 2])) {
+                out.push(high * 16 + low);
+                index += 3;
                 continue;
             }
         }
-        if b[i] == b'+' {
+        if bytes[index] == b'+' {
             out.push(b' ');
         } else {
-            out.push(b[i]);
+            out.push(bytes[index]);
         }
-        i += 1;
+        index += 1;
     }
     String::from_utf8_lossy(&out).into_owned()
 }
 
-fn qget(q: &str, key: &str) -> Option<String> {
-    for pair in q.split('&') {
-        let (k, v) = match pair.split_once('=') {
-            Some(x) => x,
+fn qget(query: &str, key: &str) -> Option<String> {
+    for pair in query.split('&') {
+        let (name, value) = match pair.split_once('=') {
+            Some(parts) => parts,
             None => (pair, ""),
         };
-        if k == key {
-            return Some(udecode(v));
+        if name == key {
+            return Some(udecode(value));
         }
     }
     None
 }
 
-fn parse_range(r: &str, total: usize) -> Option<(usize, usize)> {
-    let r = r.trim();
-    let r = r.strip_prefix("bytes=")?;
-    let (a, b) = r.split_once('-')?;
-    let start = a.trim().parse::<usize>().ok()?;
-    let end = if b.trim().is_empty() {
+fn parse_range(range: &str, total: usize) -> Option<(usize, usize)> {
+    let range = range.trim();
+    let range = range.strip_prefix("bytes=")?;
+    let (start_text, end_text) = range.split_once('-')?;
+    let start = start_text.trim().parse::<usize>().ok()?;
+    let end = if end_text.trim().is_empty() {
         total.saturating_sub(1)
     } else {
-        b.trim().parse::<usize>().ok()?.min(total.saturating_sub(1))
+        end_text
+            .trim()
+            .parse::<usize>()
+            .ok()?
+            .min(total.saturating_sub(1))
     };
     if start > end || start >= total {
         return None;
@@ -165,8 +169,8 @@ fn parse_range(r: &str, total: usize) -> Option<(usize, usize)> {
     Some((start, end))
 }
 
-fn send_json(req: tiny_http::Request, v: &Value) {
-    let data = serde_json::to_vec(v).unwrap_or_default();
+fn send_json(req: tiny_http::Request, value: &Value) {
+    let data = serde_json::to_vec(value).unwrap_or_default();
     let _ = req.respond(
         Response::from_data(data)
             .with_header(hdr("Content-Type", "application/json"))
@@ -198,17 +202,22 @@ fn send_static(req: tiny_http::Request, path: &str) {
 
 fn send_thumb(core: &Arc<Core>, req: tiny_http::Request, id: &str) {
     let item = {
-        let lib = core.lib.lock().unwrap();
-        lib.items().into_iter().find(|i| i.id == id)
+        let library = core.lib.lock().unwrap();
+        library
+            .items()
+            .into_iter()
+            .find(|item_entry| item_entry.id == id)
     };
     let path = match item {
-        Some(it) => core.lib.lock().unwrap().ensure_thumb(&it),
+        Some(item_entry) => core.lib.lock().unwrap().ensure_thumb(&item_entry),
         None => None,
     };
     match path {
-        Some(p) => match std::fs::read(&p) {
-            Ok(d) => {
-                let _ = req.respond(Response::from_data(d).with_header(hdr("Content-Type", "image/png")));
+        Some(path) => match std::fs::read(&path) {
+            Ok(data) => {
+                let _ = req.respond(
+                    Response::from_data(data).with_header(hdr("Content-Type", "image/png")),
+                );
             }
             Err(_) => {
                 let _ = req.respond(Response::empty(StatusCode(404)));
@@ -222,18 +231,18 @@ fn send_thumb(core: &Arc<Core>, req: tiny_http::Request, id: &str) {
 
 fn send_media(core: &Arc<Core>, req: tiny_http::Request, id: &str, download: bool) {
     let resolved = {
-        let lib = core.lib.lock().unwrap();
-        lib.resolve(id).map(|(_, name, p)| (name, p))
+        let library = core.lib.lock().unwrap();
+        library.resolve(id).map(|(_, name, path)| (name, path))
     };
     let (name, path) = match resolved {
-        Some(x) => x,
+        Some(pair) => pair,
         None => {
             let _ = req.respond(Response::empty(StatusCode(404)));
             return;
         }
     };
     let data = match std::fs::read(&path) {
-        Ok(d) => d,
+        Ok(data) => data,
         Err(_) => {
             let _ = req.respond(Response::empty(StatusCode(404)));
             return;
@@ -244,24 +253,27 @@ fn send_media(core: &Arc<Core>, req: tiny_http::Request, id: &str, download: boo
     let range = req
         .headers()
         .iter()
-        .find(|h| h.field.equiv("Range"))
-        .map(|h| h.value.as_str().to_string());
+        .find(|header| header.field.equiv("Range"))
+        .map(|header| header.value.as_str().to_string());
     let mut status = 200u16;
     let mut slice: &[u8] = &data[..];
     let mut extra: Vec<Header> = Vec::new();
-    if let Some(r) = range {
-        if let Some((s, e)) = parse_range(&r, total) {
+    if let Some(range) = range {
+        if let Some((start_byte, end_byte)) = parse_range(&range, total) {
             status = 206;
-            slice = &data[s..=e];
-            extra.push(hdr("Content-Range", &format!("bytes {}-{}/{}", s, e, total)));
+            slice = &data[start_byte..=end_byte];
+            extra.push(hdr(
+                "Content-Range",
+                &format!("bytes {}-{}/{}", start_byte, end_byte, total),
+            ));
         }
     }
     let mut resp = Response::from_data(slice.to_vec())
         .with_status_code(StatusCode(status))
         .with_header(hdr("Content-Type", mime))
         .with_header(hdr("Accept-Ranges", "bytes"));
-    for h in extra {
-        resp = resp.with_header(h);
+    for header in extra {
+        resp = resp.with_header(header);
     }
     if download {
         resp = resp.with_header(hdr(
@@ -289,8 +301,8 @@ fn handle_req(core: &Arc<Core>, mut req: tiny_http::Request) {
             }
             "/api/file" => {
                 let id = qget(&query, "id").unwrap_or_default();
-                let dl = qget(&query, "download").as_deref() == Some("1");
-                return send_media(core, req, &id, dl);
+                let download_requested = qget(&query, "download").as_deref() == Some("1");
+                return send_media(core, req, &id, download_requested);
             }
             _ => return send_static(req, &path),
         }
@@ -299,11 +311,14 @@ fn handle_req(core: &Arc<Core>, mut req: tiny_http::Request) {
     if method == Method::Post {
         let mut body = Vec::new();
         let _ = req.as_reader().read_to_end(&mut body);
-        let v: Value = serde_json::from_slice(&body).unwrap_or_else(|_| json!({}));
+        let value: Value = serde_json::from_slice(&body).unwrap_or_else(|_| json!({}));
         let resp = match path.as_str() {
             "/api/shot" => dispatch(core, "shot", &json!({})),
             "/api/record" => {
-                let action = v.get("action").and_then(|x| x.as_str()).unwrap_or("toggle");
+                let action = value
+                    .get("action")
+                    .and_then(|value| value.as_str())
+                    .unwrap_or("toggle");
                 let cmd = match action {
                     "start" => "record_start",
                     "stop" => "record_stop",
@@ -311,22 +326,25 @@ fn handle_req(core: &Arc<Core>, mut req: tiny_http::Request) {
                 };
                 dispatch(core, cmd, &json!({}))
             }
-            "/api/delete" => dispatch(core, "delete", &v),
+            "/api/delete" => dispatch(core, "delete", &value),
             "/api/config" => {
-                let patch = v.get("patch").cloned().unwrap_or(v);
+                let patch = value.get("patch").cloned().unwrap_or(value);
                 core.apply_config(&patch)
             }
             "/api/remote" => {
-                let enabled = v.get("enabled").and_then(|x| x.as_bool()).unwrap_or(false);
+                let enabled = value
+                    .get("enabled")
+                    .and_then(|value| value.as_bool())
+                    .unwrap_or(false);
                 if enabled {
-                    if let Some(port) = v.get("port").and_then(|x| x.as_u64()) {
-                        let mut c = core.cfg.lock().unwrap();
-                        c.remote.port = port as u16;
-                        let _ = c.save(&core.cfg_path);
+                    if let Some(port) = value.get("port").and_then(|value| value.as_u64()) {
+                        let mut config_guard = core.cfg.lock().unwrap();
+                        config_guard.remote.port = port as u16;
+                        let _ = config_guard.save(&core.cfg_path);
                     }
                     match start(core) {
-                        Ok(u) => json!({ "ok": true, "url": u }),
-                        Err(e) => json!({ "ok": false, "error": e }),
+                        Ok(url) => json!({ "ok": true, "url": url }),
+                        Err(error) => json!({ "ok": false, "error": error }),
                     }
                 } else {
                     stop(core);

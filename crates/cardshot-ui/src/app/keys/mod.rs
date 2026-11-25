@@ -6,22 +6,22 @@ use crate::app::actions::{apply_config, clear_all, clear_selected, delete_curren
 use crate::app::poll::{load_items, poll_config, poll_status};
 use crate::app::view::open_preview;
 use crate::constants::{
-    FPS_STEPS, HomeAction, IMAGE_FORMATS, Page, SettingRow, GRID_COLS, HOME_COLS, PORT_MAX,
+    HomeAction, Page, SettingRow, FPS_STEPS, GRID_COLS, HOME_COLS, IMAGE_FORMATS, PORT_MAX,
     PORT_MIN, QUALITY_PRESETS,
 };
 use crate::daemon::Client;
 use crate::model::State;
 use crate::AppWindow;
 
-pub(crate) mod home;
 pub(crate) mod gallery;
+pub(crate) mod home;
 pub(crate) mod preview;
 pub(crate) mod settings;
 
-use home::handle_home;
 use gallery::handle_gallery;
+use home::handle_home;
 use preview::handle_preview;
-use settings::{handle_settings, handle_hotkey_capture, handle_port_edit};
+use settings::{handle_hotkey_capture, handle_port_edit, handle_settings};
 
 pub fn handle_key(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str) {
     // Shift 状态单独跟踪，供快捷键录制与退格组合判断

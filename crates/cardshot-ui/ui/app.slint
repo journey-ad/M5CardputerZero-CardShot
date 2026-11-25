@@ -51,7 +51,7 @@ export component AppWindow inherits Window {
         source: root.preview-img; image-fit: fill;
     }
     TopBar {
-
+        y: 0; width: 100%;
     }
     if root.page == Pages.home : HomeScreen {
         y: 0; width: parent.width; height: parent.height - 18px;

@@ -2,20 +2,26 @@ use std::collections::HashSet;
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
 
-
 fn collect_source_chars(dir: &Path, out: &mut HashSet<char>) {
-    let Ok(entries) = std::fs::read_dir(dir) else { return };
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
     for entry in entries.flatten() {
         let path = entry.path();
         if path.is_dir() {
             collect_source_chars(&path, out);
             continue;
         }
-        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+        let ext = path
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .unwrap_or("");
         if !matches!(ext, "slint" | "rs" | "po") {
             continue;
         }
-        let Ok(text) = std::fs::read_to_string(&path) else { continue };
+        let Ok(text) = std::fs::read_to_string(&path) else {
+            continue;
+        };
         for ch in text.chars() {
             if (' '..='~').contains(&ch) || ch as u32 >= 0x2000 {
                 out.insert(ch);
@@ -37,9 +43,12 @@ pub fn generate() {
     let output = PathBuf::from(std::env::var_os("OUT_DIR").unwrap());
     let mut code = String::new();
     let mut pixels = Vec::new();
-    // 只光栅化源码中实际出现的字符，避免把整套字体打进二进制
+    // 只光栅化源码中出现的字符
     for size in [12, 10, 8] {
-        let source = format!("{}/fonts/fusion{size}.ttf", std::env::var("CARGO_MANIFEST_DIR").unwrap());
+        let source = format!(
+            "{}/fonts/fusion{size}.ttf",
+            std::env::var("CARGO_MANIFEST_DIR").unwrap()
+        );
         let font = fontdue::Font::from_bytes(
             std::fs::read(source).expect("读取 UI 字体失败"),
             fontdue::FontSettings::default(),
@@ -50,7 +59,7 @@ pub fn generate() {
             .chars()
             .keys()
             .copied()
-            .filter(|c| used.contains(c))
+            .filter(|character| used.contains(character))
             .collect();
         // 对象替换字符预留 12px 表情与左右各 1px 字距，表情由 Text 绘制
         characters.retain(|&character| character != '\u{fffc}');

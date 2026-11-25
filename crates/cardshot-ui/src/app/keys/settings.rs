@@ -31,7 +31,17 @@ pub(crate) fn hotkey_prefix(st: &State, upper: bool) -> String {
     if mods.is_empty() {
         return String::new();
     }
-    let joined = mods.iter().map(|m| if upper { m.clone() } else { m.to_lowercase() }).collect::<Vec<_>>().join("+");
+    let joined = mods
+        .iter()
+        .map(|modifier| {
+            if upper {
+                modifier.clone()
+            } else {
+                modifier.to_lowercase()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("+");
     format!("{joined}+")
 }
 
@@ -114,10 +124,10 @@ pub(crate) fn handle_hotkey_capture(st: &mut State, client: &mut Client, key: &s
 pub(crate) fn handle_port_edit(st: &mut State, client: &mut Client, key: &str) {
     match key {
         "ENTER" => {
-            if let Ok(p) = st.port_buf.parse::<i64>() {
-                let p = p.clamp(PORT_MIN, PORT_MAX);
-                if p != st.remote_port {
-                    change_port(client, st, p);
+            if let Ok(port_value) = st.port_buf.parse::<i64>() {
+                let port_value = port_value.clamp(PORT_MIN, PORT_MAX);
+                if port_value != st.remote_port {
+                    change_port(client, st, port_value);
                 }
             }
             st.port_edit = false;
@@ -126,9 +136,9 @@ pub(crate) fn handle_port_edit(st: &mut State, client: &mut Client, key: &str) {
         "BACK" => {
             st.port_buf.pop();
         }
-        k if k.len() == 1 && k.chars().all(|c| c.is_ascii_digit()) => {
+        key if key.len() == 1 && key.chars().all(|character| character.is_ascii_digit()) => {
             if st.port_buf.len() < 5 {
-                st.port_buf.push_str(k);
+                st.port_buf.push_str(key);
             }
         }
         _ => {}
@@ -136,7 +146,7 @@ pub(crate) fn handle_port_edit(st: &mut State, client: &mut Client, key: &str) {
 }
 
 pub(crate) fn cycle<T: Copy + PartialEq>(list: &[T], current: T, dir: i64) -> T {
-    let idx = list.iter().position(|v| *v == current).unwrap_or(0) as i64;
+    let idx = list.iter().position(|item| *item == current).unwrap_or(0) as i64;
     let next = (idx + dir).rem_euclid(list.len() as i64) as usize;
     list[next]
 }
@@ -149,15 +159,23 @@ pub(crate) fn handle_settings(st: &mut State, client: &mut Client, key: &str) {
             st.settings_focus = crate::constants::SETTINGS_TAB_RANGES[st.settings_tab].0;
         }
         "SHIFT_TAB" => {
-            let n = crate::constants::SETTINGS_TAB_RANGES.len();
-            st.settings_tab = (st.settings_tab + n - 1) % n;
+            let tab_count = crate::constants::SETTINGS_TAB_RANGES.len();
+            st.settings_tab = (st.settings_tab + tab_count - 1) % tab_count;
             st.settings_focus = crate::constants::SETTINGS_TAB_RANGES[st.settings_tab].0;
         }
         "UP" => {
-            st.settings_focus = if st.settings_focus > start { st.settings_focus - 1 } else { end };
+            st.settings_focus = if st.settings_focus > start {
+                st.settings_focus - 1
+            } else {
+                end
+            };
         }
         "DOWN" => {
-            st.settings_focus = if st.settings_focus < end { st.settings_focus + 1 } else { start };
+            st.settings_focus = if st.settings_focus < end {
+                st.settings_focus + 1
+            } else {
+                start
+            };
         }
         "LEFT" | "RIGHT" | "ENTER" => {
             let dir: i64 = if key == "LEFT" { -1 } else { 1 };

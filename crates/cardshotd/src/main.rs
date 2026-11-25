@@ -3,11 +3,11 @@ mod feedback;
 mod hotkeys;
 mod http;
 
-use cardshot_core::overlay;
+use cardshot_core::capture;
 use cardshot_core::config::Config;
 use cardshot_core::library::Library;
+use cardshot_core::overlay;
 use cardshot_core::recorder::Recorder;
-use cardshot_core::capture;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -23,15 +23,18 @@ pub struct Core {
 }
 
 fn config_json(cfg: &Config, remote_running: bool) -> Value {
-    let mut v = serde_json::to_value(cfg).unwrap_or_else(|_| json!({}));
-    if let Some(o) = v.as_object_mut() {
-        let mut remote = o.get("remote").cloned().unwrap_or_else(|| json!({}));
-        if let Some(ro) = remote.as_object_mut() {
-            ro.insert("running".to_string(), json!(remote_running));
+    let mut json_value = serde_json::to_value(cfg).unwrap_or_else(|_| json!({}));
+    if let Some(object_map) = json_value.as_object_mut() {
+        let mut remote_value = object_map
+            .get("remote")
+            .cloned()
+            .unwrap_or_else(|| json!({}));
+        if let Some(remote_map) = remote_value.as_object_mut() {
+            remote_map.insert("running".to_string(), json!(remote_running));
         }
-        o.insert("remote".to_string(), remote);
+        object_map.insert("remote".to_string(), remote_value);
     }
-    v
+    json_value
 }
 
 impl Core {
@@ -49,79 +52,84 @@ impl Core {
     }
 
     pub fn status(&self) -> Value {
-        let (im, vi, tb) = self.lib.lock().unwrap().stats();
-        let rec = self.recorder.lock().unwrap().status();
-        let running = self.remote.lock().unwrap().is_some();
-        let cfg = self.cfg.lock().unwrap();
-        let mut v = json!({
-            "recording": rec.recording,
-            "elapsed": rec.elapsed,
-            "frames": rec.frames,
-            "current_file": rec.current_file,
-            "last_error": rec.last_error,
-            "counts": { "images": im, "videos": vi },
-            "total_bytes": tb,
-            "remote": { "running": running, "port": cfg.remote.port, "bind": cfg.remote.bind.clone(), "host": crate::http::display_host(&cfg.remote.bind) },
-            "output_dir": cfg.output_dir.clone(),
-            "video_dir": cfg.video_dir.clone(),
-            "image_format": cfg.image_format.clone(),
-            "image_quality": cfg.image_quality,
+        let (image_count, video_count, total_bytes) = self.lib.lock().unwrap().stats();
+        let record_status = self.recorder.lock().unwrap().status();
+        let remote_running = self.remote.lock().unwrap().is_some();
+        let config = self.cfg.lock().unwrap();
+        let mut status_json = json!({
+            "recording": record_status.recording,
+            "elapsed": record_status.elapsed,
+            "frames": record_status.frames,
+            "current_file": record_status.current_file,
+            "last_error": record_status.last_error,
+            "counts": { "images": image_count, "videos": video_count },
+            "total_bytes": total_bytes,
+            "remote": { "running": remote_running, "port": config.remote.port, "bind": config.remote.bind.clone(), "host": crate::http::display_host(&config.remote.bind) },
+            "output_dir": config.output_dir.clone(),
+            "video_dir": config.video_dir.clone(),
+            "image_format": config.image_format.clone(),
+            "image_quality": config.image_quality,
         });
-        let _ = &mut v;
-        v
+        status_json
     }
 
     pub fn public_config(&self) -> Value {
-        let cfg = self.cfg.lock().unwrap();
-        let running = self.remote.lock().unwrap().is_some();
-        config_json(&cfg, running)
+        let config = self.cfg.lock().unwrap();
+        let remote_running = self.remote.lock().unwrap().is_some();
+        config_json(&config, remote_running)
     }
 
     pub fn apply_config(&self, patch: &Value) -> Value {
-        let mut cfg = self.cfg.lock().unwrap();
-        let mut cur = serde_json::to_value(&*cfg).unwrap_or_else(|_| json!({}));
-        merge(&mut cur, patch);
-        match serde_json::from_value::<Config>(cur) {
-            Ok(mut nc) => {
-                nc.image_quality = nc.image_quality.clamp(1, 100);
-                if !matches!(nc.language.as_str(), "zh" | "en" | "ja") {
-                    nc.language = "en".into();
+        let mut config = self.cfg.lock().unwrap();
+        let mut merged = serde_json::to_value(&*config).unwrap_or_else(|_| json!({}));
+        merge(&mut merged, patch);
+        match serde_json::from_value::<Config>(merged) {
+            Ok(mut new_config) => {
+                new_config.image_quality = new_config.image_quality.clamp(1, 100);
+                if !matches!(new_config.language.as_str(), "zh" | "en" | "ja") {
+                    new_config.language = "en".into();
                 }
-                let old_autostart = cfg.service.autostart;
-                let _ = nc.save(&self.cfg_path);
-                if old_autostart != nc.service.autostart {
-                    let action = if nc.service.autostart { "enable" } else { "disable" };
-                    let rt = crate::runtime_dir();
+                let old_autostart = config.service.autostart;
+                let _ = new_config.save(&self.cfg_path);
+                if old_autostart != new_config.service.autostart {
+                    let action = if new_config.service.autostart {
+                        "enable"
+                    } else {
+                        "disable"
+                    };
+                    let runtime_path = crate::runtime_dir();
                     let _ = std::process::Command::new("systemctl")
                         .args(["--user", action, "cardshot.service"])
-                        .env("XDG_RUNTIME_DIR", &rt)
+                        .env("XDG_RUNTIME_DIR", &runtime_path)
                         .status();
                 }
-                *cfg = nc.clone();
-                self.lib.lock().unwrap().reconfigure(&nc);
-                let running = self.remote.lock().unwrap().is_some();
-                json!({ "ok": true, "config": config_json(&nc, running) })
+                *config = new_config.clone();
+                self.lib.lock().unwrap().reconfigure(&new_config);
+                let remote_running = self.remote.lock().unwrap().is_some();
+                json!({ "ok": true, "config": config_json(&new_config, remote_running) })
             }
-            Err(e) => json!({ "ok": false, "error": e.to_string() }),
+            Err(error) => json!({ "ok": false, "error": error.to_string() }),
         }
     }
 
     pub fn reload_config(&self) {
-        let cfg = Config::load(&self.cfg_path);
-        let lib = Library::new(&cfg);
-        *self.cfg.lock().unwrap() = cfg;
-        *self.lib.lock().unwrap() = lib;
+        let config = Config::load(&self.cfg_path);
+        let library = Library::new(&config);
+        *self.cfg.lock().unwrap() = config;
+        *self.lib.lock().unwrap() = library;
     }
 }
 
 fn merge(dst: &mut Value, src: &Value) {
-    if let (Some(d), Some(s)) = (dst.as_object_mut(), src.as_object()) {
-        for (k, v) in s {
-            match d.get_mut(k) {
-                Some(dv) if dv.is_object() && v.is_object() => merge(dv, v),
-                Some(dv) => *dv = v.clone(),
+    if let (Some(dst_map), Some(src_map)) = (dst.as_object_mut(), src.as_object()) {
+        for (key, value) in src_map {
+            match dst_map.get_mut(key) {
+                Some(dst_value) if dst_value.is_object() && value.is_object() => {
+                    merge(dst_value, value)
+                }
+                Some(dst_value) => *dst_value = value.clone(),
                 None => {
-                    d.insert(k.clone(), v.clone());
+                    dst_map.insert(key.clone(), value.clone());
                 }
             }
         }
@@ -130,67 +138,74 @@ fn merge(dst: &mut Value, src: &Value) {
     }
 }
 
-pub fn dispatch(core: &Arc<Core>, cmd: &str, args: &Value) -> Value {
-    match cmd {
+pub fn dispatch(core: &Arc<Core>, command_name: &str, args: &Value) -> Value {
+    match command_name {
         "ping" => json!({ "ok": true, "pong": true }),
         "status" => json!({ "ok": true, "status": core.status() }),
         "shot" => {
             let cfg = core.cfg.lock().unwrap();
             match capture::screenshot(&cfg.output_dir, &cfg.image_format, cfg.image_quality) {
-                Ok(p) => {
+                Ok(path) => {
                     drop(cfg);
                     core.feedback.flash();
                     let fb = capture::FB_PATH;
-                    std::thread::spawn(move || { let _ = overlay::toast(&fb, include_bytes!("../assets/shot.png")); });
-                    json!({ "ok": true, "path": p.to_string_lossy() })
+                    std::thread::spawn(move || {
+                        let _ = overlay::toast(&fb, include_bytes!("../assets/shot.png"));
+                    });
+                    json!({ "ok": true, "path": path.to_string_lossy() })
                 }
-                Err(e) => json!({ "ok": false, "error": e.to_string() }),
+                Err(error) => json!({ "ok": false, "error": error.to_string() }),
             }
         }
         "record_start" => {
             let cfg = core.cfg.lock().unwrap().clone();
             let _ = overlay::toast(&capture::FB_PATH, include_bytes!("../assets/rec_start.png"));
-            let mut r = core.recorder.lock().unwrap();
-            match r.start(&cfg) {
-                Ok(p) => {
-                    drop(r);
+            let mut recorder = core.recorder.lock().unwrap();
+            match recorder.start(&cfg) {
+                Ok(path) => {
+                    drop(recorder);
                     core.feedback.flash();
-                    json!({ "ok": true, "recording": true, "path": p.to_string_lossy() })
+                    json!({ "ok": true, "recording": true, "path": path.to_string_lossy() })
                 }
-                Err(e) => json!({ "ok": false, "error": e }),
+                Err(error) => json!({ "ok": false, "error": error }),
             }
         }
         "record_stop" => {
-            let mut r = core.recorder.lock().unwrap();
-            match r.stop() {
-                Ok(p) => {
-                    drop(r);
+            let mut recorder = core.recorder.lock().unwrap();
+            match recorder.stop() {
+                Ok(path) => {
+                    drop(recorder);
                     core.feedback.flash();
                     let fb = capture::FB_PATH;
-                    std::thread::spawn(move || { let _ = overlay::toast(&fb, include_bytes!("../assets/rec_saved.png")); });
-                    json!({ "ok": true, "recording": false, "path": p.to_string_lossy() })
+                    std::thread::spawn(move || {
+                        let _ = overlay::toast(&fb, include_bytes!("../assets/rec_saved.png"));
+                    });
+                    json!({ "ok": true, "recording": false, "path": path.to_string_lossy() })
                 }
-                Err(e) => json!({ "ok": false, "error": e }),
+                Err(error) => json!({ "ok": false, "error": error }),
             }
         }
         "record_toggle" => {
             let cfg = core.cfg.lock().unwrap().clone();
-            let mut r = core.recorder.lock().unwrap();
-            let was = r.status().recording;
+            let mut recorder = core.recorder.lock().unwrap();
+            let was = recorder.status().recording;
             if !was {
-                let _ = overlay::toast(&capture::FB_PATH, include_bytes!("../assets/rec_start.png"));
+                let _ =
+                    overlay::toast(&capture::FB_PATH, include_bytes!("../assets/rec_start.png"));
             }
-            match r.toggle(&cfg) {
-                Ok((on, p)) => {
-                    drop(r);
+            match recorder.toggle(&cfg) {
+                Ok((on, path)) => {
+                    drop(recorder);
                     core.feedback.flash();
                     if was && !on {
                         let fb = capture::FB_PATH;
-                        std::thread::spawn(move || { let _ = overlay::toast(&fb, include_bytes!("../assets/rec_saved.png")); });
+                        std::thread::spawn(move || {
+                            let _ = overlay::toast(&fb, include_bytes!("../assets/rec_saved.png"));
+                        });
                     }
-                    json!({ "ok": true, "recording": on, "path": p.to_string_lossy() })
+                    json!({ "ok": true, "recording": on, "path": path.to_string_lossy() })
                 }
-                Err(e) => json!({ "ok": false, "error": e }),
+                Err(error) => json!({ "ok": false, "error": error }),
             }
         }
         "items" => {
@@ -198,12 +213,15 @@ pub fn dispatch(core: &Arc<Core>, cmd: &str, args: &Value) -> Value {
             json!({ "ok": true, "items": items })
         }
         "thumb" => {
-            let id = args.get("id").and_then(|v| v.as_str()).unwrap_or("");
+            let id = args
+                .get("id")
+                .and_then(|value| value.as_str())
+                .unwrap_or("");
             let lib = core.lib.lock().unwrap();
-            let found = lib.items().into_iter().find(|i| i.id == id);
+            let found = lib.items().into_iter().find(|item| item.id == id);
             match found {
                 Some(it) => match lib.ensure_thumb(&it) {
-                    Some(p) => json!({ "ok": true, "path": p.to_string_lossy() }),
+                    Some(path) => json!({ "ok": true, "path": path.to_string_lossy() }),
                     None => json!({ "ok": false, "error": "thumb failed" }),
                 },
                 None => json!({ "ok": false, "error": "not found" }),
@@ -216,15 +234,16 @@ pub fn dispatch(core: &Arc<Core>, cmd: &str, args: &Value) -> Value {
         "delete" => {
             let ids: Vec<String> = args
                 .get("ids")
-                .and_then(|v| v.as_array())
-                .map(|a| {
-                    a.iter()
-                        .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                .and_then(|value| value.as_array())
+                .map(|array| {
+                    array
+                        .iter()
+                        .filter_map(|value| value.as_str().map(|src| src.to_string()))
                         .collect()
                 })
                 .unwrap_or_default();
-            let n = core.lib.lock().unwrap().delete(&ids);
-            json!({ "ok": true, "removed": n })
+            let removed = core.lib.lock().unwrap().delete(&ids);
+            json!({ "ok": true, "removed": removed })
         }
         "clear_all" => {
             let ids: Vec<String> = core
@@ -235,8 +254,8 @@ pub fn dispatch(core: &Arc<Core>, cmd: &str, args: &Value) -> Value {
                 .iter()
                 .map(|it| it.id.clone())
                 .collect();
-            let n = core.lib.lock().unwrap().delete(&ids);
-            json!({ "ok": true, "removed": n })
+            let removed = core.lib.lock().unwrap().delete(&ids);
+            json!({ "ok": true, "removed": removed })
         }
         "config_get" => json!({ "ok": true, "config": core.public_config() }),
         "config_set" => {
@@ -247,19 +266,17 @@ pub fn dispatch(core: &Arc<Core>, cmd: &str, args: &Value) -> Value {
             core.reload_config();
             json!({ "ok": true })
         }
-        "remote_start" => {
-            match http::start(core) {
-                Ok(url) => {
-                    {
-                        let mut cfg = core.cfg.lock().unwrap();
-                        cfg.remote.enabled = true;
-                        let _ = cfg.save(&core.cfg_path);
-                    }
-                    json!({ "ok": true, "url": url })
+        "remote_start" => match http::start(core) {
+            Ok(url) => {
+                {
+                    let mut cfg = core.cfg.lock().unwrap();
+                    cfg.remote.enabled = true;
+                    let _ = cfg.save(&core.cfg_path);
                 }
-                Err(e) => json!({ "ok": false, "error": e }),
+                json!({ "ok": true, "url": url })
             }
-        }
+            Err(error) => json!({ "ok": false, "error": error }),
+        },
         "remote_stop" => {
             http::stop(core);
             {
@@ -270,7 +287,12 @@ pub fn dispatch(core: &Arc<Core>, cmd: &str, args: &Value) -> Value {
             json!({ "ok": true })
         }
         "remote_status" => {
-            let running = core.remote.lock().unwrap().as_ref().map(|h| h.url.clone());
+            let running = core
+                .remote
+                .lock()
+                .unwrap()
+                .as_ref()
+                .map(|handle| handle.url.clone());
             match running {
                 Some(url) => json!({ "ok": true, "running": true, "url": url }),
                 None => json!({ "ok": true, "running": false }),
@@ -286,9 +308,9 @@ fn default_cfg_path() -> String {
 }
 
 fn runtime_dir() -> PathBuf {
-    if let Ok(d) = std::env::var("XDG_RUNTIME_DIR") {
-        if !d.is_empty() {
-            return PathBuf::from(d);
+    if let Ok(dst) = std::env::var("XDG_RUNTIME_DIR") {
+        if !dst.is_empty() {
+            return PathBuf::from(dst);
         }
     }
     format!("/tmp/cardshot-{}", unsafe { libc::getuid() }).into()
@@ -296,19 +318,19 @@ fn runtime_dir() -> PathBuf {
 
 fn acquire_lock(path: &Path) -> bool {
     use std::os::unix::io::AsRawFd;
-    let f = match std::fs::OpenOptions::new()
+    let file = match std::fs::OpenOptions::new()
         .create(true)
         .write(true)
         .open(path)
     {
-        Ok(f) => f,
+        Ok(file) => file,
         Err(_) => return false,
     };
-    let rc = unsafe { libc::flock(f.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
+    let rc = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
     if rc != 0 {
         return false;
     }
-    std::mem::forget(f);
+    std::mem::forget(file);
     true
 }
 
@@ -321,10 +343,10 @@ extern "C" fn on_signal(_sig: libc::c_int) {
 fn main() {
     let mut cfg_path = default_cfg_path();
     let mut it = std::env::args().skip(1);
-    while let Some(a) = it.next() {
-        if a == "--config" {
-            if let Some(v) = it.next() {
-                cfg_path = v;
+    while let Some(array) = it.next() {
+        if array == "--config" {
+            if let Some(path_value) = it.next() {
+                cfg_path = path_value;
             }
         }
     }
@@ -351,8 +373,8 @@ fn main() {
 
     if cfg.remote.enabled {
         match http::start(&core) {
-            Ok(u) => eprintln!("cardshotd: remote web {u}"),
-            Err(e) => eprintln!("cardshotd: remote start failed: {e}"),
+            Ok(url) => eprintln!("cardshotd: remote web {url}"),
+            Err(error) => eprintln!("cardshotd: remote start failed: {error}"),
         }
     }
 
@@ -367,9 +389,9 @@ fn main() {
 
     // 退出前停止录制与远程服务
     {
-        let mut r = core.recorder.lock().unwrap();
-        if r.is_recording() {
-            let _ = r.stop();
+        let mut recorder = core.recorder.lock().unwrap();
+        if recorder.is_recording() {
+            let _ = recorder.stop();
         }
     }
     http::stop(&core);

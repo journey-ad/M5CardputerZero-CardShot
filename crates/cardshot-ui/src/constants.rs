@@ -1,4 +1,4 @@
-// 集中常量与语义化枚举，避免散落的魔法值与下标
+// 常量与语义化枚举
 
 pub const WIDTH: u32 = 320;
 pub const HEIGHT: u32 = 170;
@@ -33,13 +33,7 @@ pub const PORT_MAX: i64 = 65535;
 pub const PORT_STEP: i64 = 10;
 
 /// 截图快捷键候选项，左右键循环切换
-pub const SHOT_CHORDS: [&str; 5] = [
-    "shift+space",
-    "ctrl+space",
-    "shift+s",
-    "ctrl+alt+s",
-    "f12",
-];
+pub const SHOT_CHORDS: [&str; 5] = ["shift+space", "ctrl+space", "shift+s", "ctrl+alt+s", "f12"];
 
 /// 缩略图与预览图的最大显示尺寸
 pub const THUMB_BOX: (u32, u32) = (96, 40);
@@ -86,13 +80,19 @@ impl Page {
     /// 切换到的下一页，按 Page::ALL 顺序循环
     pub fn next(self) -> Page {
         let list = Page::ALL;
-        let pos = list.iter().position(|p| *p == self).unwrap_or(0);
+        let pos = list
+            .iter()
+            .position(|candidate| *candidate == self)
+            .unwrap_or(0);
         list[(pos + 1) % list.len()]
     }
 
     pub fn prev(self) -> Page {
         let list = Page::ALL;
-        let pos = list.iter().position(|p| *p == self).unwrap_or(0);
+        let pos = list
+            .iter()
+            .position(|candidate| *candidate == self)
+            .unwrap_or(0);
         list[(pos + list.len() - 1) % list.len()]
     }
 
@@ -138,7 +138,10 @@ pub enum SettingRow {
 /// 每个设置分类页包含的行索引区间（含首尾），由 SettingRow 顺序推导
 pub const SETTINGS_TAB_RANGES: [(usize, usize); 4] = [
     (SettingRow::Autostart.index(), SettingRow::Fps.index()),
-    (SettingRow::ShotHotkey.index(), SettingRow::RecordAudio.index()),
+    (
+        SettingRow::ShotHotkey.index(),
+        SettingRow::RecordAudio.index(),
+    ),
     (SettingRow::Remote.index(), SettingRow::Port.index()),
     (SettingRow::Clear.index(), SettingRow::Clear.index()),
 ];

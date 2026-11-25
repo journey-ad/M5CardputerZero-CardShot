@@ -12,43 +12,46 @@ use std::time::{Duration, Instant};
 
 use slint::{Rgb8Pixel, SharedPixelBuffer};
 
-use crate::constants::{PREVIEW_BOX, THUMB_BOX, GRID_PAGE, SettingRow};
-use crate::daemon::Client;
 use crate::constants::FB_BYTES;
+use crate::constants::{SettingRow, GRID_PAGE, PREVIEW_BOX, THUMB_BOX};
+use crate::daemon::Client;
 use crate::model::{fmt_clock, fmt_duration, human_size, State, VideoPlayer};
 use crate::{AppWindow, GalleryItem};
 
-mod preview;
 mod hints;
+mod preview;
 mod settings;
 
-pub use preview::*;
 use hints::hint_items;
-use settings::{setting_tabs, setting_rows, setting_footer};
+pub use preview::*;
+use settings::{setting_footer, setting_rows, setting_tabs};
 
-fn expand_home(p: &str) -> std::path::PathBuf {
-    if let Some(rest) = p.strip_prefix("~/") {
+fn expand_home(path: &str) -> std::path::PathBuf {
+    if let Some(rest) = path.strip_prefix("~/") {
         if let Some(home) = std::env::var_os("HOME") {
             return Path::new(&home).join(rest);
         }
     }
-    Path::new(p).to_path_buf()
+    Path::new(path).to_path_buf()
 }
 
 fn load_sized(path: &Path, max: (u32, u32)) -> Option<slint::Image> {
     let img = image::open(path).ok()?.to_rgb8();
-    let (w, h) = (img.width(), img.height());
-    if w == 0 || h == 0 {
+    let (width, height) = (img.width(), img.height());
+    if width == 0 || height == 0 {
         return None;
     }
-    // 已在目标尺寸内则直接使用原始像素，避免重采样造成模糊
-    let (nw, nh) = if w <= max.0 && h <= max.1 {
-        (w, h)
+    // 在目标尺寸内时使用原始像素
+    let (nw, nh) = if width <= max.0 && height <= max.1 {
+        (width, height)
     } else {
-        let scale = (max.0 as f64 / w as f64).min(max.1 as f64 / h as f64);
-        (((w as f64 * scale).round() as u32).max(1), ((h as f64 * scale).round() as u32).max(1))
+        let scale = (max.0 as f64 / width as f64).min(max.1 as f64 / height as f64);
+        (
+            ((width as f64 * scale).round() as u32).max(1),
+            ((height as f64 * scale).round() as u32).max(1),
+        )
     };
-    let resized = if (nw, nh) == (w, h) {
+    let resized = if (nw, nh) == (width, height) {
         img
     } else {
         image::imageops::resize(&img, nw, nh, image::imageops::FilterType::Triangle)
@@ -57,11 +60,11 @@ fn load_sized(path: &Path, max: (u32, u32)) -> Option<slint::Image> {
     let mut buf = SharedPixelBuffer::<Rgb8Pixel>::new(nw, nh);
     let dst = buf.make_mut_slice();
     let raw = resized.as_raw();
-    for i in 0..(nw * nh) as usize {
-        dst[i] = Rgb8Pixel {
-            r: raw[i * 3],
-            g: raw[i * 3 + 1],
-            b: raw[i * 3 + 2],
+    for index in 0..(nw * nh) as usize {
+        dst[index] = Rgb8Pixel {
+            r: raw[index * 3],
+            g: raw[index * 3 + 1],
+            b: raw[index * 3 + 2],
         };
     }
     Some(slint::Image::from_rgb8(buf))
@@ -74,17 +77,26 @@ fn item_image(client: &mut Client, st: &mut State, idx: usize, big: bool) -> Opt
     } else {
         &mut st.images_grid
     };
-    let key = if big { format!("{}@big", it.id) } else { it.id.clone() };
+    let key = if big {
+        format!("{}@big", it.id)
+    } else {
+        it.id.clone()
+    };
     if let Some(img) = cache.get(&key) {
         return Some(img.clone());
     }
     let box_size = if big { PREVIEW_BOX } else { THUMB_BOX };
     let img = if big && it.kind == "image" && !st.output_dir.is_empty() {
-        let p = expand_home(&st.output_dir).join(&it.name);
-        load_sized(&p, box_size)
-            .or_else(|| client.thumb_path(&it.id).and_then(|p| load_sized(&p, box_size)))
+        let path = expand_home(&st.output_dir).join(&it.name);
+        load_sized(&path, box_size).or_else(|| {
+            client
+                .thumb_path(&it.id)
+                .and_then(|path| load_sized(&path, box_size))
+        })
     } else {
-        client.thumb_path(&it.id).and_then(|p| load_sized(&p, box_size))
+        client
+            .thumb_path(&it.id)
+            .and_then(|path| load_sized(&path, box_size))
     }?;
     cache.insert(key, img.clone());
     Some(img)
@@ -117,7 +129,9 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     ui.set_sel_count(st.selected.len() as i32);
     let start = st.scroll.min(st.items.len());
     let end = (start + GRID_PAGE).min(st.items.len());
-    let flags: Vec<bool> = (start..end).map(|i| st.selected.contains(&i)).collect();
+    let flags: Vec<bool> = (start..end)
+        .map(|index| st.selected.contains(&index))
+        .collect();
     ui.set_selected_flags(slint::ModelRc::new(slint::VecModel::from(flags)));
     ui.set_recording(st.recording);
     ui.set_rec_time(fmt_clock(st.rec_seconds as f64).into());
@@ -137,7 +151,13 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
         ui.set_s_setting_help_body(crate::i18n::tr(lang, dk).into());
     }
     crate::i18n::set_current(lang);
-    ui.global::<crate::I18n>().set_lang(if lang == "en" { 1 } else if lang == "ja" { 2 } else { 0 });
+    ui.global::<crate::I18n>().set_lang(if lang == "en" {
+        1
+    } else if lang == "ja" {
+        2
+    } else {
+        0
+    });
     ui.set_count_images(st.count_images as i32);
     ui.set_count_videos(st.count_videos as i32);
     ui.set_size_label(human_size(st.total_bytes).into());
