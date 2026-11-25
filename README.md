@@ -1,12 +1,12 @@
 # CardShot
 
-Cardputer Zero（aarch64 Linux，320×170 帧缓冲）上的截图、录屏与相册管理工具。
+Cardputer Zero 上的截图、录屏与相册管理工具。
 
 由四部分组成：
 
 - `crates/cardshot-core`：抓帧、编码、录制、相册等公共逻辑
 - `crates/cardshotd`：后台守护，读取 `/dev/fb0` 抓取当前前台画面，提供截图、录屏、相册、控制 socket 与 HTTP 远程管理
-- `crates/cardshot-ui`：设备端 Slint 界面，用于浏览相册、预览、多选删除与设置
+- `crates/cardshot-ui`：设备端管理界面，用于浏览相册、预览、多选删除与设置
 - `service/web`：远程 Web 管理页（Preact + htm，无需构建）
 
 ## 目录
@@ -53,19 +53,6 @@ bash scripts/install-app.sh   # 注册到 APPLaunch
 - `remote.enabled`、`remote.bind`、`remote.port`
 - `hotkeys.enabled`、`hotkeys.shot`、`hotkeys.record`
 
-## 接口
-
-Unix socket（`$XDG_RUNTIME_DIR/cardshot.sock`）按行收发 JSON：
-
-`status` `shot` `record_start` `record_stop` `record_toggle` `items` `counts` `delete` `config_get` `config_set` `reload` `remote_start` `remote_stop` `remote_status` `thumb`
-
-HTTP API：
-
-```
-GET  /api/status  /api/items  /api/config  /api/thumb?id=  /api/file?id=&download=1
-POST /api/shot    /api/record  /api/delete  /api/config  /api/remote
-```
-
 ## 界面预览
 
 设备端：
@@ -78,16 +65,3 @@ POST /api/shot    /api/record  /api/delete  /api/config  /api/remote
 Web 管理页与设备端共用设置，支持中/英/日三语；相册可切换缩略图与列表、分页、拖拽框选多选；预览支持 1X/2X/3X 像素级缩放，可复制当前倍率图片或下载对应文件。
 
 ![Web 管理页](docs/screenshots/07-web.png)
-
-## 发布
-
-推送到 `main` 触发 CI 检查与设备构建。打 `v*` 标签（如 `v0.1.0`）后自动构建二进制、生成 `.deb` 与源码包、创建 GitHub Release，并向 CardputerZero 应用商店提交更新 PR。
-
-商店发布需在仓库 Actions secrets 配置 `CARDPUTER_STORE_TOKEN`，且账号为仓库所有者。
-
-本地打包：
-
-```sh
-bash scripts/build-rust.sh
-python3 scripts/package-release.py
-```
