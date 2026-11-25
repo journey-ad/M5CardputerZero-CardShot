@@ -1,5 +1,6 @@
 #!/bin/sh
-# APPLaunch 以 root 启动，统一运行时目录后进入设备端界面
-export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/1000}
-export HOME=${HOME:-/root}
+# 启动前确保后台守护在当前用户会话中运行
+uid=$(id -u)
+export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$uid}
+systemctl --user start cardshot.service >/dev/null 2>&1 || true
 exec /usr/share/APPLaunch/bin/cardshot-ui

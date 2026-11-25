@@ -53,7 +53,7 @@ def main() -> None:
         shutil.rmtree(package)
     app = package / "usr/share/APPLaunch"
     lib = package / "usr/lib/cardshot"
-    unit = package / "usr/lib/systemd/user"
+    unit = package / "usr/lib/cardshot"
     doc = package / "usr/share/doc/cardshot"
 
     copy(binaries["cardshot-ui"], app / "bin/cardshot-ui")
@@ -105,9 +105,22 @@ def main() -> None:
     )
     postinst = package / "DEBIAN/postinst"
     postinst.write_text(
-        "#!/bin/sh\nset -e\nsystemctl --global enable cardshot.service >/dev/null 2>&1 || true\n"
-        "systemctl --global daemon-reload >/dev/null 2>&1 || true\nexit 0\n",
-        encoding="utf-8",
+        "#!/bin/sh\n"
+        "set -e\n"
+        "UNIT=/usr/lib/cardshot/cardshot.service\n"
+        "for entry in $(getent passwd | awk -F: '$3 >= 1000 && $3 < 60000 && $6 ~ /^\\/home\\// { print $1 \":\" $6 }'); do\n"
+        "  user=${entry%%:*}\n"
+        "  home=${entry#*:}\n"
+        "  dir=\"$home/.config/systemd/user\"\n"
+        "  mkdir -p \"$dir/default.target.wants\"\n"
+        "  ln -sf \"$UNIT\" \"$dir/cardshot.service\"\n"
+        "  ln -sf \"$UNIT\" \"$dir/default.target.wants/cardshot.service\"\n"
+        "  uid=$(id -u \"$user\")\n"
+        "  chown -R \"$user\" \"$home/.config/systemd/user\" 2>/dev/null || true\n"
+        "  runuser -u \"$user\" -- env XDG_RUNTIME_DIR=\"/run/user/$uid\" systemctl --user daemon-reload >/dev/null 2>&1 || true\n"
+        "  runuser -u \"$user\" -- env XDG_RUNTIME_DIR=\"/run/user/$uid\" systemctl --user start cardshot.service >/dev/null 2>&1 || true\n"
+        "done\n"
+        "exit 0\n"
     )
     postinst.chmod(0o755)
     dpkg_deb("--build", "--root-owner-group", package, DIST / f"cardshot_{version}_arm64.deb")
