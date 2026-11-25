@@ -264,3 +264,9 @@ msgstr "Record sound"
 
 msgid "录制扬声器输出（内录），默认关闭"
 msgstr "Record speaker output (loopback); off by default"
+
+msgid "空格"
+msgstr "Space"
+
+msgid "退格"
+msgstr "Back"
