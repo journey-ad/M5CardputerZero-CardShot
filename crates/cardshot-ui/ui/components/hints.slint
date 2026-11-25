@@ -57,7 +57,7 @@ export component HintPair inherits Rectangle {
 export component HintCell inherits Rectangle {
     in property <HintItem> item;
     height: 18px;
-    width: item.w;
+    width: item.kind == HintKind.pair ? item.w + item.w2 + 3px : item.w;
     horizontal-stretch: item.kind == HintKind.stretch ? 1 : 0;
     background: transparent;
     if item.kind == HintKind.text : HintText { text: item.text; }
@@ -70,7 +70,7 @@ export component HintRow inherits Rectangle {
     in property <[HintItem]> items: AppState.hints;
     in property <bool> overlay: AppState.page == Pages.preview;
     height: 18px;
-    background: root.overlay ? #0F1419E8 : #0F1419;
+    background: #0F1419;
     Rectangle { x: 0; y: 0; width: parent.width; height: 1px; background: #1C242B; }
 
     HorizontalLayout {

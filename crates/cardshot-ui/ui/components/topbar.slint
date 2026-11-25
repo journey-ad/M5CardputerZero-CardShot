@@ -7,7 +7,7 @@ export component TopBar inherits Rectangle {
     in property <bool> overlay: AppState.page == Pages.preview;
     in property <bool> wide-right: AppState.page == Pages.preview;
     height: 20px;
-    background: root.overlay ? #0B0E11D8 : #0B0E11;
+    background: #0B0E11;
     Rectangle { x: 0; y: parent.height - 1px; width: parent.width; height: 1px; background: #1C242B; }
     Text {
         x: 10px; y: 0; width: parent.width - (root.wide-right ? 156px : 74px); height: parent.height; vertical-alignment: center; overflow: elide;

@@ -269,7 +269,7 @@ msgid "空格"
 msgstr "Space"
 
 msgid "退格"
-msgstr "Back"
+msgstr "Backspace"
 
 msgid " 项"
 msgstr " items"

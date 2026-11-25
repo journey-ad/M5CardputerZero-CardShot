@@ -97,7 +97,6 @@ pub(crate) fn hint_items(st: &crate::model::State) -> Vec<crate::HintItem> {
         ],
         Page::Gallery => vec![
             arrow(false),
-            label(translate("移动")),
             pair("Enter", "预览"),
             pair("空格", "多选"),
             pair("退格", "删除"),
