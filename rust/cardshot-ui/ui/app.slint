@@ -282,7 +282,7 @@ component SettingRow inherits Rectangle {
     border-width: root.focused ? 1px : 0px;
     border-color: #2DD4BF;
     Text {
-        x: 8px; width: 70px; height: parent.height; vertical-alignment: center;
+        x: 8px; width: parent.width - 160px; height: parent.height; vertical-alignment: center;
         text: root.label; color: root.disabled ? #566270 : (root.focused ? #E6EDF3 : #AEBAC6);
         font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 11px;
     }
@@ -369,7 +369,7 @@ component SettingsScreen inherits Rectangle {
     }
 
     if root.set-tab == 0 : SettingRow { x: 8px; y: 46px; width: 304px; height: 20px; label: I18n.tr("后台常驻"); mode: 2; value: root.s-autostart; focused: root.focus-idx == 0; }
-    if root.set-tab == 0 : SettingRow { x: 8px; y: 67px; width: 304px; height: 20px; label: I18n.tr("语言设置"); mode: 0; value: root.s-language; focused: root.focus-idx == 1; }
+    if root.set-tab == 0 : SettingRow { x: 8px; y: 67px; width: 304px; height: 20px; label: I18n.lang == 1 ? "Language" : "Language / " + I18n.tr("语言设置"); mode: 0; value: root.s-language; focused: root.focus-idx == 1; }
     if root.set-tab == 0 : SettingRow { x: 8px; y: 88px; width: 304px; height: 20px; label: I18n.tr("图片格式"); mode: 1; value: root.fmt; focused: root.focus-idx == 2; }
     if root.set-tab == 0 : SettingRow { x: 8px; y: 109px; width: 304px; height: 20px; label: I18n.tr("压缩质量"); mode: 0; value: root.quality; focused: root.focus-idx == 3; }
     if root.set-tab == 0 : SettingRow { x: 8px; y: 130px; width: 304px; height: 20px; label: I18n.tr("录制帧率"); mode: 0; value: root.fps; focused: root.focus-idx == 4; }
@@ -408,13 +408,16 @@ component SettingsScreen inherits Rectangle {
 component KeyCap inherits Rectangle {
     in property <string> label: "";
     in property <length> w: 14px;
-    width: root.w; height: 13px; border-radius: 3px;
-    background: #22303A; border-width: 1px; border-color: #31424E;
-    Text {
-        x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
-        horizontal-alignment: TextHorizontalAlignment.center;
-        text: root.label; color: #CFEAE4;
-        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+    width: root.w; height: 18px; background: transparent;
+    Rectangle {
+        y: 2px; width: 100%; height: 14px; border-radius: 3px;
+        background: #22303A; border-width: 1px; border-color: #31424E;
+        Text {
+            x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
+            horizontal-alignment: TextHorizontalAlignment.center;
+            text: root.label; color: #CFEAE4;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+        }
     }
 }
 
@@ -425,14 +428,17 @@ component HintText inherits Text {
 
 component ArrowPair inherits Rectangle {
     in property <bool> vertical: false;
-    width: 34px; height: 15px; border-radius: 3px;
-    background: #22303A; border-width: 1px; border-color: #31424E;
+    width: 34px; height: 18px; background: transparent;
+    Rectangle {
+        y: 1px; width: 100%; height: 16px; border-radius: 3px;
+        background: #22303A; border-width: 1px; border-color: #31424E;
+    }
     Image {
-        x: 4px; y: 1px; width: 12px; height: 12px;
+        x: 4px; y: 3px; width: 12px; height: 12px;
         source: root.vertical ? @image-url("icons/arrow-up.svg") : @image-url("icons/arrow-left.svg");
     }
     Image {
-        x: 18px; y: 1px; width: 12px; height: 12px;
+        x: 18px; y: 3px; width: 12px; height: 12px;
         source: root.vertical ? @image-url("icons/arrow-down.svg") : @image-url("icons/arrow-right.svg");
     }
 }
@@ -449,48 +455,57 @@ component HintRow inherits Rectangle {
     background: root.overlay ? #0F1419E8 : #0F1419;
     Rectangle { x: 0; y: 0; width: parent.width; height: 1px; background: #1C242B; }
 
-    // 主页
-    if root.page == 0 : KeyCap  { x: 8px;   y: 2px; label: "Enter"; w: 30px; }
-    if root.page == 0 : HintText { x: 41px; y: 0; text: I18n.tr("打开"); }
-    if root.page == 0 : KeyCap  { x: parent.width - 74px; y: 2px; label: "Esc"; w: 22px; }
-    if root.page == 0 : HintText { x: parent.width - 50px; y: 0; text: I18n.tr("长按退出"); }
+    HorizontalLayout {
+        x: 0; y: 0; width: parent.width; height: parent.height;
+        padding-left: 8px; padding-right: 8px; spacing: 4px;
 
-    // 相册：多选态显示已选数量与操作提示
-    if root.page == 1 && root.selecting : Text {
-        x: 8px; y: 0; height: 18px; vertical-alignment: center;
-        text: I18n.tr("已选 ") + root.sel-count + I18n.tr(" 项    空格 选择    退格 删除    Esc 取消");
-        color: #2DD4BF; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+        // 主页
+        if root.page == 0 : KeyCap  { w: 30px; label: "Enter"; }
+        if root.page == 0 : HintText { text: I18n.tr("打开"); }
+        if root.page == 0 : Rectangle { horizontal-stretch: 1; }
+        if root.page == 0 : KeyCap  { w: 22px; label: "Esc"; }
+        if root.page == 0 : HintText { text: I18n.tr("长按退出"); }
+
+        // 相册：多选态显示已选数量与操作提示
+        if root.page == 1 && root.selecting : Text {
+            height: 18px; vertical-alignment: center;
+            text: I18n.tr("已选 ") + root.sel-count + I18n.tr(" 项    空格 选择    退格 删除    Esc 取消");
+            color: #2DD4BF; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+        }
+        if root.page == 1 && !root.selecting : ArrowPair { vertical: false; }
+        if root.page == 1 && !root.selecting : HintText { text: I18n.tr("移动"); }
+        if root.page == 1 && !root.selecting : KeyCap { w: 30px; label: "Enter"; }
+        if root.page == 1 && !root.selecting : HintText { text: I18n.tr("预览"); }
+        if root.page == 1 && !root.selecting : KeyCap { w: 26px; label: I18n.tr("空格"); }
+        if root.page == 1 && !root.selecting : HintText { text: I18n.tr("多选"); }
+        if root.page == 1 && !root.selecting : Rectangle { horizontal-stretch: 1; }
+        if root.page == 1 && !root.selecting : KeyCap { w: 26px; label: I18n.tr("退格"); }
+        if root.page == 1 && !root.selecting : HintText { text: I18n.tr("删除"); }
+
+        // 预览
+        if root.page == 2 : ArrowPair { vertical: false; }
+        if root.page == 2 : HintText { text: I18n.tr("切换"); }
+        if root.page == 2 : Rectangle { horizontal-stretch: 1; }
+        if root.page == 2 : KeyCap { w: 26px; label: I18n.tr("退格"); }
+        if root.page == 2 : HintText { text: I18n.tr("删除"); }
+        if root.page == 2 : KeyCap { w: 22px; label: "Esc"; }
+        if root.page == 2 : HintText { text: I18n.tr("返回"); }
+
+        // 设置：编辑态显示动态提示；否则方向键选择，仅档位项显示左右调整
+        if root.page == 3 && root.editing : HintText { text: root.hint; }
+        if root.page == 3 && !root.editing : ArrowPair { vertical: true; }
+        if root.page == 3 && !root.editing : HintText { text: I18n.tr("选择"); }
+        if root.page == 3 && !root.editing && root.adjust : ArrowPair { vertical: false; }
+        if root.page == 3 && !root.editing && root.adjust : HintText { text: I18n.tr("调整"); }
+        if root.page == 3 && !root.editing && !root.adjust && root.hint != "" : HintText { text: root.hint; }
+        if root.page == 3 && !root.editing : Rectangle { horizontal-stretch: 1; }
+        if root.page == 3 && !root.editing : KeyCap { w: 24px; label: "Tab"; }
+        if root.page == 3 && !root.editing : HintText { text: I18n.tr("分类"); }
+        if root.page == 3 && !root.editing : KeyCap { w: 14px; label: "H"; }
+        if root.page == 3 && !root.editing : HintText { text: I18n.tr("说明"); }
+        if root.page == 3 && !root.editing : KeyCap { w: 22px; label: "Esc"; }
+        if root.page == 3 && !root.editing : HintText { text: I18n.tr("返回"); }
     }
-    if root.page == 1 && !root.selecting : ArrowPair { x: 8px; y: 2px; vertical: false; }
-    if root.page == 1 && !root.selecting : HintText { x: 41px; y: 0; text: I18n.tr("移动"); }
-    if root.page == 1 && !root.selecting : KeyCap  { x: 74px;  y: 2px; label: "Enter"; w: 30px; }
-    if root.page == 1 && !root.selecting : HintText { x: 107px; y: 0; text: I18n.tr("预览"); }
-    if root.page == 1 && !root.selecting : KeyCap  { x: 138px; y: 2px; label: I18n.tr("空格"); w: 26px; }
-    if root.page == 1 && !root.selecting : HintText { x: 167px; y: 0; text: I18n.tr("多选"); }
-    if root.page == 1 && !root.selecting : KeyCap  { x: parent.width - 60px; y: 2px; label: I18n.tr("退格"); w: 26px; }
-    if root.page == 1 && !root.selecting : HintText { x: parent.width - 31px; y: 0; text: I18n.tr("删除"); }
-
-    // 预览
-    if root.page == 2 : ArrowPair { x: 8px; y: 2px; vertical: false; }
-    if root.page == 2 : HintText { x: 41px; y: 0; text: I18n.tr("切换"); }
-    if root.page == 2 : KeyCap  { x: parent.width - 106px; y: 2px; label: I18n.tr("退格"); w: 26px; }
-    if root.page == 2 : HintText { x: parent.width - 77px; y: 0; text: I18n.tr("删除"); }
-    if root.page == 2 : KeyCap  { x: parent.width - 48px; y: 2px; label: "Esc"; w: 22px; }
-    if root.page == 2 : HintText { x: parent.width - 23px; y: 0; text: I18n.tr("返回"); }
-
-    // 设置：编辑态显示动态提示；否则方向键选择，仅档位项显示左右调整
-    if root.page == 3 && root.editing : HintText { x: 8px; y: 0; text: root.hint; }
-    if root.page == 3 && !root.editing : ArrowPair { x: 8px; y: 2px; vertical: true; }
-    if root.page == 3 && !root.editing : HintText { x: 47px; y: 0; text: I18n.tr("选择"); }
-    if root.page == 3 && !root.editing && root.adjust : ArrowPair { x: 78px; y: 2px; vertical: false; }
-    if root.page == 3 && !root.editing && root.adjust : HintText { x: 117px; y: 0; text: I18n.tr("调整"); }
-    if root.page == 3 && !root.editing && !root.adjust && root.hint != "" : HintText { x: 78px; y: 0; text: root.hint; }
-    if root.page == 3 && !root.editing : KeyCap  { x: 150px; y: 2px; label: "Tab"; w: 22px; }
-    if root.page == 3 && !root.editing : HintText { x: 175px; y: 0; text: I18n.tr("分类"); }
-    if root.page == 3 && !root.editing : KeyCap  { x: 214px; y: 2px; label: "H"; w: 14px; }
-    if root.page == 3 && !root.editing : HintText { x: 231px; y: 0; text: I18n.tr("说明"); }
-    if root.page == 3 && !root.editing : KeyCap  { x: parent.width - 48px; y: 2px; label: "Esc"; w: 22px; }
-    if root.page == 3 && !root.editing : HintText { x: parent.width - 23px; y: 0; text: I18n.tr("返回"); }
 }
 
 export component AppWindow inherits Window {

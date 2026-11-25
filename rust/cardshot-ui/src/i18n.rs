@@ -51,7 +51,7 @@ pub fn lang_name(lang: &str) -> String {
     match code(lang) {
         "en" => "English".to_string(),
         "ja" => "日本語".to_string(),
-        _ => "中文".to_string(),
+        _ => "简体中文".to_string(),
     }
 }
 
