@@ -19,7 +19,7 @@ msgid "后台常驻"
 msgstr "常駐"
 
 msgid "语言设置"
-msgstr "言語"
+msgstr "言語設定"
 
 msgid "图片格式"
 msgstr "画像形式"

@@ -139,7 +139,7 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     ui.set_hint(hint.into());
     ui.set_set_tab(st.settings_tab as i32);
     ui.set_s_autostart(if st.autostart { crate::i18n::tr(lang, "开").into() } else { crate::i18n::tr(lang, "关").into() });
-    ui.set_s_language(crate::i18n::lang_name(&st.language).into());
+    ui.set_s_language(format!("Language / {}", crate::i18n::tr_current("语言设置")).into());
     ui.set_setting_help_visible(st.setting_help_visible);
     if st.setting_help_visible {
         let (lk, dk) = crate::i18n::setting_help(row);

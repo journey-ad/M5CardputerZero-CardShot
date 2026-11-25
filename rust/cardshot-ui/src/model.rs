@@ -123,7 +123,7 @@ impl State {
             record_audio: false,
             settings_tab: 0,
             autostart: true,
-            language: "zh".into(),
+            language: "en".into(),
             setting_help_visible: false,
             items: Vec::new(),
             images: HashMap::new(),

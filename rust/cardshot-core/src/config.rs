@@ -110,7 +110,7 @@ impl Default for Config {
             output_dir: "~/Pictures/CardShot".into(),
             video_dir: "~/Videos/CardShot".into(),
             thumb_dir: "~/.cache/cardshot/thumbs".into(),
-            language: "zh".into(),
+            language: "en".into(),
             image_format: "png".into(),
             image_quality: 90,
             socket_name: "cardshot.sock".into(),

@@ -114,6 +114,8 @@ pub fn spawn_keys(path: String, tx: mpsc::Sender<String>) {
             }
             let name = if code == keycode::BACKSPACE {
                 if shift { "SHIFT_BACK" } else { "BACK" }
+            } else if code == keycode::TAB && shift {
+                "SHIFT_TAB"
             } else {
                 match code_name(code) {
                     Some(n) => n,

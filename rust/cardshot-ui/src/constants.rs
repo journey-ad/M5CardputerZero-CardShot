@@ -91,6 +91,12 @@ impl Page {
         list[(pos + 1) % list.len()]
     }
 
+    pub fn prev(self) -> Page {
+        let list = Page::ALL;
+        let pos = list.iter().position(|p| *p == self).unwrap_or(0);
+        list[(pos + list.len() - 1) % list.len()]
+    }
+
     /// Esc 返回的目标页
     pub fn back(self) -> Page {
         match self {

@@ -99,6 +99,20 @@ pub fn handle_key(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
             handle_settings(st, client, key);
             return;
         }
+        "SHIFT_TAB" if st.page == Page::Settings => {
+            handle_settings(st, client, key);
+            return;
+        }
+        "SHIFT_TAB" => {
+            st.page = st.page.prev();
+            if st.page == Page::Gallery || st.page == Page::Preview {
+                load_items(client, st);
+            }
+            if st.page == Page::Settings {
+                poll_config(client, st);
+            }
+            return;
+        }
         "TAB" => {
             st.page = st.page.next();
             if st.page == Page::Gallery || st.page == Page::Preview {
@@ -397,6 +411,11 @@ fn handle_settings(st: &mut State, client: &mut Client, key: &str) {
     match key {
         "TAB" => {
             st.settings_tab = (st.settings_tab + 1) % crate::constants::SETTINGS_TAB_RANGES.len();
+            st.settings_focus = crate::constants::SETTINGS_TAB_RANGES[st.settings_tab].0;
+        }
+        "SHIFT_TAB" => {
+            let n = crate::constants::SETTINGS_TAB_RANGES.len();
+            st.settings_tab = (st.settings_tab + n - 1) % n;
             st.settings_focus = crate::constants::SETTINGS_TAB_RANGES[st.settings_tab].0;
         }
         "UP" => {
