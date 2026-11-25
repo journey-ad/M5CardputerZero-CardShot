@@ -98,7 +98,7 @@ impl Core {
                         .status();
                 }
                 *cfg = nc.clone();
-                *self.lib.lock().unwrap() = Library::new(&nc);
+                self.lib.lock().unwrap().reconfigure(&nc);
                 let running = self.remote.lock().unwrap().is_some();
                 json!({ "ok": true, "config": config_json(&nc, running) })
             }

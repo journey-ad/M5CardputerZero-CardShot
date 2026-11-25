@@ -287,7 +287,7 @@ fn hotkey_prefix(st: &State, upper: bool) -> String {
 }
 
 fn refresh_hotkey_buffer(st: &mut State) {
-    st.hotkey_buffer = hotkey_prefix(st, true);
+    st.hotkey_buffer = hotkey_prefix(st, false);
 }
 
 fn handle_hotkey_capture(st: &mut State, client: &mut Client, key: &str) {

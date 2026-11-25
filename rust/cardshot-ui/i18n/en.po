@@ -259,8 +259,8 @@ msgid "按 H 关闭"
 msgstr "Press H to close"
 
 
-msgid "麦克风录音"
-msgstr "Microphone"
+msgid "录制声音"
+msgstr "Record sound"
 
-msgid "录制视频时同步录入麦克风声音，默认关闭"
-msgstr "Capture microphone audio while recording; off by default"
+msgid "录制扬声器输出（内录），默认关闭"
+msgstr "Record speaker output (loopback); off by default"

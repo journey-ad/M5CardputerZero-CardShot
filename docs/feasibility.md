@@ -37,7 +37,7 @@
 - 改用 `libx264 -preset ultrafast -tune zerolatency`：编码 60 帧 320×170 @20fps 仅 1258ms（约 47fps），余量充足，现为默认编码器
 - 修复喂帧节奏：开始录制时先预滚一帧穿过初始化，之后每写一帧固定 sleep 一个帧间隔，不做追赶
 - 录制上限由 `record.max_seconds` 控制，默认 120 秒，超时自动停止并落盘
-- 麦克风录音：视频与音频分开录制（音频 `ffmpeg -f pulse -i default -ar 48000 -ac 2 -c:a pcm_s16le`），停止后用 ffmpeg 合成 H.264+AAC；音频失败时保留无声视频并在状态里给出提示。实测 3 秒录制得到 h264+aac 48kHz 立体声，时长 3.07s
+- 录制声音（默认内录）：音频源默认 `@DEFAULT_MONITOR@`（扬声器回环），视频与音频分开录制（`ffmpeg -f pulse -i @DEFAULT_MONITOR@ -ar 48000 -ac 2 -c:a pcm_s16le`），停止后合成 H.264+AAC；音频失败时保留无声视频并在状态里给出提示。实测播放 440Hz 音调录制：mean -16.9dB / max -8.8dB，确认为内录
 - 实测 4 秒上限：录制在 4 秒结束，文件时长 3.93s，音视频正常
 
 结论：设备以 libx264 软编可稳定支撑 320×170 常驻录屏，CPU 与内存余量充足；硬件编码在当前内核与管道模型下不可靠，仅作可选项。

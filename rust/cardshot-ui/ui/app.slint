@@ -376,7 +376,7 @@ component SettingsScreen inherits Rectangle {
 
     if root.set-tab == 1 : SettingRow { x: 8px; y: 52px;  width: 304px; label: I18n.tr("截图快捷键"); mode: 0; value: root.shot-text; focused: root.focus-idx == 5; }
     if root.set-tab == 1 : SettingRow { x: 8px; y: 82px;  width: 304px; label: I18n.tr("录制快捷键"); mode: 0; value: root.record-text; focused: root.focus-idx == 6; }
-    if root.set-tab == 1 : SettingRow { x: 8px; y: 112px; width: 304px; label: I18n.tr("麦克风录音"); mode: 2; value: root.s-record-audio; focused: root.focus-idx == 7; }
+    if root.set-tab == 1 : SettingRow { x: 8px; y: 112px; width: 304px; label: I18n.tr("录制声音"); mode: 2; value: root.s-record-audio; focused: root.focus-idx == 7; }
 
     if root.set-tab == 2 : SettingRow { x: 8px; y: 52px;  width: 304px; label: I18n.tr("Web管理面板"); mode: 2; value: root.remote; focused: root.focus-idx == 8; }
     if root.set-tab == 2 : SettingRow { x: 8px; y: 82px;  width: 304px; label: I18n.tr("服务端口");   mode: 3; value: root.s-port-host; value2: root.s-port-value; focused: root.focus-idx == 9; disabled: root.port-disabled; }

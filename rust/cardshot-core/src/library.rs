@@ -24,6 +24,7 @@ pub struct Library {
     pub video_dir: PathBuf,
     pub thumb_dir: PathBuf,
     dur_cache: Mutex<HashMap<String, f64>>,
+    dur_file: PathBuf,
 }
 
 struct Raw {
@@ -80,12 +81,32 @@ fn scan_dir(dir: &Path, kind: &str, exts: &[&str], out: &mut Vec<Raw>) {
 
 impl Library {
     pub fn new(cfg: &Config) -> Self {
+        let thumb_dir = expand_home(&cfg.thumb_dir);
+        let dur_file = thumb_dir.join("durations.json");
+        let dur_cache = std::fs::read(&dur_file)
+            .ok()
+            .and_then(|b| serde_json::from_slice::<HashMap<String, f64>>(&b).ok())
+            .unwrap_or_default();
         Library {
             output_dir: expand_home(&cfg.output_dir),
             video_dir: expand_home(&cfg.video_dir),
-            thumb_dir: expand_home(&cfg.thumb_dir),
-            dur_cache: Mutex::new(HashMap::new()),
+            thumb_dir,
+            dur_cache: Mutex::new(dur_cache),
+            dur_file,
         }
+    }
+
+    /// 仅更新目录，保留已缓存的视频时长，避免配置变更后重新探测
+    pub fn reconfigure(&mut self, cfg: &Config) {
+        let out = expand_home(&cfg.output_dir);
+        let vid = expand_home(&cfg.video_dir);
+        let thumb = expand_home(&cfg.thumb_dir);
+        if out != self.output_dir || vid != self.video_dir {
+            self.dur_cache.lock().unwrap().clear();
+        }
+        self.output_dir = out;
+        self.video_dir = vid;
+        self.thumb_dir = thumb;
     }
 
     fn scan(&self) -> Vec<Raw> {
@@ -105,7 +126,18 @@ impl Library {
             }
         }
         let d = duration_of(&r.path).unwrap_or(0.0);
-        self.dur_cache.lock().unwrap().insert(key, d);
+        let snapshot = {
+            let mut cache = self.dur_cache.lock().unwrap();
+            cache.insert(key, d);
+            serde_json::to_vec(&*cache).ok()
+        };
+        if let Some(body) = snapshot {
+            let _ = std::fs::create_dir_all(&self.thumb_dir);
+            let tmp = self.dur_file.with_extension("json.tmp");
+            if std::fs::write(&tmp, body).is_ok() {
+                let _ = std::fs::rename(&tmp, &self.dur_file);
+            }
+        }
         d
     }
 

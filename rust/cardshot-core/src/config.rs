@@ -33,7 +33,7 @@ impl Default for RecordCfg {
             bitrate: "2M".into(),
             encoder: "libx264".into(),
             audio: false,
-            audio_device: "default".to_string(),
+            audio_device: "@DEFAULT_MONITOR@".to_string(),
             max_seconds: 120,
         }
     }
