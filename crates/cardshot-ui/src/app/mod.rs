@@ -87,7 +87,7 @@ impl App {
             st.settings_focus = SettingRow::Port.index();
             st.settings_tab = 2;
             st.port_edit = true;
-            st.port_buf = "8420".into();
+            st.port_buf = "17173".into();
         }
         if std::env::var("CARDSHOT_TEST_HOTKEY").is_ok() {
             st.settings_focus = SettingRow::ShotHotkey.index();

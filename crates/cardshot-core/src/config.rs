@@ -82,7 +82,7 @@ impl Default for RemoteCfg {
         RemoteCfg {
             enabled: true,
             bind: "0.0.0.0".into(),
-            port: 8420,
+            port: 17173,
         }
     }
 }

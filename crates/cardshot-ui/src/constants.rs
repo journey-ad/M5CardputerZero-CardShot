@@ -16,7 +16,7 @@ pub const FRAME_SLEEP_MS: u64 = 30;
 pub const POLL_INTERVAL_MS: u64 = 500;
 pub const TOAST_DURATION_MS: u64 = 2000;
 
-pub const DEFAULT_PORT: i64 = 8420;
+pub const DEFAULT_PORT: i64 = 17173;
 pub const DEFAULT_QUALITY: i64 = 90;
 pub const DEFAULT_FPS: i64 = 20;
 
