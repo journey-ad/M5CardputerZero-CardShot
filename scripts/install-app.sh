@@ -3,7 +3,7 @@
 set -euo pipefail
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 . "$ROOT/scripts/lib.sh"
-UI_BIN="$ROOT/rust/target/release/cardshot-ui"
+UI_BIN="$ROOT/crates/target/release/cardshot-ui"
 [ -f "$UI_BIN" ] || { echo "缺少构建产物: $UI_BIN"; exit 1; }
 
 REMOTE=/tmp/cardshot-pack

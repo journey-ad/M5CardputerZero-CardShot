@@ -3,8 +3,8 @@
 set -euo pipefail
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 . "$ROOT/scripts/lib.sh"
-BIN="$ROOT/rust/target/release/cardshotd"
-UI_BIN="$ROOT/rust/target/release/cardshot-ui"
+BIN="$ROOT/crates/target/release/cardshotd"
+UI_BIN="$ROOT/crates/target/release/cardshot-ui"
 [ -f "$BIN" ] || { echo "缺少构建产物: $BIN"; exit 1; }
 [ -f "$UI_BIN" ] || { echo "缺少构建产物: $UI_BIN"; exit 1; }
 

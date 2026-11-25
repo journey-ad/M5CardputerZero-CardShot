@@ -3,7 +3,7 @@
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 docker run --rm --platform linux/arm64 \
-    -v "$ROOT/rust:/work" \
+    -v "$ROOT/crates:/work" \
     -v cardshot-cargo:/usr/local/cargo \
     -w /work \
     rust:1-trixie \

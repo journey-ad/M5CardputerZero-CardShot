@@ -4,14 +4,14 @@ Cardputer Zero（aarch64 Linux，320×170 帧缓冲）上的后台截图 / 录�
 
 由三部分组成：
 
-- `rust/cardshotd`：常驻后台守护，读全局 `/dev/fb0` 抓取任意前台应用画面，支持截图、录屏、相册、Unix socket 控制与 HTTP 远程管理
-- `rust/cardshot-ui`：设备端界面（Rust + Slint），相册管理工具：浏览、预览、多选删除、设置
+- `crates/cardshotd`：常驻后台守护，读全局 `/dev/fb0` 抓取任意前台应用画面，支持截图、录屏、相册、Unix socket 控制与 HTTP 远程管理
+- `crates/cardshot-ui`：设备端界面（Rust + Slint），相册管理工具：浏览、预览、多选删除、设置
 - `service/web`：远程 Web 管理页（Preact + htm，无构建步骤）
 
 ## 目录
 
 ```
-rust/
+crates/
   cardshot-core/   配置、抓帧、编码、相册、录制
   cardshotd/       守护进程：控制 socket、热键、ACT LED、HTTP 远程
   cardshot-ui/     设备端 Slint 界面
@@ -31,7 +31,7 @@ docs/feasibility.md 可行性分析
 bash scripts/build-rust.sh
 ```
 
-产物位于 `rust/target/release/cardshotd` 与 `rust/target/release/cardshot-ui`。
+产物位于 `crates/target/release/cardshotd` 与 `crates/target/release/cardshot-ui`。
 
 ## 部署
 
