@@ -90,3 +90,21 @@ HTTP API：
 
 
 ![Web 管理页](docs/screenshots/07-web.png)
+
+## 发布
+
+推送到 `main` 触发 CI 检查与设备构建；打 `v*` 标签（如 `v0.1.0`）后自动：
+
+1. 构建设备二进制
+2. 生成 `dist/cardshot_<version>_arm64.deb` 与源码包
+3. 创建 GitHub Release
+4. 提交 CardputerZero 应用商店更新 PR
+
+商店发布需要在仓库 Actions secrets 配置 `CARDPUTER_STORE_TOKEN`，且账号需为仓库所有者。
+
+本地打包：
+
+```sh
+bash scripts/build-rust.sh
+python3 scripts/package-release.py
+```
