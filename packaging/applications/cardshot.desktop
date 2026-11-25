@@ -2,11 +2,11 @@
 Type=Application
 Name=CardShot
 GenericName=Screenshot and recorder
-Comment=Background screenshot and screen recording
+Comment=Screenshot and screen recording
 Name[zh_CN]=CardShot
-Comment[zh_CN]=后台截图与录屏
+Comment[zh_CN]=截图与录屏
 Name[ja]=CardShot
-Comment[ja]=バックグラウンドのスクリーンショットと画面録画
+Comment[ja]=スクリーンショットと画面録画
 Exec=/usr/share/APPLaunch/bin/run-cardshot
 Icon=share/images/cardshot_100.png
 Terminal=false

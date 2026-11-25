@@ -1,6 +1,6 @@
 # CardShot
 
-Cardputer Zero（aarch64 Linux，320×170 帧缓冲）上的后台截图 / 录屏 / 相册管理工具。
+Cardputer Zero（aarch64 Linux，320×170 帧缓冲）上的截图 / 录屏 / 相册管理工具。
 
 由三部分组成：
 

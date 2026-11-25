@@ -1,6 +1,6 @@
 # CardShot 可行性分析
 
-面向 M5Stack Cardputer Zero（aarch64 Linux、320×170 RGB565 帧缓冲、实体键盘）的后台截图/截屏/录屏工具。
+面向 M5Stack Cardputer Zero（aarch64 Linux、320×170 RGB565 帧缓冲、实体键盘）的截图、截屏与录屏工具。
 
 ## 1. 目标与约束
 

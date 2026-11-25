@@ -1,5 +1,5 @@
 [Unit]
-Description=CardShot 后台截图/录屏服务 (Rust)
+Description=CardShot 截图与录屏服务 (Rust)
 After=default.target
 StartLimitIntervalSec=0
 

@@ -3,11 +3,14 @@
   "version": "0.1.0",
   "app_name": "CardShot",
   "bin_name": "cardshot-ui",
-  "description": "Background screenshot and screen recorder for Cardputer Zero",
+  "description": "Screenshot and screen recorder for Cardputer Zero",
   "store": {
-    "summary": "Background screenshots and screen recording with gallery and web access",
-    "description": "Runs as a background service. Captures screenshots or records the screen without interrupting the foreground app. Browse, preview and delete captures on device, or manage them from a browser.",
-    "categories": ["Utility", "Media"],
+    "summary": "Capture screenshots and record the screen anytime, with gallery and web access",
+    "description": "Capture the current screen from any app without interrupting it. Record video with sound, keep captures in a gallery, and manage them from a browser.",
+    "categories": [
+      "Utility",
+      "Media"
+    ],
     "screenshots": [
       "docs/screenshots/01-home.png",
       "docs/screenshots/02-gallery.png",
@@ -33,15 +36,15 @@
     "locales": {
       "en": {
         "title": "CardShot",
-        "summary": "Background screenshots and screen recording with gallery and web access"
+        "summary": "Capture screenshots and record the screen anytime, with gallery and web access"
       },
       "zh-CN": {
         "title": "CardShot",
-        "summary": "后台截图与录屏，支持相册和网页管理"
+        "summary": "随时截图与录屏，支持相册和网页管理"
       },
       "ja": {
         "title": "CardShot",
-        "summary": "バックグラウンドでスクリーンショットと画面録画、ギャラリーとWeb管理に対応"
+        "summary": "いつでもスクリーンショットと画面録画、ギャラリーとWeb管理に対応"
       }
     }
   }
