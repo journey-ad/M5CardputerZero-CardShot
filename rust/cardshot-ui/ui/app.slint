@@ -200,6 +200,7 @@ component GalleryTile inherits Rectangle {
 
 component GalleryScreen inherits Rectangle {
     in property <[GalleryItem]> items;
+    in property <[bool]> selected-flags;
     in property <int> focus-idx: 0;
     in property <bool> selecting: false;
     in property <int> sel-count: 0;
@@ -209,8 +210,9 @@ component GalleryScreen inherits Rectangle {
         y: 26px + Math.floor(i / 3) * 65px;
         width: 98px; height: 59px;
         img: it.img; kind: it.kind; label: it.name; dur: it.dur;
-        focused: root.focus-idx == i && !root.selecting;
+        focused: root.focus-idx == i;
         selecting: root.selecting;
+        check: i < root.selected-flags.length ? root.selected-flags[i] : false;
     }
     Rectangle {
         visible: root.items.length == 0;
@@ -467,11 +469,14 @@ component HintRow inherits Rectangle {
         if root.page == 0 : HintText { text: I18n.tr("长按退出"); }
 
         // 相册：多选态显示已选数量与操作提示
-        if root.page == 1 && root.selecting : Text {
-            height: 18px; vertical-alignment: center;
-            text: I18n.tr("已选 ") + root.sel-count + I18n.tr(" 项    空格 选择    退格 删除    Esc 取消");
-            color: #2DD4BF; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
-        }
+        if root.page == 1 && root.selecting : HintText { text: I18n.tr("已选 ") + root.sel-count + I18n.tr(" 项"); }
+        if root.page == 1 && root.selecting : Rectangle { horizontal-stretch: 1; }
+        if root.page == 1 && root.selecting : KeyCap { w: 26px; label: I18n.tr("空格"); }
+        if root.page == 1 && root.selecting : HintText { text: I18n.tr("选择"); }
+        if root.page == 1 && root.selecting : KeyCap { w: 26px; label: I18n.tr("退格"); }
+        if root.page == 1 && root.selecting : HintText { text: I18n.tr("删除"); }
+        if root.page == 1 && root.selecting : KeyCap { w: 22px; label: "Esc"; }
+        if root.page == 1 && root.selecting : HintText { text: I18n.tr("取消"); }
         if root.page == 1 && !root.selecting : ArrowPair { vertical: false; }
         if root.page == 1 && !root.selecting : HintText { text: I18n.tr("移动"); }
         if root.page == 1 && !root.selecting : KeyCap { w: 30px; label: "Enter"; }
@@ -522,6 +527,7 @@ export component AppWindow inherits Window {
     in property <bool> selecting: false;
     in property <int> sel-count: 0;
     in property <[GalleryItem]> items;
+    in property <[bool]> selected-flags;
     in property <image> preview-img;
     in property <string> preview-name: "";
     in property <string> preview-size: "";
@@ -582,7 +588,7 @@ export component AppWindow inherits Window {
     }
     if root.page == 1 : GalleryScreen {
         y: 0; width: parent.width; height: parent.height - 18px;
-        items: root.items; focus-idx: root.grid-focus; selecting: root.selecting; sel-count: root.sel-count;
+        items: root.items; focus-idx: root.grid-focus; selecting: root.selecting; sel-count: root.sel-count; selected-flags: root.selected-flags;
     }
     if root.page == 2 : PreviewScreen {
         y: 0; width: parent.width; height: parent.height;

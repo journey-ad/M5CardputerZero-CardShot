@@ -107,6 +107,10 @@ pub fn sync_ui(ui: &AppWindow, st: &State) {
     ui.set_grid_focus(st.grid_focus.saturating_sub(st.scroll) as i32);
     ui.set_selecting(st.selecting);
     ui.set_sel_count(st.selected.len() as i32);
+    let start = st.scroll.min(st.items.len());
+    let end = (start + GRID_PAGE).min(st.items.len());
+    let flags: Vec<bool> = (start..end).map(|i| st.selected.contains(&i)).collect();
+    ui.set_selected_flags(slint::ModelRc::new(slint::VecModel::from(flags)));
     ui.set_set_focus(st.settings_focus as i32);
     ui.set_recording(st.recording);
     ui.set_rec_time(fmt_clock(st.rec_seconds as f64).into());
