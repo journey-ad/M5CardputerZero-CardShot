@@ -8,8 +8,7 @@
     "summary": "Capture screenshots and record the screen anytime, with gallery and web access",
     "description": "Capture the current screen from any app without interrupting it. Record video with sound, keep captures in a gallery, and manage them from a browser.",
     "categories": [
-      "Utility",
-      "Media"
+      "Creative & Office"
     ],
     "screenshots": [
       "docs/screenshots/01-home.png",
@@ -46,6 +45,7 @@
         "title": "CardShot",
         "summary": "いつでもスクリーンショットと画面録画、ギャラリーとWeb管理に対応"
       }
-    }
+    },
+    "source_repo": "https://github.com/journey-ad/M5CardputerZero-CardShot"
   }
 }
