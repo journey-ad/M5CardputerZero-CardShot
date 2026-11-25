@@ -335,97 +335,29 @@ component SettingRow inherits Rectangle {
     }
 }
 
-component SettingsScreen inherits Rectangle {
-    in property <int> focus-idx: 0;
-    in property <int> set-tab: 0;
-    in property <string> s-autostart: "开";
-    in property <string> s-language: "中文";
-    in property <string> fmt: "PNG";
-    in property <string> port-text: "8420";
-    in property <string> shot-text: "shift+space";
-    in property <string> record-text: "shift+enter";
-    in property <string> s-record-audio: "关";
-    in property <bool> port-disabled: false;
-    in property <int> quality: 90;
-    in property <int> fps: 20;
-    in property <int> port: 8420;
-    in property <string> shot: "";
-    in property <string> record: "shift+enter";
-    in property <string> remote: "开";
-    in property <string> s-port-host: "";
-    in property <string> s-port-value: "8420";
-    width: 100%; height: 100%; background: transparent;
-
-    // 分类标签：当前控件所在分组高亮
-    Rectangle {
-        x: 8px; y: 22px; width: 304px; height: 22px; border-radius: 7px;
-        background: #0E151B; border-width: 1px; border-color: #1E2A33;
-        Rectangle { x: 2px;  y: 2px; width: 73px; height: 18px; border-radius: 5px; background: root.set-tab == 0 ? #2DD4BF : transparent; }
-        Rectangle { x: 77px; y: 2px; width: 73px; height: 18px; border-radius: 5px; background: root.set-tab == 1 ? #2DD4BF : transparent; }
-        Rectangle { x: 152px;y: 2px; width: 73px; height: 18px; border-radius: 5px; background: root.set-tab == 2 ? #2DD4BF : transparent; }
-        Rectangle { x: 227px;y: 2px; width: 73px; height: 18px; border-radius: 5px; background: root.set-tab == 3 ? #2DD4BF : transparent; }
-        Text { x: 2px;  y: 0; width: 73px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: I18n.tr("常规"); color: root.set-tab == 0 ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-        Text { x: 77px; y: 0; width: 73px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: I18n.tr("按键"); color: root.set-tab == 1 ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-        Text { x: 152px;y: 0; width: 73px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: I18n.tr("远程"); color: root.set-tab == 2 ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-        Text { x: 227px;y: 0; width: 73px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: I18n.tr("数据"); color: root.set-tab == 3 ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; }
-    }
-
-    if root.set-tab == 0 : SettingRow { x: 8px; y: 46px; width: 304px; height: 20px; label: I18n.tr("后台常驻"); mode: 2; value: root.s-autostart; focused: root.focus-idx == 0; }
-    if root.set-tab == 0 : SettingRow { x: 8px; y: 67px; width: 304px; height: 20px; label: I18n.lang == 1 ? "Language" : "Language / " + I18n.tr("语言设置"); mode: 0; value: root.s-language; focused: root.focus-idx == 1; }
-    if root.set-tab == 0 : SettingRow { x: 8px; y: 88px; width: 304px; height: 20px; label: I18n.tr("图片格式"); mode: 1; value: root.fmt; focused: root.focus-idx == 2; }
-    if root.set-tab == 0 : SettingRow { x: 8px; y: 109px; width: 304px; height: 20px; label: I18n.tr("压缩质量"); mode: 0; value: root.quality; focused: root.focus-idx == 3; }
-    if root.set-tab == 0 : SettingRow { x: 8px; y: 130px; width: 304px; height: 20px; label: I18n.tr("录制帧率"); mode: 0; value: root.fps; focused: root.focus-idx == 4; }
-
-    if root.set-tab == 1 : SettingRow { x: 8px; y: 52px;  width: 304px; label: I18n.tr("截图快捷键"); mode: 0; value: root.shot-text; focused: root.focus-idx == 5; }
-    if root.set-tab == 1 : SettingRow { x: 8px; y: 82px;  width: 304px; label: I18n.tr("录制快捷键"); mode: 0; value: root.record-text; focused: root.focus-idx == 6; }
-    if root.set-tab == 1 : SettingRow { x: 8px; y: 112px; width: 304px; label: I18n.tr("录制声音"); mode: 2; value: root.s-record-audio; focused: root.focus-idx == 7; }
-
-    if root.set-tab == 2 : SettingRow { x: 8px; y: 52px;  width: 304px; label: I18n.tr("Web管理面板"); mode: 2; value: root.remote; focused: root.focus-idx == 8; }
-    if root.set-tab == 2 : SettingRow { x: 8px; y: 82px;  width: 304px; label: I18n.tr("服务端口");   mode: 3; value: root.s-port-host; value2: root.s-port-value; focused: root.focus-idx == 9; disabled: root.port-disabled; }
-    if root.set-tab == 2 : Text {
-        x: 12px; y: 114px; width: 296px; height: 14px; vertical-alignment: center;
-        text: I18n.tr("同一局域网内用浏览器访问该端口"); color: #6B7885;
-        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
-    }
-
-    if root.set-tab == 3 : SettingRow { x: 8px; y: 52px;  width: 304px; label: I18n.tr("清空数据"); mode: 0; value: I18n.tr("全部删除"); focused: root.focus-idx == 10; }
-    if root.set-tab == 3 : Rectangle {
-        x: 8px; y: 86px; width: 304px; height: 48px; border-radius: 7px;
-        background: #0E151B; border-width: 1px; border-color: #1E2A33;
-        Text {
-            x: 10px; y: 6px; width: 284px; height: 12px; vertical-alignment: center;
-            text: I18n.tr("截图保存在 Pictures/CardShot"); color: #8B98A6;
-            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
-        }
-        Text {
-            x: 10px; y: 22px; width: 284px; height: 12px; vertical-alignment: center;
-            text: I18n.tr("录像保存在 Videos/CardShot"); color: #8B98A6;
-            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
-        }
-    }
-
+export struct SettingItem {
+    label: string,
+    mode: int,
+    value: string,
+    value2: string,
+    focused: bool,
+    disabled: bool,
 }
 
-// 底栏：键帽方块 + 文字，右对齐 Esc（参照原型 .kb）
-component KeyCap inherits Rectangle {
-    in property <string> label: "";
-    in property <length> w: 14px;
-    width: root.w; height: 18px; background: transparent;
+component TabCell inherits Rectangle {
+    in property <string> title: "";
+    in property <bool> active: false;
+    width: 73px; height: 22px; background: transparent;
     Rectangle {
-        y: 2px; width: 100%; height: 14px; border-radius: 3px;
-        background: #22303A; border-width: 1px; border-color: #31424E;
-        Text {
-            x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
-            horizontal-alignment: TextHorizontalAlignment.center;
-            text: root.label; color: #CFEAE4;
-            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
-        }
+        x: 0; y: 2px; width: 73px; height: 18px; border-radius: 5px;
+        background: root.active ? #2DD4BF : transparent;
     }
-}
-
-component HintText inherits Text {
-    height: 18px; vertical-alignment: center; color: #6E7B88;
-    font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+    Text {
+        x: 0; y: 0; width: 73px; height: parent.height;
+        vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center;
+        text: root.title; color: root.active ? #04221F : #8B98A6;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+    }
 }
 
 component ArrowPair inherits Rectangle {
@@ -466,6 +398,33 @@ export struct HintItem {
     vertical: bool,
 }
 
+component KeyCap inherits Rectangle {
+    in property <string> label: "";
+    in property <length> w: 14px;
+    width: root.w; height: 18px; background: transparent;
+    Rectangle {
+        y: 2px; width: 100%; height: 14px; border-radius: 3px;
+        background: #22303A; border-width: 1px; border-color: #31424E;
+        Text {
+            x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
+            horizontal-alignment: TextHorizontalAlignment.center;
+            text: root.label; color: #CFEAE4;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+        }
+    }
+}
+
+component HintText inherits Rectangle {
+    in property <string> text: "";
+    height: 18px; background: transparent;
+    Text {
+        x: 0; y: 0; width: 100%; height: 100%;
+        vertical-alignment: center;
+        text: root.text; color: #8B98A6;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+    }
+}
+
 component HintCell inherits Rectangle {
     in property <HintItem> item;
     height: 18px;
@@ -491,6 +450,40 @@ component HintRow inherits Rectangle {
     }
 }
 
+component SettingsScreen inherits Rectangle {
+    in property <int> set-tab: 0;
+    in property <[string]> tabs;
+    in property <[SettingItem]> rows;
+    in property <string> footer: "";
+    width: 100%; height: 100%; background: transparent;
+
+    Rectangle {
+        x: 8px; y: 22px; width: 304px; height: 22px; border-radius: 7px;
+        background: #0E151B; border-width: 1px; border-color: #1E2A33;
+    }
+    for t[i] in root.tabs : TabCell {
+        x: 10px + i * 75px; y: 22px;
+        title: t; active: root.set-tab == i;
+    }
+
+    for it[i] in root.rows : SettingRow {
+        x: 8px; y: 46px + i * 21px; width: 304px; height: 20px;
+        label: it.label; mode: it.mode; value: it.value; value2: it.value2;
+        focused: it.focused; disabled: it.disabled;
+    }
+
+    if root.footer != "" : Rectangle {
+        x: 8px; y: 46px + root.rows.length * 21px + 6px; width: 304px; height: 40px; border-radius: 7px;
+        background: #0E151B; border-width: 1px; border-color: #1E2A33;
+        Text {
+            x: 10px; y: 4px; width: 284px; height: 32px;
+            vertical-alignment: center; wrap: word-wrap;
+            text: root.footer; color: #8B98A6;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+        }
+    }
+}
+
 export component AppWindow inherits Window {
     title: "CardShot";
     width: 320px; height: 170px;
@@ -505,6 +498,9 @@ export component AppWindow inherits Window {
     in property <bool> selecting: false;
     in property <int> sel-count: 0;
     in property <[HintItem]> hints;
+    in property <[string]> setting-tabs;
+    in property <[SettingItem]> setting-rows;
+    in property <string> setting-footer: "";
     in property <[GalleryItem]> items;
     in property <[bool]> selected-flags;
     in property <image> preview-img;
@@ -575,11 +571,7 @@ export component AppWindow inherits Window {
     }
     if root.page == Pages.settings : SettingsScreen {
         y: 0; width: parent.width; height: parent.height - 18px;
-        focus-idx: root.set-focus; fmt: root.s-fmt; quality: root.s-quality; fps: root.s-fps;
-        port: root.s-port; shot: root.s-shot; record: root.s-record; remote: root.s-remote; set-tab: root.set-tab; s-autostart: root.s-autostart; s-language: root.s-language;
-        port-text: root.s-port-text; shot-text: root.s-shot; record-text: root.s-record; s-record-audio: root.s-record-audio;
-        s-port-host: root.s-port-host; s-port-value: root.s-port-value;
-        port-disabled: root.port-disabled;
+        set-tab: root.set-tab; tabs: root.setting-tabs; rows: root.setting-rows; footer: root.setting-footer;
     }
     HintRow { width: parent.width; y: parent.height - 18px; overlay: root.page == Pages.preview; items: root.hints; }
 
