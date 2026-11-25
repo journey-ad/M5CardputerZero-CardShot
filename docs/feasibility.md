@@ -11,9 +11,9 @@
 
 ## 2. 取画面的可行性
 
-设备只有一个全局帧缓冲 `/dev/fb0`（`/dev/fb_lcd`），320×170、RGB565 LE、行长 640、单帧 108800 字节。前台应用（CardBili、APPLaunch 等）都直接往这块缓冲写，因此后台进程只需 `pread` 整帧即可拿到屏幕内容，与被抓取的应用无关，无需其配合。
+设备只有一个全局帧缓冲 `/dev/fb0`（`/dev/fb_lcd`），320×170、RGB565 LE、行长 640、单帧 108800 字节。前台应用（如 APPLaunch）都直接往这块缓冲写，因此后台进程只需 `pread` 整帧即可拿到屏幕内容，与被抓取的应用无关，无需其配合。
 
-实测：连续 20 次 `pread` 仅耗 0.001s，读帧开销可忽略。抓取 CardBili 播放中的视频画面帧，相邻帧差异 5 万像素以上，确认拿到的是实时画面。
+实测：连续 20 次 `pread` 仅耗 0.001s，读帧开销可忽略。抓取一段播放中的视频画面帧，相邻帧差异 5 万像素以上，确认拿到的是实时画面。
 
 结论：后台抓屏完全可行，且天然支持「截取任意前台应用」。
 
@@ -51,7 +51,7 @@
 | Python（Pillow + 本项目模块） | RSS 约 23 MB（PSS 18 MB） | 代码 268 KB，但依赖 Python3.13 stdlib 约 53 MB + 解释器 6.7 MB + Pillow 3.1 MB |
 | Rust（静态链接） | RSS 约 2.5 MB | 单二进制约 1.2 MB，无运行时依赖 |
 
-Python 版即便功能正常，运行时基线也达 23 MB 量级；Rust 版约 2.5 MB，是前者的十分之一量级，且打包为单文件自包含。参照同机 CardBili（Rust+Slint）运行 RSS 约 4.1 MB、二进制 21.6 MB（含字体），说明该技术栈在设备上成熟可用。
+Python 版即便功能正常，运行时基线也达 23 MB 量级；Rust 版约 2.5 MB，是前者的十分之一量级，且打包为单文件自包含。同为 Rust+Slint 的同类应用运行 RSS 约 4 MB 量级，说明该技术栈在设备上成熟可用。
 
 结论：为满足小内存常驻目标，采用 Rust 实现守护进程与设备端界面。
 
@@ -85,12 +85,12 @@ Python 版即便功能正常，运行时基线也达 23 MB 量级；Rust 版约 
 
 ## 10. APPLaunch 集成与打包
 
-界面按 CardBili 的约定集成到 APPLaunch：
+界面按 APPLaunch 的应用约定集成：
 
 - 桌面入口 `/usr/share/APPLaunch/applications/cardshot.desktop`，`Terminal=false`，`Exec` 指向包装脚本 `run-cardshot`
 - 包装脚本设置 `XDG_RUNTIME_DIR=/run/user/1000` 后启动 `/usr/share/APPLaunch/bin/cardshot-ui`，保证与以用户服务运行的守护共用控制 socket
 - 图标 `share/images/cardshot_100.png`（100px 桌面）与 `cardshot_256.png`（256px 商店/详情），由 `cardputer-zero-application` 技能脚本生成
 - 图标素材取自 Pixelarticons（MIT），应用内缩略图角标、播放标记、方向箭头均为同库 SVG，由 Slint 原生渲染，不做 PNG 转换
-- 字体沿用 CardBili 的 Fusion Pixel 预光栅化管线（`build/font_cache.rs` + `build/ui_fonts.rs`），界面文字无额外运行时依赖
+- 字体沿用 Fusion Pixel 预光栅化管线（`build/font_cache.rs` + `build/ui_fonts.rs`），界面文字无额外运行时依赖
 
 安装：`bash scripts/install-app.sh`（写入 APPLaunch 目录并重启 APPLaunch 用户服务）。

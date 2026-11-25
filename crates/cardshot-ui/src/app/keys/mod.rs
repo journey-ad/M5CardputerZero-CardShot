@@ -59,7 +59,7 @@ pub fn handle_key(ui: &AppWindow, st: &mut State, client: &mut Client, key: &str
         st.setting_help_visible = true;
         return;
     }
-    // 机身方向键为字母键，按 cardbili 的约定映射为方向语义
+    // 机身方向键为字母键，按设备按键布局映射为方向语义
     let key = match key {
         "z" | "Z" => "LEFT",
         "c" | "C" => "RIGHT",
