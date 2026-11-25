@@ -1,0 +1,60 @@
+import { AppState, Pages, HintKind, HintItem } from "../state.slint";
+
+export component GalleryTile inherits Rectangle {
+    in property <image> img;
+    in property <string> kind: "";
+    in property <string> label: "";
+    in property <string> dur: "";
+    in property <bool> focused: false;
+    in property <bool> selecting: false;
+    in property <bool> check: false;
+    border-radius: 8px;
+    background: #14191E;
+    border-width: 1px;
+    border-color: #202830;
+    Rectangle {
+        x: 0; y: 0; width: 100%; height: 100%; border-radius: 8px; clip: true;
+        Image {
+            x: 0; y: 0; width: parent.width; height: parent.height - 14px;
+            source: root.img; image-fit: contain;
+        }
+    }
+    Rectangle { x: 4px; y: 4px; width: 16px; height: 16px; border-radius: 4px; background: #000000B0; }
+    Image { x: 6px; y: 6px; width: 12px; height: 12px; source: @image-url("../icons/camera.svg"); visible: root.kind == "image"; }
+    Image { x: 6px; y: 6px; width: 12px; height: 12px; source: @image-url("../icons/play.svg"); visible: root.kind == "video"; }
+    Image {
+        x: (parent.width - 24px) / 2; y: (parent.height - 14px - 24px) / 2;
+        width: 24px; height: 24px; source: @image-url("../icons/play-circle.svg");
+        visible: root.kind == "video" && !root.selecting; opacity: 0.92;
+    }
+    if root.dur != "" && !root.selecting : Rectangle {
+        x: parent.width - 36px; y: 4px; width: 32px; height: 13px; border-radius: 4px; background: #000000B0;
+        Text {
+            x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
+            horizontal-alignment: TextHorizontalAlignment.center;
+            text: root.dur; color: #FFFFFF;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+        }
+    }
+    if root.selecting : Rectangle {
+        x: parent.width - 21px; y: 4px; width: 16px; height: 16px; border-radius: 8px;
+        background: root.check ? #2DD4BF : #000000B0;
+        border-width: 1px; border-color: root.check ? #2DD4BF : #4C5865;
+        Image {
+            x: 3px; y: 3px; width: 10px; height: 10px;
+            source: @image-url("../icons/check.svg"); visible: root.check;
+        }
+    }
+    Rectangle {
+        y: parent.height - 14px; width: parent.width; height: 14px; background: #1A2027;
+        Text {
+            x: 5px; width: parent.width - 10px; height: parent.height; vertical-alignment: center;
+            text: root.label; color: #AEBAC6;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; overflow: elide;
+        }
+    }
+    if root.focused : Rectangle {
+        x: 0; y: 0; width: 100%; height: 100%; border-radius: 8px;
+        background: transparent; border-width: 2px; border-color: #2DD4BF;
+    }
+}

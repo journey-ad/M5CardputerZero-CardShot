@@ -1,0 +1,135 @@
+// 页面：读取 AppState，底部提示与弹窗由根组件组合
+import { AppState, Pages, I18n, HintItem, SettingItem, GalleryItem } from "../state.slint";
+import { StatChip, ActionRow } from "../components/topbar.slint";
+import { GalleryTile } from "../components/gallery.slint";
+import { SettingRow, TabCell } from "../components/settings.slint";
+import { ArrowPair, KeyCap, HintText } from "../components/hints.slint";
+
+export component HomeScreen inherits Rectangle {
+    in property <int> focus-idx: AppState.home-focus;
+    in property <int> count-images: AppState.count-images;
+    in property <int> count-videos: AppState.count-videos;
+    in property <string> size-label: AppState.size-label;
+    width: 100%; height: 100%; background: transparent;
+
+    StatChip { x: 9px;  y: 27px; width: 148px; icon: @image-url("../icons/camera.svg"); value: root.count-images + " " + I18n.tr("项"); label: I18n.tr("截图"); }
+    StatChip { x: 163px; y: 27px; width: 148px; icon: @image-url("../icons/video.svg"); value: root.count-videos + " " + I18n.tr("项"); label: I18n.tr("录制"); }
+
+    ActionRow {
+        x: 9px; y: 63px; width: 302px;
+        icon: @image-url("../icons/gallery-thumbnails.svg");
+        label: I18n.tr("相册"); right: (root.count-images + root.count-videos) + " 项";
+        focused: root.focus-idx == 0;
+    }
+    ActionRow {
+        x: 9px; y: 93px; width: 302px;
+        icon: @image-url("../icons/settings-cog.svg");
+        label: I18n.tr("设置"); focused: root.focus-idx == 1;
+    }
+    ActionRow {
+        x: 9px; y: 123px; width: 302px;
+        icon: @image-url("../icons/book-open.svg");
+        label: I18n.tr("使用说明"); focused: root.focus-idx == 2;
+    }
+}
+
+export component GalleryScreen inherits Rectangle {
+    in property <[GalleryItem]> items: AppState.items;
+    in property <[bool]> selected-flags: AppState.selected-flags;
+    in property <int> focus-idx: AppState.grid-focus;
+    in property <bool> selecting: AppState.selecting;
+    in property <int> sel-count: AppState.sel-count;
+    width: 100%; height: 100%; background: transparent;
+    for it[i] in root.items : GalleryTile {
+        x: 8px + Math.mod(i, 3) * 103px;
+        y: 26px + Math.floor(i / 3) * 65px;
+        width: 98px; height: 59px;
+        img: it.img; kind: it.kind; label: it.name; dur: it.dur;
+        focused: root.focus-idx == i;
+        selecting: root.selecting;
+        check: i < root.selected-flags.length ? root.selected-flags[i] : false;
+    }
+    Rectangle {
+        visible: root.items.length == 0;
+        x: 0; y: 50px; width: parent.width; height: 50px;
+        Text {
+            x: 0; y: 0; width: parent.width; horizontal-alignment: TextHorizontalAlignment.center;
+            text: I18n.tr("还没有内容"); color: #94A3B2;
+            font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px;
+        }
+        Text {
+            x: 0; y: 20px; width: parent.width; horizontal-alignment: TextHorizontalAlignment.center;
+            text: I18n.tr("用热键截图或录制后会自动出现"); color: #5C6773;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+        }
+    }
+}
+
+export component PreviewScreen inherits Rectangle {
+    in property <image> img: AppState.preview-img;
+    in property <string> name: AppState.preview-name;
+    in property <string> size-label: AppState.preview-size;
+    in property <string> dur: AppState.preview-dur;
+    in property <string> kind: AppState.preview-kind;
+    in property <string> pos: AppState.preview-pos;
+    in property <bool> ended: AppState.video-ended;
+    width: 100%; height: 100%; background: transparent;
+    if root.ended : Rectangle {
+        x: (parent.width - 48px) / 2; y: (parent.height - 48px) / 2; width: 48px; height: 48px;
+        border-radius: 24px; background: #000000A6; border-width: 1px; border-color: #FFFFFF59;
+        Image { x: 17px; y: 17px; width: 14px; height: 14px; source: @image-url("../icons/play.svg"); }
+    }
+    // 位置与体积：右上浮层，不占布局
+    Text {
+        x: parent.width - 158px; y: 2px; width: 150px; height: 16px; vertical-alignment: center;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: root.pos + "   " + root.size-label; color: #C8D2DC;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+    }
+    // 左右切换：半透明悬浮按钮，压在图片上
+    Rectangle {
+        x: 6px; y: (parent.height - 40px) / 2; width: 24px; height: 40px; border-radius: 6px;
+        background: #00000066; border-width: 1px; border-color: #FFFFFF2E;
+        Image { x: 6px; y: 14px; width: 12px; height: 12px; source: @image-url("../icons/arrow-left.svg"); opacity: 0.95; }
+    }
+    Rectangle {
+        x: parent.width - 30px; y: (parent.height - 40px) / 2; width: 24px; height: 40px; border-radius: 6px;
+        background: #00000066; border-width: 1px; border-color: #FFFFFF2E;
+        Image { x: 6px; y: 14px; width: 12px; height: 12px; source: @image-url("../icons/arrow-right.svg"); opacity: 0.95; }
+    }
+}
+
+export component SettingsScreen inherits Rectangle {
+    in property <int> set-tab: AppState.set-tab;
+    in property <[string]> tabs: AppState.setting-tabs;
+    in property <[SettingItem]> rows: AppState.setting-rows;
+    in property <string> footer: AppState.setting-footer;
+    width: 100%; height: 100%; background: transparent;
+
+    Rectangle {
+        x: 8px; y: 22px; width: 304px; height: 22px; border-radius: 7px;
+        background: #0E151B; border-width: 1px; border-color: #1E2A33;
+    }
+    for t[i] in root.tabs : TabCell {
+        x: 10px + i * 75px; y: 22px;
+        title: t; active: root.set-tab == i;
+    }
+
+    for it[i] in root.rows : SettingRow {
+        x: 8px; y: 46px + i * 21px; width: 304px; height: 20px;
+        label: it.label; mode: it.mode; value: it.value; value2: it.value2;
+        focused: it.focused; disabled: it.disabled;
+    }
+
+    if root.footer != "" : Rectangle {
+        x: 8px; y: 46px + root.rows.length * 21px + 6px; width: 304px; height: 40px; border-radius: 7px;
+        background: #0E151B; border-width: 1px; border-color: #1E2A33;
+        Text {
+            x: 10px; y: 4px; width: 284px; height: 32px;
+            vertical-alignment: center; wrap: word-wrap;
+            text: root.footer; color: #8B98A6;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+        }
+    }
+}
+

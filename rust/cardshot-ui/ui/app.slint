@@ -1,579 +1,71 @@
-// CardShot 设备端界面（320×170）：后台截图/录屏守护的相册管理前端
-// 视觉规范：8px 基线栅格；正文 10/12px；三种语义色（表面/描边/强调）
+// CardShot 设备端界面根：仅组合页面、提示与弹窗；状态集中在 AppState
+import { AppState, Pages, I18n, HintItem, SettingItem, GalleryItem } from "state.slint";
+export { I18n } from "state.slint";
+import { TopBar } from "components/topbar.slint";
+import { HintRow, ArrowPair } from "components/hints.slint";
+import { HomeScreen, GalleryScreen, PreviewScreen, SettingsScreen } from "screens/screens.slint";
 
-export struct GalleryItem {
-    img: image,
-    kind: string,
-    name: string,
-    sub: string,
-    dur: string,
-}
-
-
-// 界面语言：lang 为 0 显示中文原文，否则由 Rust 按 i18n/*.po 查表
-// tr 读取 lang，切换语言时所有文案绑定随之刷新
-export global I18n {
-    in-out property <int> lang: 0;
-    pure callback lookup(string) -> string;
-    public pure function tr(text: string) -> string {
-        return self.lang == 0 ? text : self.lookup(text);
-    }
-}
-
-// 主色板
-// bg #0B0E11  surface #14191E  surface2 #1A2027  border #262E36
-// text #E6EDF3  muted #94A3B2  faint #5C6773  accent #2DD4BF  danger #F26D6D
-
-component TopBar inherits Rectangle {
-    in property <string> title: "CardShot";
-    in property <bool> recording: false;
-    in property <string> rec-time: "";
-    in property <bool> overlay: false;
-    in property <bool> wide-right: false;
-    height: 20px;
-    background: root.overlay ? #0B0E11D8 : #0B0E11;
-    Rectangle { x: 0; y: parent.height - 1px; width: parent.width; height: 1px; background: #1C242B; }
-    Text {
-        x: 10px; y: 0; width: parent.width - (root.wide-right ? 156px : 74px); height: parent.height; vertical-alignment: center; overflow: elide;
-        text: root.title; color: #E6EDF3;
-        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
-    }
-    if root.recording : Rectangle {
-        x: parent.width - 62px; y: 4px; width: 52px; height: 14px; border-radius: 7px;
-        background: #2A1518;
-        Rectangle { x: 6px; y: 5px; width: 5px; height: 5px; border-radius: 3px; background: #F26D6D; }
-        Text {
-            x: 16px; y: 0; width: 32px; height: parent.height; vertical-alignment: center;
-            text: root.rec-time; color: #F6A5A5;
-            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
-        }
-    }
-}
-
-component StatChip inherits Rectangle {
-    in property <image> icon;
-    in property <string> value: "0";
-    in property <string> label: "";
-    height: 28px;
-    border-radius: 8px;
-    background: #14191E;
-    border-width: 1px;
-    border-color: #202830;
-    Image {
-        x: 10px; y: (parent.height - 12px) / 2; width: 12px; height: 12px;
-        source: root.icon; opacity: 1.0;
-    }
-    Text {
-        x: 27px; y: 0; height: parent.height; vertical-alignment: center;
-        text: root.value; color: #E6EDF3;
-        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
-    }
-    Text {
-        x: parent.width - 40px; y: 0; width: 30px; height: parent.height; vertical-alignment: center;
-        horizontal-alignment: TextHorizontalAlignment.right;
-        text: root.label; color: #5C6773;
-        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
-    }
-}
-
-component ActionRow inherits Rectangle {
-    in property <image> icon;
-    in property <string> label: "";
-    in property <string> right: "";
-    in property <bool> focused: false;
-    height: 26px;
-    border-radius: 8px;
-    background: focused ? #17262B : #14191E;
-    border-width: 1px;
-    border-color: focused ? #2DD4BF : #202830;
-    animate background { duration: 110ms; }
-    animate border-color { duration: 110ms; }
-    Image {
-        x: 10px; y: (parent.height - 12px) / 2; width: 12px; height: 12px;
-        source: root.icon; opacity: root.focused ? 1.0 : 0.72;
-    }
-    Text {
-        x: 30px; y: 0; height: parent.height; vertical-alignment: center;
-        text: root.label; color: #E6EDF3;
-        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px;
-    }
-    if root.right != "" : Text {
-        x: parent.width - 92px; y: 0; width: 54px; height: parent.height; vertical-alignment: center;
-        horizontal-alignment: TextHorizontalAlignment.right;
-        text: root.right; color: #94A3B2;
-        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
-    }
-    Image {
-        x: parent.width - 21px; y: (parent.height - 12px) / 2; width: 12px; height: 12px;
-        source: @image-url("icons/arrow-right.svg");
-        opacity: root.focused ? 0.9 : 0.28;
-        animate opacity { duration: 110ms; }
-    }
-}
-
-component HomeScreen inherits Rectangle {
-    in property <int> focus-idx: 0;
-    in property <int> count-images: 0;
-    in property <int> count-videos: 0;
-    in property <string> size-label: "";
-    width: 100%; height: 100%; background: transparent;
-
-    StatChip { x: 9px;  y: 27px; width: 148px; icon: @image-url("icons/camera.svg"); value: root.count-images + " " + I18n.tr("项"); label: I18n.tr("截图"); }
-    StatChip { x: 163px; y: 27px; width: 148px; icon: @image-url("icons/video.svg"); value: root.count-videos + " " + I18n.tr("项"); label: I18n.tr("录制"); }
-
-    ActionRow {
-        x: 9px; y: 63px; width: 302px;
-        icon: @image-url("icons/gallery-thumbnails.svg");
-        label: I18n.tr("相册"); right: (root.count-images + root.count-videos) + " 项";
-        focused: root.focus-idx == 0;
-    }
-    ActionRow {
-        x: 9px; y: 93px; width: 302px;
-        icon: @image-url("icons/settings-cog.svg");
-        label: I18n.tr("设置"); focused: root.focus-idx == 1;
-    }
-    ActionRow {
-        x: 9px; y: 123px; width: 302px;
-        icon: @image-url("icons/book-open.svg");
-        label: I18n.tr("使用说明"); focused: root.focus-idx == 2;
-    }
-}
-
-component GalleryTile inherits Rectangle {
-    in property <image> img;
-    in property <string> kind: "";
-    in property <string> label: "";
-    in property <string> dur: "";
-    in property <bool> focused: false;
-    in property <bool> selecting: false;
-    in property <bool> check: false;
-    border-radius: 8px;
-    background: #14191E;
-    border-width: 1px;
-    border-color: #202830;
-    Rectangle {
-        x: 0; y: 0; width: 100%; height: 100%; border-radius: 8px; clip: true;
-        Image {
-            x: 0; y: 0; width: parent.width; height: parent.height - 14px;
-            source: root.img; image-fit: contain;
-        }
-    }
-    Rectangle { x: 4px; y: 4px; width: 16px; height: 16px; border-radius: 4px; background: #000000B0; }
-    Image { x: 6px; y: 6px; width: 12px; height: 12px; source: @image-url("icons/camera.svg"); visible: root.kind == "image"; }
-    Image { x: 6px; y: 6px; width: 12px; height: 12px; source: @image-url("icons/play.svg"); visible: root.kind == "video"; }
-    Image {
-        x: (parent.width - 24px) / 2; y: (parent.height - 14px - 24px) / 2;
-        width: 24px; height: 24px; source: @image-url("icons/play-circle.svg");
-        visible: root.kind == "video" && !root.selecting; opacity: 0.92;
-    }
-    if root.dur != "" && !root.selecting : Rectangle {
-        x: parent.width - 36px; y: 4px; width: 32px; height: 13px; border-radius: 4px; background: #000000B0;
-        Text {
-            x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
-            horizontal-alignment: TextHorizontalAlignment.center;
-            text: root.dur; color: #FFFFFF;
-            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
-        }
-    }
-    if root.selecting : Rectangle {
-        x: parent.width - 21px; y: 4px; width: 16px; height: 16px; border-radius: 8px;
-        background: root.check ? #2DD4BF : #000000B0;
-        border-width: 1px; border-color: root.check ? #2DD4BF : #4C5865;
-        Image {
-            x: 3px; y: 3px; width: 10px; height: 10px;
-            source: @image-url("icons/check.svg"); visible: root.check;
-        }
-    }
-    Rectangle {
-        y: parent.height - 14px; width: parent.width; height: 14px; background: #1A2027;
-        Text {
-            x: 5px; width: parent.width - 10px; height: parent.height; vertical-alignment: center;
-            text: root.label; color: #AEBAC6;
-            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px; overflow: elide;
-        }
-    }
-    if root.focused : Rectangle {
-        x: 0; y: 0; width: 100%; height: 100%; border-radius: 8px;
-        background: transparent; border-width: 2px; border-color: #2DD4BF;
-    }
-}
-
-component GalleryScreen inherits Rectangle {
-    in property <[GalleryItem]> items;
-    in property <[bool]> selected-flags;
-    in property <int> focus-idx: 0;
-    in property <bool> selecting: false;
-    in property <int> sel-count: 0;
-    width: 100%; height: 100%; background: transparent;
-    for it[i] in root.items : GalleryTile {
-        x: 8px + Math.mod(i, 3) * 103px;
-        y: 26px + Math.floor(i / 3) * 65px;
-        width: 98px; height: 59px;
-        img: it.img; kind: it.kind; label: it.name; dur: it.dur;
-        focused: root.focus-idx == i;
-        selecting: root.selecting;
-        check: i < root.selected-flags.length ? root.selected-flags[i] : false;
-    }
-    Rectangle {
-        visible: root.items.length == 0;
-        x: 0; y: 50px; width: parent.width; height: 50px;
-        Text {
-            x: 0; y: 0; width: parent.width; horizontal-alignment: TextHorizontalAlignment.center;
-            text: I18n.tr("还没有内容"); color: #94A3B2;
-            font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px;
-        }
-        Text {
-            x: 0; y: 20px; width: parent.width; horizontal-alignment: TextHorizontalAlignment.center;
-            text: I18n.tr("用热键截图或录制后会自动出现"); color: #5C6773;
-            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
-        }
-    }
-}
-
-component ArrowPad inherits Rectangle {
-    in property <image> icon;
-    width: 20px; height: 34px; border-radius: 5px;
-    background: #141E22; border-width: 1px; border-color: #262E36;
-    Image { x: 4px; y: 11px; width: 12px; height: 12px; source: root.icon; opacity: 0.85; }
-}
-
-component PreviewScreen inherits Rectangle {
-    in property <image> img;
-    in property <string> name: "";
-    in property <string> size-label: "";
-    in property <string> dur: "";
-    in property <string> kind: "image";
-    in property <string> pos: "";
-    in property <bool> ended: false;
-    width: 100%; height: 100%; background: transparent;
-    if root.ended : Rectangle {
-        x: (parent.width - 48px) / 2; y: (parent.height - 48px) / 2; width: 48px; height: 48px;
-        border-radius: 24px; background: #000000A6; border-width: 1px; border-color: #FFFFFF59;
-        Image { x: 17px; y: 17px; width: 14px; height: 14px; source: @image-url("icons/play.svg"); }
-    }
-    // 位置与体积：右上浮层，不占布局
-    Text {
-        x: parent.width - 158px; y: 2px; width: 150px; height: 16px; vertical-alignment: center;
-        horizontal-alignment: TextHorizontalAlignment.right;
-        text: root.pos + "   " + root.size-label; color: #C8D2DC;
-        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
-    }
-    // 左右切换：半透明悬浮按钮，压在图片上
-    Rectangle {
-        x: 6px; y: (parent.height - 40px) / 2; width: 24px; height: 40px; border-radius: 6px;
-        background: #00000066; border-width: 1px; border-color: #FFFFFF2E;
-        Image { x: 6px; y: 14px; width: 12px; height: 12px; source: @image-url("icons/arrow-left.svg"); opacity: 0.95; }
-    }
-    Rectangle {
-        x: parent.width - 30px; y: (parent.height - 40px) / 2; width: 24px; height: 40px; border-radius: 6px;
-        background: #00000066; border-width: 1px; border-color: #FFFFFF2E;
-        Image { x: 6px; y: 14px; width: 12px; height: 12px; source: @image-url("icons/arrow-right.svg"); opacity: 0.95; }
-    }
-}
-
-component SettingRow inherits Rectangle {
-    in property <string> label: "";
-    in property <string> value: "";
-    in property <string> value2: "";
-    in property <int> mode: 0;      // 0 文本 / 1 格式段选 / 2 远程开关 / 3 IP+端口
-    in property <bool> focused: false;
-    in property <bool> disabled: false;
-    height: 26px;
-    border-radius: 5px;
-    background: focused ? #16302F : transparent;
-    border-width: root.focused ? 1px : 0px;
-    border-color: #2DD4BF;
-    Text {
-        x: 8px; width: parent.width - 160px; height: parent.height; vertical-alignment: center;
-        text: root.label; color: root.disabled ? #566270 : (root.focused ? #E6EDF3 : #AEBAC6);
-        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 11px;
-    }
-    if root.mode == 0 : Text {
-        x: parent.width - 130px; width: 120px; height: parent.height; vertical-alignment: center;
-        horizontal-alignment: TextHorizontalAlignment.right;
-        text: root.value; color: root.disabled ? #566270 : (root.focused ? #2DD4BF : #C8D2DC);
-        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 11px;
-    }
-    if root.mode == 3 : Text {
-        x: 80px; width: 138px; height: parent.height; vertical-alignment: center;
-        horizontal-alignment: TextHorizontalAlignment.right;
-        text: root.value; color: #7C8896;
-        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
-    }
-    if root.mode == 3 : Rectangle {
-        x: parent.width - 84px; y: (parent.height - 14px) / 2; width: 76px; height: 14px;
-        border-radius: 4px; background: #10161B; border-width: 1px; border-color: root.focused ? #2DD4BF55 : #263038;
-        Text {
-            x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
-            horizontal-alignment: TextHorizontalAlignment.center;
-            text: root.value2; color: root.disabled ? #566270 : (root.focused ? #2DD4BF : #C8D2DC);
-            font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 10px;
-        }
-    }
-    if root.mode == 1 : Rectangle {
-        x: parent.width - 122px; y: (parent.height - 14px) / 2; width: 114px; height: 14px; opacity: root.disabled ? 0.4 : 1.0;
-        border-radius: 4px; background: #10161B; border-width: 1px; border-color: #263038;
-        Rectangle { x: 1px; y: 1px; width: 36px; height: 11px; border-radius: 3px; background: root.value == "PNG"  ? #2DD4BF : transparent; }
-        Rectangle { x: 39px; y: 1px; width: 36px; height: 11px; border-radius: 3px; background: root.value == "JPEG" ? #2DD4BF : transparent; }
-        Rectangle { x: 77px; y: 1px; width: 36px; height: 11px; border-radius: 3px; background: root.value == "WEBP" ? #2DD4BF : transparent; }
-        Text { x: 1px; y: 0; width: 36px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: "PNG";  color: root.value == "PNG"  ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px; }
-        Text { x: 39px; y: 0; width: 36px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: "JPEG"; color: root.value == "JPEG" ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px; }
-        Text { x: 77px; y: 0; width: 36px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: "WebP"; color: root.value == "WEBP" ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px; }
-    }
-    if root.mode == 2 : Text {
-        x: parent.width - 96px; width: 62px; height: parent.height; vertical-alignment: center;
-        horizontal-alignment: TextHorizontalAlignment.right;
-        text: root.value; color: #2DD4BF;
-        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
-    }
-    if root.mode == 2 : Rectangle {
-        x: parent.width - 30px; y: (parent.height - 14px) / 2; width: 26px; height: 14px; border-radius: 7px;
-        background: root.value != "关" ? #2DD4BF : #2A3A44;
-        Rectangle {
-            x: root.value != "关" ? 14px : 2px; y: 2px; width: 9px; height: 9px; border-radius: 5px; background: #FFFFFF;
-        }
-    }
-}
-
-export struct SettingItem {
-    label: string,
-    mode: int,
-    value: string,
-    value2: string,
-    focused: bool,
-    disabled: bool,
-}
-
-component TabCell inherits Rectangle {
-    in property <string> title: "";
-    in property <bool> active: false;
-    width: 73px; height: 22px; background: transparent;
-    Rectangle {
-        x: 0; y: 2px; width: 73px; height: 18px; border-radius: 5px;
-        background: root.active ? #2DD4BF : transparent;
-    }
-    Text {
-        x: 0; y: 0; width: 73px; height: parent.height;
-        vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center;
-        text: root.title; color: root.active ? #04221F : #8B98A6;
-        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
-    }
-}
-
-component ArrowPair inherits Rectangle {
-    in property <bool> vertical: false;
-    width: 34px; height: 18px; background: transparent;
-    Rectangle {
-        y: 1px; width: 100%; height: 16px; border-radius: 3px;
-        background: #22303A; border-width: 1px; border-color: #31424E;
-    }
-    Image {
-        x: 4px; y: 3px; width: 12px; height: 12px;
-        source: root.vertical ? @image-url("icons/arrow-up.svg") : @image-url("icons/arrow-left.svg");
-    }
-    Image {
-        x: 18px; y: 3px; width: 12px; height: 12px;
-        source: root.vertical ? @image-url("icons/arrow-down.svg") : @image-url("icons/arrow-right.svg");
-    }
-}
-
-export global HintKind {
-    out property <int> text: 0;
-    out property <int> key: 1;
-    out property <int> arrow: 2;
-    out property <int> stretch: 3;
-}
-
-export global Pages {
-    out property <int> home: 0;
-    out property <int> gallery: 1;
-    out property <int> preview: 2;
-    out property <int> settings: 3;
-}
-
-export struct HintItem {
-    kind: int,
-    text: string,
-    w: length,
-    vertical: bool,
-}
-
-component KeyCap inherits Rectangle {
-    in property <string> label: "";
-    in property <length> w: 14px;
-    width: root.w; height: 18px; background: transparent;
-    Rectangle {
-        y: 2px; width: 100%; height: 14px; border-radius: 3px;
-        background: #22303A; border-width: 1px; border-color: #31424E;
-        Text {
-            x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
-            horizontal-alignment: TextHorizontalAlignment.center;
-            text: root.label; color: #CFEAE4;
-            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
-        }
-    }
-}
-
-component HintText inherits Rectangle {
-    in property <string> text: "";
-    height: 18px; background: transparent;
-    Text {
-        x: 0; y: 0; width: 100%; height: 100%;
-        vertical-alignment: center;
-        text: root.text; color: #8B98A6;
-        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
-    }
-}
-
-component HintCell inherits Rectangle {
-    in property <HintItem> item;
-    height: 18px;
-    width: item.w;
-    horizontal-stretch: item.kind == HintKind.stretch ? 1 : 0;
-    background: transparent;
-    if item.kind == HintKind.text : HintText { text: item.text; }
-    if item.kind == HintKind.key : KeyCap { w: item.w; label: item.text; }
-    if item.kind == HintKind.arrow : ArrowPair { vertical: item.vertical; }
-}
-
-component HintRow inherits Rectangle {
-    in property <[HintItem]> items;
-    in property <bool> overlay: false;
-    height: 18px;
-    background: root.overlay ? #0F1419E8 : #0F1419;
-    Rectangle { x: 0; y: 0; width: parent.width; height: 1px; background: #1C242B; }
-
-    HorizontalLayout {
-        x: 0; y: 0; width: parent.width; height: parent.height;
-        padding-left: 6px; padding-right: 6px; spacing: 3px;
-        for it[i] in root.items : HintCell { item: it; }
-    }
-}
-
-component SettingsScreen inherits Rectangle {
-    in property <int> set-tab: 0;
-    in property <[string]> tabs;
-    in property <[SettingItem]> rows;
-    in property <string> footer: "";
-    width: 100%; height: 100%; background: transparent;
-
-    Rectangle {
-        x: 8px; y: 22px; width: 304px; height: 22px; border-radius: 7px;
-        background: #0E151B; border-width: 1px; border-color: #1E2A33;
-    }
-    for t[i] in root.tabs : TabCell {
-        x: 10px + i * 75px; y: 22px;
-        title: t; active: root.set-tab == i;
-    }
-
-    for it[i] in root.rows : SettingRow {
-        x: 8px; y: 46px + i * 21px; width: 304px; height: 20px;
-        label: it.label; mode: it.mode; value: it.value; value2: it.value2;
-        focused: it.focused; disabled: it.disabled;
-    }
-
-    if root.footer != "" : Rectangle {
-        x: 8px; y: 46px + root.rows.length * 21px + 6px; width: 304px; height: 40px; border-radius: 7px;
-        background: #0E151B; border-width: 1px; border-color: #1E2A33;
-        Text {
-            x: 10px; y: 4px; width: 284px; height: 32px;
-            vertical-alignment: center; wrap: word-wrap;
-            text: root.footer; color: #8B98A6;
-            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
-        }
-    }
-}
 
 export component AppWindow inherits Window {
     title: "CardShot";
     width: 320px; height: 170px;
     background: #0B0E11;
 
-    in property <int> page: 0;
-    in property <string> page-title: "CardShot";
-    in property <bool> recording: false;
-    in property <string> rec-time: "";
-    in property <int> home-focus: 0;
-    in property <int> grid-focus: 0;
-    in property <bool> selecting: false;
-    in property <int> sel-count: 0;
-    in property <[HintItem]> hints;
-    in property <[string]> setting-tabs;
-    in property <[SettingItem]> setting-rows;
-    in property <string> setting-footer: "";
-    in property <[GalleryItem]> items;
-    in property <[bool]> selected-flags;
-    in property <image> preview-img;
-    in property <string> preview-name: "";
-    in property <string> preview-size: "";
-    in property <string> preview-dur: "";
-    in property <string> preview-kind: "image";
-    in property <string> preview-pos: "";
-    in property <int> count-images: 0;
-    in property <int> count-videos: 0;
-    in property <string> size-label: "";
-    in property <string> hint: "";
-    in property <string> toast: "";
-    in property <bool> setting-help-visible: false;
-    in property <string> s-setting-help-title: "";
-    in property <string> s-setting-help-body: "";
-    in property <bool> help-visible: false;
-    in property <bool> confirm-visible: false;
-    in property <int> confirm-focus: 0;
-    in property <int> set-focus: 0;
-    in property <string> s-fmt: "PNG";
-    in property <int> s-quality: 90;
-    in property <int> s-fps: 20;
-    in property <int> s-port: 8420;
-    in property <string> s-shot: "";
-    in property <string> s-record: "";
-    in property <int> set-tab: 0;
-    in property <string> s-autostart: "开";
-    in property <string> s-language: "中文";
-    in property <string> s-remote: "开";
-    in property <string> s-port-text: "8420";
-    in property <string> s-port-host: "";
-    in property <string> s-port-value: "8420";
-    in property <string> s-record-audio: "关";
-    in property <bool> port-edit: false;
-    in property <bool> port-disabled: false;
-    in property <bool> hotkey-capture: false;
-    in property <bool> video-ended: false;
-    in property <bool> settings-adjust: true;
-    in property <bool> settings-editing: false;
-    in property <string> confirm-title: "删除当前内容";
-    in property <string> confirm-desc: "是否确认进行删除？删除后将无法恢复";
+    in-out property <int> page <=> AppState.page;
+    in-out property <string> page-title <=> AppState.page-title;
+    in-out property <bool> recording <=> AppState.recording;
+    in-out property <string> rec-time <=> AppState.rec-time;
+    in-out property <int> home-focus <=> AppState.home-focus;
+    in-out property <int> grid-focus <=> AppState.grid-focus;
+    in-out property <bool> selecting <=> AppState.selecting;
+    in-out property <int> sel-count <=> AppState.sel-count;
+    in-out property <[HintItem]> hints <=> AppState.hints;
+    in-out property <[string]> setting-tabs <=> AppState.setting-tabs;
+    in-out property <[SettingItem]> setting-rows <=> AppState.setting-rows;
+    in-out property <string> setting-footer <=> AppState.setting-footer;
+    in-out property <[GalleryItem]> items <=> AppState.items;
+    in-out property <[bool]> selected-flags <=> AppState.selected-flags;
+    in-out property <image> preview-img <=> AppState.preview-img;
+    in-out property <string> preview-name <=> AppState.preview-name;
+    in-out property <string> preview-size <=> AppState.preview-size;
+    in-out property <string> preview-dur <=> AppState.preview-dur;
+    in-out property <string> preview-kind <=> AppState.preview-kind;
+    in-out property <string> preview-pos <=> AppState.preview-pos;
+    in-out property <int> count-images <=> AppState.count-images;
+    in-out property <int> count-videos <=> AppState.count-videos;
+    in-out property <string> size-label <=> AppState.size-label;
+    in-out property <string> toast <=> AppState.toast;
+    in-out property <bool> setting-help-visible <=> AppState.setting-help-visible;
+    in-out property <string> s-setting-help-title <=> AppState.s-setting-help-title;
+    in-out property <string> s-setting-help-body <=> AppState.s-setting-help-body;
+    in-out property <bool> help-visible <=> AppState.help-visible;
+    in-out property <bool> confirm-visible <=> AppState.confirm-visible;
+    in-out property <int> confirm-focus <=> AppState.confirm-focus;
+    in-out property <int> set-tab <=> AppState.set-tab;
+    in-out property <bool> video-ended <=> AppState.video-ended;
+    in-out property <string> confirm-title <=> AppState.confirm-title;
+    in-out property <string> confirm-desc <=> AppState.confirm-desc;
 
     if root.page == Pages.preview : Image {
         x: 0; y: 0; width: parent.width; height: parent.height;
         source: root.preview-img; image-fit: fill;
     }
     TopBar {
-        width: parent.width; y: 0;
-        title: root.page-title;
-        recording: root.recording;
-        rec-time: root.rec-time;
-        overlay: root.page == Pages.preview;
-        wide-right: root.page == Pages.preview;
+
     }
     if root.page == Pages.home : HomeScreen {
         y: 0; width: parent.width; height: parent.height - 18px;
-        focus-idx: root.home-focus;
-        count-images: root.count-images; count-videos: root.count-videos; size-label: root.size-label;
     }
     if root.page == Pages.gallery : GalleryScreen {
         y: 0; width: parent.width; height: parent.height - 18px;
-        items: root.items; focus-idx: root.grid-focus; selecting: root.selecting; sel-count: root.sel-count; selected-flags: root.selected-flags;
     }
     if root.page == Pages.preview : PreviewScreen {
         y: 0; width: parent.width; height: parent.height;
-        img: root.preview-img; name: root.preview-name; size-label: root.preview-size; dur: root.preview-dur; kind: root.preview-kind; pos: root.preview-pos; ended: root.video-ended;
     }
     if root.page == Pages.settings : SettingsScreen {
         y: 0; width: parent.width; height: parent.height - 18px;
-        set-tab: root.set-tab; tabs: root.setting-tabs; rows: root.setting-rows; footer: root.setting-footer;
     }
-    HintRow { width: parent.width; y: parent.height - 18px; overlay: root.page == Pages.preview; items: root.hints; }
+    HintRow { width: parent.width; y: parent.height - 18px; }
 
     if root.toast != "" : Rectangle {
         x: parent.width - 120px; y: parent.height - 32px; width: 112px; height: 16px;

@@ -1,0 +1,81 @@
+import { AppState, Pages, HintKind, HintItem } from "../state.slint";
+
+export component ArrowPair inherits Rectangle {
+    in property <bool> vertical: false;
+    width: 34px; height: 18px; background: transparent;
+    Rectangle {
+        y: 1px; width: 100%; height: 16px; border-radius: 3px;
+        background: #22303A; border-width: 1px; border-color: #31424E;
+    }
+    Image {
+        x: 4px; y: 3px; width: 12px; height: 12px;
+        source: root.vertical ? @image-url("../icons/arrow-up.svg") : @image-url("../icons/arrow-left.svg");
+    }
+    Image {
+        x: 18px; y: 3px; width: 12px; height: 12px;
+        source: root.vertical ? @image-url("../icons/arrow-down.svg") : @image-url("../icons/arrow-right.svg");
+    }
+}
+
+export component KeyCap inherits Rectangle {
+    in property <string> label: "";
+    in property <length> w: 14px;
+    width: root.w; height: 18px; background: transparent;
+    Rectangle {
+        y: 2px; width: 100%; height: 14px; border-radius: 3px;
+        background: #22303A; border-width: 1px; border-color: #31424E;
+        Text {
+            x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
+            horizontal-alignment: TextHorizontalAlignment.center;
+            text: root.label; color: #CFEAE4;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+        }
+    }
+}
+
+export component HintText inherits Rectangle {
+    in property <string> text: "";
+    height: 18px; background: transparent;
+    Text {
+        x: 0; y: 0; width: 100%; height: 100%;
+        vertical-alignment: center;
+        text: root.text; color: #8B98A6;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+    }
+}
+
+export component HintPair inherits Rectangle {
+    in property <string> key-text: "";
+    in property <string> label-text: "";
+    in property <length> kw: 14px;
+    in property <length> lw: 20px;
+    width: root.kw + root.lw + 3px; height: 18px; background: transparent;
+    KeyCap { x: 0; y: 0; w: root.kw; label: root.key-text; }
+    HintText { x: root.kw + 3px; y: 0; width: root.lw; text: root.label-text; }
+}
+
+export component HintCell inherits Rectangle {
+    in property <HintItem> item;
+    height: 18px;
+    width: item.w;
+    horizontal-stretch: item.kind == HintKind.stretch ? 1 : 0;
+    background: transparent;
+    if item.kind == HintKind.text : HintText { text: item.text; }
+    if item.kind == HintKind.key : KeyCap { w: item.w; label: item.text; }
+    if item.kind == HintKind.arrow : ArrowPair { vertical: item.vertical; }
+    if item.kind == HintKind.pair : HintPair { kw: item.w; lw: item.w2; key-text: item.key; label-text: item.label; }
+}
+
+export component HintRow inherits Rectangle {
+    in property <[HintItem]> items: AppState.hints;
+    in property <bool> overlay: AppState.page == Pages.preview;
+    height: 18px;
+    background: root.overlay ? #0F1419E8 : #0F1419;
+    Rectangle { x: 0; y: 0; width: parent.width; height: 1px; background: #1C242B; }
+
+    HorizontalLayout {
+        x: 0; y: 0; width: parent.width; height: parent.height;
+        padding-left: 6px; padding-right: 6px; spacing: 3px;
+        for it[i] in root.items : HintCell { item: it; }
+    }
+}

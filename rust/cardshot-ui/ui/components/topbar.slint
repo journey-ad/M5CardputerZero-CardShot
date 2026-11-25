@@ -1,0 +1,88 @@
+import { AppState, Pages, HintKind, HintItem } from "../state.slint";
+
+export component TopBar inherits Rectangle {
+    in property <string> title: AppState.page-title;
+    in property <bool> recording: AppState.recording;
+    in property <string> rec-time: AppState.rec-time;
+    in property <bool> overlay: AppState.page == Pages.preview;
+    in property <bool> wide-right: AppState.page == Pages.preview;
+    height: 20px;
+    background: root.overlay ? #0B0E11D8 : #0B0E11;
+    Rectangle { x: 0; y: parent.height - 1px; width: parent.width; height: 1px; background: #1C242B; }
+    Text {
+        x: 10px; y: 0; width: parent.width - (root.wide-right ? 156px : 74px); height: parent.height; vertical-alignment: center; overflow: elide;
+        text: root.title; color: #E6EDF3;
+        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
+    }
+    if root.recording : Rectangle {
+        x: parent.width - 62px; y: 4px; width: 52px; height: 14px; border-radius: 7px;
+        background: #2A1518;
+        Rectangle { x: 6px; y: 5px; width: 5px; height: 5px; border-radius: 3px; background: #F26D6D; }
+        Text {
+            x: 16px; y: 0; width: 32px; height: parent.height; vertical-alignment: center;
+            text: root.rec-time; color: #F6A5A5;
+            font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+        }
+    }
+}
+
+export component StatChip inherits Rectangle {
+    in property <image> icon;
+    in property <string> value: "0";
+    in property <string> label: "";
+    height: 28px;
+    border-radius: 8px;
+    background: #14191E;
+    border-width: 1px;
+    border-color: #202830;
+    Image {
+        x: 10px; y: (parent.height - 12px) / 2; width: 12px; height: 12px;
+        source: root.icon; opacity: 1.0;
+    }
+    Text {
+        x: 27px; y: 0; height: parent.height; vertical-alignment: center;
+        text: root.value; color: #E6EDF3;
+        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px; font-weight: 700;
+    }
+    Text {
+        x: parent.width - 40px; y: 0; width: 30px; height: parent.height; vertical-alignment: center;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: root.label; color: #5C6773;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+    }
+}
+
+export component ActionRow inherits Rectangle {
+    in property <image> icon;
+    in property <string> label: "";
+    in property <string> right: "";
+    in property <bool> focused: false;
+    height: 26px;
+    border-radius: 8px;
+    background: focused ? #17262B : #14191E;
+    border-width: 1px;
+    border-color: focused ? #2DD4BF : #202830;
+    animate background { duration: 110ms; }
+    animate border-color { duration: 110ms; }
+    Image {
+        x: 10px; y: (parent.height - 12px) / 2; width: 12px; height: 12px;
+        source: root.icon; opacity: root.focused ? 1.0 : 0.72;
+    }
+    Text {
+        x: 30px; y: 0; height: parent.height; vertical-alignment: center;
+        text: root.label; color: #E6EDF3;
+        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 12px;
+    }
+    if root.right != "" : Text {
+        x: parent.width - 92px; y: 0; width: 54px; height: parent.height; vertical-alignment: center;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: root.right; color: #94A3B2;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+    }
+    Image {
+        x: parent.width - 21px; y: (parent.height - 12px) / 2; width: 12px; height: 12px;
+        source: @image-url("../icons/arrow-right.svg");
+        opacity: root.focused ? 0.9 : 0.28;
+        animate opacity { duration: 110ms; }
+    }
+}

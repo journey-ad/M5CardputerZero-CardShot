@@ -1,0 +1,88 @@
+// CardShot 设备端界面（320×170）：后台截图/录屏守护的相册管理前端
+// 视觉规范：8px 基线栅格；正文 10/12px；三种语义色（表面/描边/强调）
+
+export struct GalleryItem {
+    img: image,
+    kind: string,
+    name: string,
+    sub: string,
+    dur: string,
+}
+
+
+// 界面语言：lang 为 0 显示中文原文，否则由 Rust 按 i18n/*.po 查表
+// tr 读取 lang，切换语言时所有文案绑定随之刷新
+export global I18n {
+    in-out property <int> lang: 0;
+    pure callback lookup(string) -> string;
+    public pure function tr(text: string) -> string {
+        return self.lang == 0 ? text : self.lookup(text);
+    }
+}
+
+export global Pages {
+    out property <int> home: 0;
+    out property <int> gallery: 1;
+    out property <int> preview: 2;
+    out property <int> settings: 3;
+}
+export global HintKind {
+    out property <int> text: 0;
+    out property <int> key: 1;
+    out property <int> arrow: 2;
+    out property <int> stretch: 3;
+    out property <int> pair: 4;
+}
+export struct HintItem {
+    kind: int,
+    text: string,
+    w: length,
+    vertical: bool,
+    key: string,
+    label: string,
+    w2: length,
+}
+export struct SettingItem {
+    label: string,
+    mode: int,
+    value: string,
+    value2: string,
+    focused: bool,
+    disabled: bool,
+}
+export global AppState {
+    in-out property <int> page: 0;
+    in-out property <string> page-title: "CardShot";
+    in-out property <bool> recording: false;
+    in-out property <string> rec-time: "";
+    in-out property <int> home-focus: 0;
+    in-out property <int> grid-focus: 0;
+    in-out property <bool> selecting: false;
+    in-out property <int> sel-count: 0;
+    in-out property <[HintItem]> hints;
+    in-out property <[string]> setting-tabs;
+    in-out property <[SettingItem]> setting-rows;
+    in-out property <string> setting-footer: "";
+    in-out property <[GalleryItem]> items;
+    in-out property <[bool]> selected-flags;
+    in-out property <image> preview-img;
+    in-out property <string> preview-name: "";
+    in-out property <string> preview-size: "";
+    in-out property <string> preview-dur: "";
+    in-out property <string> preview-kind: "image";
+    in-out property <string> preview-pos: "";
+    in-out property <int> count-images: 0;
+    in-out property <int> count-videos: 0;
+    in-out property <string> size-label: "";
+    in-out property <string> toast: "";
+    in-out property <bool> setting-help-visible: false;
+    in-out property <string> s-setting-help-title: "";
+    in-out property <string> s-setting-help-body: "";
+    in-out property <bool> help-visible: false;
+    in-out property <bool> confirm-visible: false;
+    in-out property <int> confirm-focus: 0;
+    in-out property <int> set-tab: 0;
+    in-out property <bool> video-ended: false;
+    in-out property <string> confirm-title: "删除当前内容";
+    in-out property <string> confirm-desc: "是否确认进行删除？删除后将无法恢复";
+}

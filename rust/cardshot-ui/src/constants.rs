@@ -20,7 +20,6 @@ pub const DEFAULT_PORT: i64 = 8420;
 pub const DEFAULT_QUALITY: i64 = 90;
 pub const DEFAULT_FPS: i64 = 20;
 
-pub const QUALITY_MIN: i64 = 1;
 pub const QUALITY_MAX: i64 = 100;
 pub const QUALITY_STEP: i64 = 10;
 /// 压缩质量预设档位（左右键循环）
@@ -247,6 +246,7 @@ pub const HINT_TEXT: i32 = 0;
 pub const HINT_KEY: i32 = 1;
 pub const HINT_ARROW: i32 = 2;
 pub const HINT_STRETCH: i32 = 3;
+pub const HINT_PAIR: i32 = 4;
 
 pub const CONFIRM_DELETE: i32 = 0;
 pub const CONFIRM_CLEAR: i32 = 1;

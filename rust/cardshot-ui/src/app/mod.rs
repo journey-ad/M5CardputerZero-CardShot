@@ -33,7 +33,7 @@ impl App {
 
     /// 初始化：拉取一次状态与配置，并支持通过环境变量指定起始页（便于调试）
     pub fn init(&mut self) {
-        let App { ui, st, client, .. } = self;
+        let App { st, client, .. } = self;
         let Some(c) = client.as_mut() else { return };
         poll::poll_status(c, st);
         poll::poll_config(c, st);

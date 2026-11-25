@@ -1,0 +1,90 @@
+import { AppState, Pages, HintKind, HintItem } from "../state.slint";
+
+export component SettingRow inherits Rectangle {
+    in property <string> label: "";
+    in property <string> value: "";
+    in property <string> value2: "";
+    in property <int> mode: 0;      // 0 文本 / 1 格式段选 / 2 远程开关 / 3 IP+端口
+    in property <bool> focused: false;
+    in property <bool> disabled: false;
+    height: 26px;
+    border-radius: 5px;
+    background: focused ? #16302F : transparent;
+    border-width: root.focused ? 1px : 0px;
+    border-color: #2DD4BF;
+    Text {
+        x: 8px; width: parent.width - 160px; height: parent.height; vertical-alignment: center;
+        text: root.label; color: root.disabled ? #566270 : (root.focused ? #E6EDF3 : #AEBAC6);
+        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 11px;
+    }
+    if root.mode == 0 : Text {
+        x: parent.width - 130px; width: 120px; height: parent.height; vertical-alignment: center;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: root.value; color: root.disabled ? #566270 : (root.focused ? #2DD4BF : #C8D2DC);
+        font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 11px;
+    }
+    if root.mode == 3 : Text {
+        x: 80px; width: 138px; height: parent.height; vertical-alignment: center;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: root.value; color: #7C8896;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+    }
+    if root.mode == 3 : Rectangle {
+        x: parent.width - 84px; y: (parent.height - 14px) / 2; width: 76px; height: 14px;
+        border-radius: 4px; background: #10161B; border-width: 1px; border-color: root.focused ? #2DD4BF55 : #263038;
+        Text {
+            x: 0; y: 0; width: parent.width; height: parent.height; vertical-alignment: center;
+            horizontal-alignment: TextHorizontalAlignment.center;
+            text: root.value2; color: root.disabled ? #566270 : (root.focused ? #2DD4BF : #C8D2DC);
+            font-family: "Fusion Pixel 12px Prop zh-Hans"; font-size: 10px;
+        }
+    }
+    if root.mode == 1 : Rectangle {
+        x: parent.width - 122px; y: (parent.height - 14px) / 2; width: 114px; height: 14px; opacity: root.disabled ? 0.4 : 1.0;
+        border-radius: 4px; background: #10161B; border-width: 1px; border-color: #263038;
+        Rectangle { x: 1px; y: 1px; width: 36px; height: 11px; border-radius: 3px; background: root.value == "PNG"  ? #2DD4BF : transparent; }
+        Rectangle { x: 39px; y: 1px; width: 36px; height: 11px; border-radius: 3px; background: root.value == "JPEG" ? #2DD4BF : transparent; }
+        Rectangle { x: 77px; y: 1px; width: 36px; height: 11px; border-radius: 3px; background: root.value == "WEBP" ? #2DD4BF : transparent; }
+        Text { x: 1px; y: 0; width: 36px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: "PNG";  color: root.value == "PNG"  ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px; }
+        Text { x: 39px; y: 0; width: 36px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: "JPEG"; color: root.value == "JPEG" ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px; }
+        Text { x: 77px; y: 0; width: 36px; height: parent.height; vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center; text: "WebP"; color: root.value == "WEBP" ? #04221F : #8B98A6; font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px; }
+    }
+    if root.mode == 2 : Text {
+        x: parent.width - 96px; width: 62px; height: parent.height; vertical-alignment: center;
+        horizontal-alignment: TextHorizontalAlignment.right;
+        text: root.value; color: #2DD4BF;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 9px;
+    }
+    if root.mode == 2 : Rectangle {
+        x: parent.width - 30px; y: (parent.height - 14px) / 2; width: 26px; height: 14px; border-radius: 7px;
+        background: root.value != "关" ? #2DD4BF : #2A3A44;
+        Rectangle {
+            x: root.value != "关" ? 14px : 2px; y: 2px; width: 9px; height: 9px; border-radius: 5px; background: #FFFFFF;
+        }
+    }
+}
+
+export struct SettingItem {
+    label: string,
+    mode: int,
+    value: string,
+    value2: string,
+    focused: bool,
+    disabled: bool,
+}
+
+export component TabCell inherits Rectangle {
+    in property <string> title: "";
+    in property <bool> active: false;
+    width: 73px; height: 22px; background: transparent;
+    Rectangle {
+        x: 0; y: 2px; width: 73px; height: 18px; border-radius: 5px;
+        background: root.active ? #2DD4BF : transparent;
+    }
+    Text {
+        x: 0; y: 0; width: 73px; height: parent.height;
+        vertical-alignment: center; horizontal-alignment: TextHorizontalAlignment.center;
+        text: root.title; color: root.active ? #04221F : #8B98A6;
+        font-family: "Fusion Pixel 10px Prop zh-Hans"; font-size: 10px;
+    }
+}
